@@ -1,2 +1,6 @@
 #TargetFrameworkVersion=v4.0:PlatformToolSet=v140:EnableManagedIncrementalBuild=false:VCToolArchitecture=Native32Bit:WindowsTargetPlatformVersion=8.1
+<<<<<<< HEAD
 Debug|x64|J:\3DProjectBTH\|
+=======
+Debug|x64|C:\Users\Karl\Desktop\Github\3DProjectBTH\|
+>>>>>>> refs/remotes/origin/master

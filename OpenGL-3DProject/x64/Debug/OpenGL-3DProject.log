@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 ﻿  Main.cpp
 j:\3dprojectbth\opengl-3dproject\main.cpp(136): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   OpenGL-3DProject.vcxproj -> J:\3DProjectBTH\x64\Debug\OpenGL-3DProject.exe
   OpenGL-3DProject.vcxproj -> J:\3DProjectBTH\x64\Debug\OpenGL-3DProject.pdb (Partial PDB)
+=======
+﻿  OpenGL-3DProject.vcxproj -> C:\Users\Karl\Desktop\Github\3DProjectBTH\x64\Debug\OpenGL-3DProject.exe
+  OpenGL-3DProject.vcxproj -> C:\Users\Karl\Desktop\Github\3DProjectBTH\x64\Debug\OpenGL-3DProject.pdb (Partial PDB)
+>>>>>>> refs/remotes/origin/master
