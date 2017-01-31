@@ -24,12 +24,7 @@ glm::mat4 View = glm::lookAt(
 	glm::vec3(0, 1, 0)
 );
 glm::mat4 Projection = glm::perspective(45.0f, (float)800 / (float)600, 0.1f, 20.0f);
-glm::mat4 rotation = glm::mat4{
-	glm::vec4(cos(2.0f * (3.14 / 180)),0,sin(2.0f * (3.14 / 180)), 0),
-	glm::vec4(0, 1, 0, 0),
-	glm::vec4(-sin(2.0f*(3.14 / 180)),0,cos(2.0f * (3.14 / 180)), 0),
-	glm::vec4(0,0,0,1)
-};
+glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 #define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
