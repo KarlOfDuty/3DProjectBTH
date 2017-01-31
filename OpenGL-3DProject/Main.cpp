@@ -4,7 +4,9 @@
 #include <SFML\Window.hpp>
 #include <SFML\OpenGL.hpp>
 #include <fstream>
-
+#include "OBJHandler.h"
+#include <vector>
+#include <iostream>
 #pragma comment(lib, "opengl32.lib")
 
 using namespace std;
@@ -13,6 +15,9 @@ GLuint gShaderProgram = 0;
 GLuint gVertexAttribute = 0;
 GLuint gVertexBuffer = 0;
 #define BUFFER_OFFSET(i) ((char *)nullptr + (i))
+
+std::vector<int> models;
+
 void CreateShaders()
 {
 	//create vertex shader
@@ -112,10 +117,15 @@ int main()
 	settings.depthBits = 24;
 	settings.stencilBits = 8;
 	settings.antialiasingLevel = 2;
-
+	OBJHandler objHandler = OBJHandler();
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
-
+	models.push_back(0);
+	models.push_back(0);
+	models.push_back(0);
+	models.push_back(0);
+	objHandler.read(models);
+	cout << models.at(1);
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
 
