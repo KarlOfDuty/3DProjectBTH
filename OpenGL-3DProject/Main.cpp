@@ -5,14 +5,30 @@
 #include <SFML\Window.hpp>
 #include <SFML\OpenGL.hpp>
 #include <fstream>
+#include <iostream>
 
 #pragma comment(lib, "opengl32.lib")
 
 using namespace std;
 
+int oldMouseX = 0;
+int oldMouseY = 0;
+float mouseX = 0;
+float mouseY = 0;
+
+float camSpeed = 0.05f;
+float camPosZ = 2.0f;
+float camPosX = 0.0f;
+
+const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
+const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
+
 GLuint gShaderProgram = 0;
 GLuint gVertexAttribute = 0;
 GLuint gVertexBuffer = 0;
+
+GLuint gBuffer;
+GLuint gPosition, gNormal, gAlbedoSpec;
 
 int timeSinceLastFrame = 0; //DeltaTime test
 
@@ -24,7 +40,6 @@ glm::mat4 View = glm::lookAt(
 	glm::vec3(0, 1, 0)
 );
 glm::mat4 Projection = glm::perspective(45.0f, (float)800 / (float)600, 0.1f, 20.0f);
-glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 #define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
@@ -94,6 +109,43 @@ void CreateShaders()
 	}
 }
 
+void CreateGBuffer()
+{
+	glGenFramebuffers(1, &gBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+	int SCR_WIDTH = 800;
+	int SCR_HEIGHT = 600;
+
+	// - Position color buffer
+	glGenTextures(1, &gPosition);
+	glBindTexture(GL_TEXTURE_2D, gPosition);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+
+	// - Normal color buffer
+	glGenTextures(1, &gNormal);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+	// - Color + Specular color buffer
+	glGenTextures(1, &gAlbedoSpec);
+	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
+
+	// - Tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
+	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
+}
+
 void CreateTriangleData()
 {
 	glGenVertexArrays(1, &gVertexAttribute);
@@ -126,9 +178,60 @@ void CreateTriangleData()
 
 void Update() //Update funktion för deltaTime, Fungerar ej atm.
 {
-	float deltaTime = (GL_TIME_ELAPSED - timeSinceLastFrame) / 1000;
-	timeSinceLastFrame = GL_TIME_ELAPSED;
-	Model = Model*rotation;
+	//float deltaTime = (GL_TIME_ELAPSED - timeSinceLastFrame) / 1000;
+	//timeSinceLastFrame = GL_TIME_ELAPSED;
+	//Model = Model*rotation;
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+	{
+		camPosZ -= camSpeed;
+		View = glm::lookAt(
+			glm::vec3(0, 0, camPosZ),
+			glm::vec3(0, 0, 0),
+			glm::vec3(0, 1, 0)
+		);
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+	{
+		//Projection = Projection*glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, -0.1f));
+		camPosZ += camSpeed;
+		View = glm::lookAt(
+			glm::vec3(0, 0, camPosZ),
+			glm::vec3(0, 0, 0),
+			glm::vec3(0, 1, 0)
+		);
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+	{
+		camPosX -= camSpeed;
+		View = glm::lookAt(
+			glm::vec3(0, 0, camPosZ),
+			glm::vec3(0, 0, camPosX),
+			glm::vec3(0, 1, 0)
+		);
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+	{
+		camPosX -= camSpeed;
+		View = glm::lookAt(
+			glm::vec3(0, 0, camPosZ),
+			glm::vec3(0, 0, camPosX),
+			glm::vec3(0, 1, 0)
+		);
+	}
+	if (sf::Mouse::getPosition().x != RESOLUTION_WIDTH/2)
+	{
+		mouseX = (float)(sf::Mouse::getPosition().x - oldMouseX)/10.0f;
+		Projection = Projection * glm::rotate(glm::mat4(), glm::radians(mouseX), glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	if (sf::Mouse::getPosition().y != RESOLUTION_HEIGHT / 2)
+	{
+		mouseY = (float)(sf::Mouse::getPosition().y - oldMouseY) / 10.0f;
+		//Projection = Projection * glm::rotate(glm::mat4(), glm::radians(mouseY), glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+	sf::Mouse::setPosition(sf::Vector2i(1920 / 2, 1080 / 2));
+	oldMouseX = sf::Mouse::getPosition().x;
+	oldMouseY = sf::Mouse::getPosition().y;
 }
 
 void Render()
@@ -160,12 +263,15 @@ int main()
 
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
+	window.setMouseCursorVisible(false);
 
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
 
+	//CreateGBuffer();
+
 	CreateShaders();
-	
+
 	CreateTriangleData();
 
 	// run the main loop
@@ -185,6 +291,14 @@ int main()
 			{
 				// adjust the viewport when the window is resized
 				glViewport(0, 0, event.size.width, event.size.height);
+			}
+			if (event.type == sf::Event::KeyPressed)
+			{
+				if (event.key.code == sf::Keyboard::Escape)
+				{
+					window.close();
+					running = false;
+				}
 			}
 		}
 
