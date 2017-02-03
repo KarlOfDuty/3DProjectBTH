@@ -19,7 +19,7 @@ GLuint gVertexBuffer = 0;
 int timeSinceLastFrame = 0; //DeltaTime test
 
 //MVP PLUS ROTATION (rotation ska ändras från manuell)
-glm::mat4 Model = glm::mat4(1.0f);
+glm::mat4 modelMatrix = glm::mat4(1.0f);
 glm::mat4 View = glm::lookAt(
 	glm::vec3(0, 0, 2),
 	glm::vec3(0, 0, 0),
@@ -30,11 +30,8 @@ glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f
 
 #define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
-<<<<<<< HEAD
 std::vector<int> models;
 
-=======
->>>>>>> refs/remotes/origin/master
 void CreateShaders()
 {
 	//create vertex shader
@@ -114,7 +111,8 @@ void CreateTriangleData()
 		float r, g, b, a;
 	};
 
-	TriangleVertex vertices[3] = {
+	TriangleVertex vertices[3] = 
+	{
 		{ -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
 		{ 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f },
 		{ 0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f }
@@ -135,7 +133,7 @@ void Update() //Update funktion för deltaTime, Fungerar ej atm.
 {
 	float deltaTime = (GL_TIME_ELAPSED - timeSinceLastFrame) / 1000;
 	timeSinceLastFrame = GL_TIME_ELAPSED;
-	Model = Model*rotation;
+	modelMatrix = modelMatrix*rotation;
 }
 
 void Render()
@@ -148,7 +146,7 @@ void Render()
 	glBindVertexArray(gVertexAttribute);
 
 	GLint modelID = glGetUniformLocation(gShaderProgram, "model");
-	glUniformMatrix4fv(modelID, 1, GL_FALSE, &Model[0][0]);
+	glUniformMatrix4fv(modelID, 1, GL_FALSE, &modelMatrix[0][0]);
 	GLint viewID = glGetUniformLocation(gShaderProgram, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &View[0][0]);
 	GLint projectionID = glGetUniformLocation(gShaderProgram, "projection");
@@ -164,14 +162,13 @@ int main()
 	settings.depthBits = 24;
 	settings.stencilBits = 8;
 	settings.antialiasingLevel = 2;
-	OBJHandler objHandler = OBJHandler();
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
 	models.push_back(0);
 	models.push_back(0);
 	models.push_back(0);
 	models.push_back(0);
-	objHandler.read(models);
+	OBJHandler::read(models);
 	cout << models.at(1);
 	// load resources, initialize the OpenGL states, ...
 	glewInit();

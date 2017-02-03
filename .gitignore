@@ -1,2 +1,3 @@
-*.suo
 OpenGL-3DProject.VC.db
+OpenGL-3DProject/x64/Debug/
+x64/Debug/

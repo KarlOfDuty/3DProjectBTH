@@ -1,14 +1,37 @@
 #include "OBJHandler.h"
 
-void OBJHandler::read(std::vector<int> &vectorToFill)
+void OBJHandler::read(Model &model)
 {
-	vectorToFill = { 1, 2, 3, 4 };
+	std::ifstream file("Read.txt");
+	std::string str;
+	while (std::getline(file, str))
+	{
+		std::stringstream ss;
+		ss << str;
+		ss >> str;
+		if (str == "v")
+		{
+			//Vertices
+		}
+		else if (str == "vf")
+		{
+			//Faces
+		}
+		else if (str == "vn")
+		{
+			//Normals
+		}
+	}
 }
-void OBJHandler::write(std::vector<int> &vectorToWrite)
+void OBJHandler::write(Model &model)
 {
 
 }
-void OBJHandler::OBJhandler()
+void OBJHandler::readAll(std::vector<int>& vectorToFill)
+{
+
+}
+void OBJHandler::writeAll(std::vector<int>& vectorToWrite)
 {
 
 }
