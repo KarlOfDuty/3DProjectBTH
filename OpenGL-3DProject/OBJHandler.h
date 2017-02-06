@@ -4,15 +4,12 @@
 #include "Model.h"
 #include<fstream>
 #include<sstream>
-static std::vector<std::string> modelFiles = {"test.obj","sphere.obj"};
+#include<iostream>
 
 class OBJHandler
 {
 public:
 	static void read(Model &model);
-	static void write(Model &model);
-	static void readAll(std::vector<int> &vectorToFill);
-	static void writeAll(std::vector<int> &vectorToWrite);
 	virtual void OBJhandler() = 0;
 };
 

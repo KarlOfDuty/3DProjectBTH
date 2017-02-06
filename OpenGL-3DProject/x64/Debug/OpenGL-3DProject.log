@@ -1,8 +1,17 @@
-﻿  Main.cpp
-c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\main.cpp(134): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+﻿  OBJHandler.cpp
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\objhandler.cpp(23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\objhandler.cpp(27): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\objhandler.cpp(31): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\objhandler.cpp(57): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\objhandler.cpp(61): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\objhandler.cpp(65): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\objhandler.cpp(78): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\objhandler.cpp(82): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   Generating Code...
   Compiling...
-  OBJHandler.cpp
+  Model.cpp
+  Main.cpp
+c:\users\karl\desktop\github\3dprojectbth\opengl-3dproject\main.cpp(136): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   Generating Code...
   OpenGL-3DProject.vcxproj -> C:\Users\Karl\Desktop\GitHub\3DProjectBTH\x64\Debug\OpenGL-3DProject.exe
   OpenGL-3DProject.vcxproj -> C:\Users\Karl\Desktop\GitHub\3DProjectBTH\x64\Debug\OpenGL-3DProject.pdb (Partial PDB)
