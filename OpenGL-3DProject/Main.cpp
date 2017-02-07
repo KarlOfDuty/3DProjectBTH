@@ -5,21 +5,37 @@
 #include <SFML\Window.hpp>
 #include <SFML\OpenGL.hpp>
 #include <fstream>
+<<<<<<< HEAD
 #include <vector>
 #include <iostream>
 #include "Model.h"
+=======
+#include <iostream>
+#include "Camera.h"
+
+>>>>>>> refs/remotes/origin/master
 #pragma comment(lib, "opengl32.lib")
 
 using namespace std;
+
+const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
+const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
+
+Camera playerCamera;
 
 GLuint gShaderProgram = 0;
 GLuint gVertexAttribute = 0;
 GLuint gVertexBuffer = 0;
 
-int timeSinceLastFrame = 0; //DeltaTime test
+sf::Clock deltaClock;
+sf::Time deltaTime;
 
+<<<<<<< HEAD
 //MVP PLUS ROTATION (rotation ska ändras från manuell)
 glm::mat4 modelMatrix = glm::mat4(1.0f);
+=======
+glm::mat4 Model = glm::mat4(1.0f);
+>>>>>>> refs/remotes/origin/master
 glm::mat4 View = glm::lookAt(
 	glm::vec3(0, 0, 2),
 	glm::vec3(0, 0, 0),
@@ -129,11 +145,17 @@ void CreateTriangleData()
 	glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 3));
 }
 
-void Update() //Update funktion för deltaTime, Fungerar ej atm.
+void Update()
 {
+<<<<<<< HEAD
 	float deltaTime = (GL_TIME_ELAPSED - timeSinceLastFrame) / 1000;
 	timeSinceLastFrame = GL_TIME_ELAPSED;
 	modelMatrix = modelMatrix*rotation;
+=======
+	deltaTime = deltaClock.restart();
+	View = playerCamera.Update(deltaTime.asSeconds());
+	Model *= rotation;
+>>>>>>> refs/remotes/origin/master
 }
 
 void Render()
@@ -164,13 +186,17 @@ int main()
 	settings.antialiasingLevel = 2;
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
+<<<<<<< HEAD
 	//model = Model("cubetest.obj");
+=======
+	window.setMouseCursorVisible(false);
+>>>>>>> refs/remotes/origin/master
 
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
 
 	CreateShaders();
-	
+
 	CreateTriangleData();
 
 	// run the main loop
@@ -190,6 +216,14 @@ int main()
 			{
 				// adjust the viewport when the window is resized
 				glViewport(0, 0, event.size.width, event.size.height);
+			}
+			if (event.type == sf::Event::KeyPressed)
+			{
+				if (event.key.code == sf::Keyboard::Escape)
+				{
+					window.close();
+					running = false;
+				}
 			}
 		}
 

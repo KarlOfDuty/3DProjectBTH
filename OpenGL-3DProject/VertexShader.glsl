@@ -11,7 +11,6 @@ out vec4 color;
 void main()
 {
 	mat4 mvp = projection*view*model;
-    gl_Position = vec4(vertexPos.x, vertexPos.y, vertexPos.z, 1.0);
 	gl_Position = mvp * vec4(vertexPos, 1.0);
 	color = vertexColor;
 }
