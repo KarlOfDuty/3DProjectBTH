@@ -20,6 +20,7 @@ private:
 public:
 	std::vector<std::vector<Vertex>> getFaces() const;
 	void Model::read(std::string filename);
+	Model(std::string filename);
 	Model();
 	~Model();
 };

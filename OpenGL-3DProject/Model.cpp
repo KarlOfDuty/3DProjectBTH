@@ -10,7 +10,7 @@ void Model::read(std::string filename)
 	//Removes any old properties
 	faces = std::vector<std::vector<Vertex>>();
 	//Reads a .obj file and creates a Model object from the data
-	std::ifstream file("cubetest.obj");
+	std::ifstream file(filename);
 	std::string str;
 	std::vector<glm::vec3> vertexPos = std::vector<glm::vec3>();
 	vertexPos.push_back(glm::vec3(0, 0, 0));
@@ -89,12 +89,12 @@ void Model::read(std::string filename)
 		else if (str == "f")
 		{
 			//Faces
-			std::cout << "Face (f): ";
+			//std::cout << "Face (f): ";
 			std::vector<Vertex> aFace = std::vector<Vertex>();
 			//Split the rest of the line into seperate words
 			while (line >> str)
 			{
-				std::cout << str << " ";
+				//std::cout << str << " ";
 				std::stringstream word;
 				word << str;
 				//Splits up the indices in the word to be seperated by spaces instead of slashes
@@ -130,49 +130,54 @@ void Model::read(std::string filename)
 			}
 			//Adds the face to the model
 			this->faces.push_back(aFace);
-			std::cout << std::endl;
+			//std::cout << std::endl;
 		}
-		//else if (str == "g")
-		//{
-		//	//Groups
-		//	std::cout << "Group name (g): ";
-		//	while (line >> str)
-		//	{
-		//		std::cout << str << " ";
-		//	}
-		//	std::cout << std::endl;
-		//}
-		//else if (str == "s")
-		//{
-		//	//Groups
-		//	std::cout << "Smoothing group (s): ";
-		//	while (line >> str)
-		//	{
-		//		std::cout << str << " ";
-		//	}
-		//	std::cout << std::endl;
-		//}
-		//else if (str == "mtllib")
-		//{
-		//	//Material library
-		//	std::cout << "Material Library (mtllib): ";
-		//	while (line >> str)
-		//	{
-		//		std::cout << str << " ";
-		//	}
-		//	std::cout << std::endl;
-		//}
-		//else if (str == "usemtl")
-		//{
-		//	//Material name
-		//	std::cout << "Material name (usemtl): ";
-		//	while (line >> str)
-		//	{
-		//		std::cout << str << " ";
-		//	}
-		//	std::cout << std::endl;
-		//}
+		else if (str == "g")
+		{
+			//Groups
+			//std::cout << "Group name (g): ";
+			while (line >> str)
+			{
+				//std::cout << str << " ";
+			}
+			//std::cout << std::endl;
+		}
+		else if (str == "s")
+		{
+			//Groups
+			//std::cout << "Smoothing group (s): ";
+			while (line >> str)
+			{
+				//std::cout << str << " ";
+			}
+			//std::cout << std::endl;
+		}
+		else if (str == "mtllib")
+		{
+			//Material library
+			//std::cout << "Material Library (mtllib): ";
+			while (line >> str)
+			{
+				//std::cout << str << " ";
+			}
+			//std::cout << std::endl;
+		}
+		else if (str == "usemtl")
+		{
+			//Material name
+			//std::cout << "Material name (usemtl): ";
+			while (line >> str)
+			{
+				//std::cout << str << " ";
+			}
+			//std::cout << std::endl;
+		}
 	}
+}
+
+Model::Model(std::string filename)
+{
+	read(filename);
 }
 
 Model::Model()

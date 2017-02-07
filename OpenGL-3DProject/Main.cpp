@@ -5,7 +5,6 @@
 #include <SFML\Window.hpp>
 #include <SFML\OpenGL.hpp>
 #include <fstream>
-#include "OBJHandler.h"
 #include <vector>
 #include <iostream>
 #include "Model.h"
@@ -31,7 +30,6 @@ glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f
 
 #define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
-std::vector<Model> models;
 Model model;
 
 void CreateShaders()
@@ -166,7 +164,8 @@ int main()
 	settings.antialiasingLevel = 2;
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
-	OBJHandler::read(model);
+	//model = Model("cubetest.obj");
+
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
 
