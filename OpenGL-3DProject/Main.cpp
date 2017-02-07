@@ -5,18 +5,16 @@
 #include <SFML\Window.hpp>
 #include <SFML\OpenGL.hpp>
 #include <fstream>
-<<<<<<< HEAD
 #include <vector>
 #include <iostream>
 #include "Model.h"
-=======
 #include <iostream>
 #include "Camera.h"
-
->>>>>>> refs/remotes/origin/master
 #pragma comment(lib, "opengl32.lib")
 
 using namespace std;
+
+#define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
@@ -30,12 +28,7 @@ GLuint gVertexBuffer = 0;
 sf::Clock deltaClock;
 sf::Time deltaTime;
 
-<<<<<<< HEAD
-//MVP PLUS ROTATION (rotation ska ändras från manuell)
 glm::mat4 modelMatrix = glm::mat4(1.0f);
-=======
-glm::mat4 Model = glm::mat4(1.0f);
->>>>>>> refs/remotes/origin/master
 glm::mat4 View = glm::lookAt(
 	glm::vec3(0, 0, 2),
 	glm::vec3(0, 0, 0),
@@ -43,8 +36,6 @@ glm::mat4 View = glm::lookAt(
 );
 glm::mat4 Projection = glm::perspective(45.0f, (float)800 / (float)600, 0.1f, 20.0f);
 glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-#define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
 Model model;
 
@@ -147,15 +138,10 @@ void CreateTriangleData()
 
 void Update()
 {
-<<<<<<< HEAD
-	float deltaTime = (GL_TIME_ELAPSED - timeSinceLastFrame) / 1000;
-	timeSinceLastFrame = GL_TIME_ELAPSED;
 	modelMatrix = modelMatrix*rotation;
-=======
 	deltaTime = deltaClock.restart();
 	View = playerCamera.Update(deltaTime.asSeconds());
-	Model *= rotation;
->>>>>>> refs/remotes/origin/master
+	modelMatrix *= rotation;
 }
 
 void Render()
@@ -186,11 +172,8 @@ int main()
 	settings.antialiasingLevel = 2;
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
-<<<<<<< HEAD
 	//model = Model("cubetest.obj");
-=======
 	window.setMouseCursorVisible(false);
->>>>>>> refs/remotes/origin/master
 
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
