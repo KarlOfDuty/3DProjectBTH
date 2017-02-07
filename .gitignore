@@ -47,6 +47,7 @@ local.properties
 *.sln.docstates
 *.db
 *.opendb
+*.tlog
 
 # Build results
 
