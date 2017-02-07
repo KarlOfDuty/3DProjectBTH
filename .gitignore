@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+OpenGL-3DProject.VC.db
+OpenGL-3DProject/x64/Debug/
+x64/Debug/
+=======
 #################
 ## Eclipse
 #################
@@ -216,3 +221,4 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+>>>>>>> refs/remotes/origin/master
