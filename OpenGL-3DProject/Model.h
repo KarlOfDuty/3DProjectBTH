@@ -1,23 +1,25 @@
 #ifndef MODEL_H
 #define MODEL_H
 #include <vector>
+#include<fstream>
+#include<sstream>
+#include<iostream>
 #include <glm\glm.hpp>
 //A single vertex (corner) in a face.
 struct Vertex
 {
-	double x, y, z;
-	double u, v;
-	//double r, g, b, a;
+	glm::vec3 pos;
+	glm::vec2 tex;
+	//glm::vec4 colour;
+	glm::vec3 normal;
 };
 class Model
 {
 private:
 	std::vector<std::vector<Vertex>> faces;
-	std::vector<glm::vec3> normals;
 public:
-	std::vector<glm::vec3> getNormals() const;
 	std::vector<std::vector<Vertex>> getFaces() const;
-	void addFace(std::vector<Vertex> face);
+	void Model::read(std::string filename);
 	Model();
 	~Model();
 };
