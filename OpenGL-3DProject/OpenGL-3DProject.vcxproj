@@ -129,9 +129,6 @@
     <None Include="VertexShader.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="OpenGL-3DProject.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Camera.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
