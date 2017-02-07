@@ -5,18 +5,25 @@
 #include <SFML\Window.hpp>
 #include <SFML\OpenGL.hpp>
 #include <fstream>
+#include <iostream>
+#include "Camera.h"
 
 #pragma comment(lib, "opengl32.lib")
 
 using namespace std;
 
+const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
+const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
+
+Camera playerCamera;
+
 GLuint gShaderProgram = 0;
 GLuint gVertexAttribute = 0;
 GLuint gVertexBuffer = 0;
 
-int timeSinceLastFrame = 0; //DeltaTime test
+sf::Clock deltaClock;
+sf::Time deltaTime;
 
-//MVP PLUS ROTATION (rotation ska ändras från manuell)
 glm::mat4 Model = glm::mat4(1.0f);
 glm::mat4 View = glm::lookAt(
 	glm::vec3(0, 0, 2),
@@ -124,11 +131,11 @@ void CreateTriangleData()
 	glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 3));
 }
 
-void Update() //Update funktion för deltaTime, Fungerar ej atm.
+void Update()
 {
-	float deltaTime = (GL_TIME_ELAPSED - timeSinceLastFrame) / 1000;
-	timeSinceLastFrame = GL_TIME_ELAPSED;
-	Model = Model*rotation;
+	deltaTime = deltaClock.restart();
+	View = playerCamera.Update(deltaTime.asSeconds());
+	Model *= rotation;
 }
 
 void Render()
@@ -160,12 +167,13 @@ int main()
 
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
+	window.setMouseCursorVisible(false);
 
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
 
 	CreateShaders();
-	
+
 	CreateTriangleData();
 
 	// run the main loop
@@ -185,6 +193,14 @@ int main()
 			{
 				// adjust the viewport when the window is resized
 				glViewport(0, 0, event.size.width, event.size.height);
+			}
+			if (event.type == sf::Event::KeyPressed)
+			{
+				if (event.key.code == sf::Keyboard::Escape)
+				{
+					window.close();
+					running = false;
+				}
 			}
 		}
 
