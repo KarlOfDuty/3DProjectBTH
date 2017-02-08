@@ -31,70 +31,70 @@ void Model::read(std::string filename)
 		{
 			//A vertex position
 			glm::vec3 aVertexPos;
-			//std::cout << "Vertex (v): ";
+			std::cout << "Vertex (v): ";
 			//X
 			line >> data;
 			aVertexPos.x = data;
-			//std::cout << data << " ";
+			std::cout << data << " ";
 			//Y
 			line >> data;
 			aVertexPos.y = data;
-			//std::cout << data << " ";
+			std::cout << data << " ";
 			//Z
 			line >> data;
 			aVertexPos.z = data;
-			//std::cout << data << " ";
+			std::cout << data << " ";
 
 			vertexPos.push_back(aVertexPos);
-			//std::cout << std::endl;
+			std::cout << std::endl;
 		}
 		else if (str == "vt")
 		{
 			//A texture position
 			glm::vec2 aVertexTex;
-			//std::cout << "Texture Position (vt): ";
+			std::cout << "Texture Position (vt): ";
 			//U
 			line >> data;
 			aVertexTex.x = data;
-			//std::cout << data << " ";
+			std::cout << data << " ";
 			//V
 			line >> data;
 			aVertexTex.y = data;
-			//std::cout << data << " ";
+			std::cout << data << " ";
 
 			vertexTex.push_back(aVertexTex);
-			//std::cout << std::endl;
+			std::cout << std::endl;
 		}
 		else if (str == "vn")
 		{
 			//A normal
 			glm::vec3 normal;
-			//std::cout << "Normal (vn): ";
+			std::cout << "Normal (vn): ";
 			//X
 			line >> data;
 			normal.x = data;
-			//std::cout << data << " ";
+			std::cout << data << " ";
 			//Y
 			line >> data;
 			normal.y = data;
-			//std::cout << data << " ";
+			std::cout << data << " ";
 			//Z
 			line >> data;
 			normal.z = data;
-			//std::cout << data << " ";
+			std::cout << data << " ";
 
 			vertexNormals.push_back(normal);
-			//std::cout << std::endl;
+			std::cout << std::endl;
 		}
 		else if (str == "f")
 		{
 			//Faces
-			//std::cout << "Face (f): ";
+			std::cout << "Face (f): ";
 			std::vector<Vertex> aFace = std::vector<Vertex>();
 			//Split the rest of the line into seperate words
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				std::cout << str << " ";
 				std::stringstream word;
 				word << str;
 				//Splits up the indices in the word to be seperated by spaces instead of slashes
@@ -125,52 +125,53 @@ void Model::read(std::string filename)
 					word >> tempInt;
 					aVertex.normal = vertexNormals.at(tempInt);
 				}
+				aVertex.colour = glm::vec4(0,0,1,1);
 				//Adds the vertex to this face
 				aFace.push_back(aVertex);
 			}
 			//Adds the face to the model
 			this->faces.push_back(aFace);
-			//std::cout << std::endl;
+			std::cout << std::endl;
 		}
 		else if (str == "g")
 		{
 			//Groups
-			//std::cout << "Group name (g): ";
+			std::cout << "Group name (g): ";
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				std::cout << str << " ";
 			}
-			//std::cout << std::endl;
+			std::cout << std::endl;
 		}
 		else if (str == "s")
 		{
 			//Groups
-			//std::cout << "Smoothing group (s): ";
+			std::cout << "Smoothing group (s): ";
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				std::cout << str << " ";
 			}
-			//std::cout << std::endl;
+			std::cout << std::endl;
 		}
 		else if (str == "mtllib")
 		{
 			//Material library
-			//std::cout << "Material Library (mtllib): ";
+			std::cout << "Material Library (mtllib): ";
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				std::cout << str << " ";
 			}
-			//std::cout << std::endl;
+			std::cout << std::endl;
 		}
 		else if (str == "usemtl")
 		{
 			//Material name
-			//std::cout << "Material name (usemtl): ";
+			std::cout << "Material name (usemtl): ";
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				std::cout << str << " ";
 			}
-			//std::cout << std::endl;
+			std::cout << std::endl;
 		}
 	}
 }

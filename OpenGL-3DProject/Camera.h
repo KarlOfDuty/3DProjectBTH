@@ -16,9 +16,11 @@ private:
 	glm::vec3 cameraUp;
 	float cameraYaw;
 	float cameraPitch;
+	int RESOLUTION_WIDTH;
+	int RESOLUTION_HEIGHT;
 public:
 	Camera();
 	~Camera();
-	glm::mat4 Update(float deltaTime);
+	glm::mat4 Update(float deltaTime, bool inFocus);
 };
 

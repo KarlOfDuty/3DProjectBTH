@@ -12,7 +12,7 @@
 #include "Camera.h"
 #pragma comment(lib, "opengl32.lib")
 
-using namespace std;
+//using namespace std;
 
 #define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
@@ -44,7 +44,7 @@ void CreateShaders()
 	//create vertex shader
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	// open glsl file and put it in a string
-	ifstream shaderFile("VertexShader.glsl");
+	std::ifstream shaderFile("VertexShader.glsl");
 	std::string shaderText((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
 	shaderFile.close();
 	// make a double pointer (only valid here)
@@ -136,11 +136,36 @@ void CreateTriangleData()
 	glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 3));
 }
 
-void Update()
+void CreateModel()
+{
+	model = Model("cubetest.obj");
+
+	struct Color
+	{
+		float r, g, b;
+	};
+	Color testColor;
+	glGenVertexArrays(1, &gVertexAttribute);
+	glBindVertexArray(gVertexAttribute);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	glGenBuffers(1, &gVertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, model.getFaces().size() * sizeof(Vertex), &model.getFaces().front(), GL_STATIC_DRAW);
+
+	GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
+	glVertexAttribPointer(vertexPos, 1, GL_FLOAT, GL_FALSE, model.getFaces().size() * sizeof(Vertex), BUFFER_OFFSET(0));
+
+	GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
+	glVertexAttribPointer(vertexColor, 1, GL_FLOAT, GL_FALSE, 1, BUFFER_OFFSET(sizeof(float) * 3));
+}
+
+void Update(sf::Window &window)
 {
 	modelMatrix = modelMatrix*rotation;
 	deltaTime = deltaClock.restart();
-	View = playerCamera.Update(deltaTime.asSeconds());
+	View = playerCamera.Update(deltaTime.asSeconds(), window.hasFocus());
 	modelMatrix *= rotation;
 }
 
@@ -172,7 +197,6 @@ int main()
 	settings.antialiasingLevel = 2;
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
-	//model = Model("cubetest.obj");
 	window.setMouseCursorVisible(false);
 
 	// load resources, initialize the OpenGL states, ...
@@ -180,7 +204,9 @@ int main()
 
 	CreateShaders();
 
-	CreateTriangleData();
+	//CreateTriangleData();
+
+	CreateModel();
 
 	// run the main loop
 	bool running = true;
@@ -210,7 +236,7 @@ int main()
 			}
 		}
 
-		Update();
+		Update(window);
 		Render();
 
 		// end the current frame (internally swaps the front and back buffers)

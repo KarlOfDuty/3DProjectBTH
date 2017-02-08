@@ -10,7 +10,7 @@ struct Vertex
 {
 	glm::vec3 pos;
 	glm::vec2 tex;
-	//glm::vec4 colour;
+	glm::vec4 colour;
 	glm::vec3 normal;
 };
 class Model
