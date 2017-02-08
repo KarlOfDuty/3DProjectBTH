@@ -25,6 +25,8 @@ GLuint gShaderProgram = 0;
 GLuint gVertexAttribute = 0;
 GLuint gVertexBuffer = 0;
 
+GLuint VAO2;
+
 sf::Clock deltaClock;
 sf::Time deltaTime;
 
@@ -131,7 +133,6 @@ void CreateTriangleData()
 
 	GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
 	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(0));
-
 	GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
 	glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 3));
 }
@@ -140,25 +141,33 @@ void CreateModel()
 {
 	model = Model("cubetest.obj");
 
-	struct Color
+	std::vector<glm::vec3> outPos;
+	std::vector<glm::vec4> outColor;
+	for (int i = 0; i < 3; i++)
 	{
-		float r, g, b;
+		outPos.push_back(model.getFaces().at(0).at(i).pos);
+		outColor.push_back(glm::vec4(1,1,1,1));
+		
+	}
+	Vertex tempTest[3] =
+	{
+		{ outPos.at(0), glm::vec2(), outColor.at(0), glm::vec3() },
+		{ outPos.at(1), glm::vec2(), outColor.at(1), glm::vec3() },
+		{ outPos.at(2), glm::vec2(), outColor.at(2), glm::vec3() }
 	};
-	Color testColor;
-	glGenVertexArrays(1, &gVertexAttribute);
-	glBindVertexArray(gVertexAttribute);
+
+	glGenVertexArrays(1, &VAO2);
+	glBindVertexArray(VAO2);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	glGenBuffers(1, &gVertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, model.getFaces().size() * sizeof(Vertex), &model.getFaces().front(), GL_STATIC_DRAW);
-
+	//glGenBuffers(1, &gVertexBuffer);
+	//glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, model.getFaces().at(0).size()* sizeof(Vertex), &model.getFaces().at(0).front(), GL_STATIC_DRAW);
 	GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
-	glVertexAttribPointer(vertexPos, 1, GL_FLOAT, GL_FALSE, model.getFaces().size() * sizeof(Vertex), BUFFER_OFFSET(0));
-
+	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
 	GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
-	glVertexAttribPointer(vertexColor, 1, GL_FLOAT, GL_FALSE, 1, BUFFER_OFFSET(sizeof(float) * 3));
+	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
 }
 
 void Update(sf::Window &window)
@@ -185,7 +194,7 @@ void Render()
 	GLint projectionID = glGetUniformLocation(gShaderProgram, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &Projection[0][0]);
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 int main()
@@ -204,7 +213,7 @@ int main()
 
 	CreateShaders();
 
-	//CreateTriangleData();
+	CreateTriangleData();
 
 	CreateModel();
 
