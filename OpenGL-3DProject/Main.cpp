@@ -25,8 +25,6 @@ GLuint gShaderProgram = 0;
 GLuint gVertexAttribute = 0;
 GLuint gVertexBuffer = 0;
 
-GLuint VAO2;
-
 sf::Clock deltaClock;
 sf::Time deltaTime;
 
@@ -187,8 +185,6 @@ int main()
 	glewInit();
 
 	CreateShaders();
-
-	rotateModels();
 
 	CreateModels();
 
