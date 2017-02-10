@@ -25,8 +25,6 @@ GLuint gShaderProgram = 0;
 GLuint gVertexAttribute = 0;
 GLuint gVertexBuffer = 0;
 
-GLuint VAO2;
-
 sf::Clock deltaClock;
 sf::Time deltaTime;
 
@@ -38,8 +36,9 @@ glm::mat4 View = glm::lookAt(
 );
 glm::mat4 Projection = glm::perspective(45.0f, (float)800 / (float)600, 0.1f, 20.0f);
 glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+int numVertices = 0;
+std::vector<Model> allModels;
 
-Model model;
 
 void CreateShaders()
 {
@@ -107,75 +106,49 @@ void CreateShaders()
 	}
 }
 
-void CreateTriangleData()
+void rotateModels()
 {
+	allModels.at(0).rotate(rotation);
+}
+void CreateModels()
+{
+	std::vector<Vertex> tempTest = std::vector<Vertex>();
+	//Iterate through all models
+	for (int i = 0; i < allModels.size(); i++)
+	{
+		//Iterate through all faces
+		for (int j = 0; j < allModels.at(i).getFaces().size(); j++)
+		{
+			//Iterate through vertices in the face
+			for (int k = 0; k < 3; k++)
+			{
+				tempTest.push_back(allModels.at(i).getFaces().at(j).at(k));
+				numVertices++;
+			}
+		}
+	}
+	//
 	glGenVertexArrays(1, &gVertexAttribute);
 	glBindVertexArray(gVertexAttribute);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	struct TriangleVertex
-	{
-		float x, y, z;
-		float r, g, b, a;
-	};
-
-	TriangleVertex vertices[3] = 
-	{
-		{ -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f },
-		{ 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f },
-		{ 0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f }
-	};
-
 	glGenBuffers(1, &gVertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
-	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(0));
-	GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
-	glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, sizeof(TriangleVertex), BUFFER_OFFSET(sizeof(float) * 3));
-}
-
-void CreateModel()
-{
-	model = Model("cubetest.obj");
-
-	std::vector<glm::vec3> outPos;
-	std::vector<glm::vec4> outColor;
-	for (int i = 0; i < 3; i++)
-	{
-		outPos.push_back(model.getFaces().at(0).at(i).pos);
-		outColor.push_back(glm::vec4(1,1,1,1));
-		
-	}
-	Vertex tempTest[3] =
-	{
-		{ outPos.at(0), glm::vec2(), outColor.at(0), glm::vec3() },
-		{ outPos.at(1), glm::vec2(), outColor.at(1), glm::vec3() },
-		{ outPos.at(2), glm::vec2(), outColor.at(2), glm::vec3() }
-	};
-
-	glGenVertexArrays(1, &VAO2);
-	glBindVertexArray(VAO2);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	//glGenBuffers(1, &gVertexBuffer);
-	//glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, model.getFaces().at(0).size()* sizeof(Vertex), &model.getFaces().at(0).front(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, tempTest.size()* sizeof(Vertex), &tempTest.front(), GL_STATIC_DRAW);
 	GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
 	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
 	GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
 	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
+	GLint vertexModelMatrix = glGetAttribLocation(gShaderProgram, "modelMatrix");
+	glVertexAttribPointer(vertexModelMatrix, 16, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 12));
 }
 
 void Update(sf::Window &window)
 {
-	modelMatrix = modelMatrix*rotation;
 	deltaTime = deltaClock.restart();
 	View = playerCamera.Update(deltaTime.asSeconds(), window.hasFocus());
-	modelMatrix *= rotation;
+	rotateModels();
 }
 
 void Render()
@@ -188,13 +161,13 @@ void Render()
 	glBindVertexArray(gVertexAttribute);
 
 	GLint modelID = glGetUniformLocation(gShaderProgram, "model");
-	glUniformMatrix4fv(modelID, 1, GL_FALSE, &modelMatrix[0][0]);
+	glUniformMatrix4fv(modelID, 1, GL_FALSE, &allModels.at(0).getModelMatrix()[0][0]);
 	GLint viewID = glGetUniformLocation(gShaderProgram, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &View[0][0]);
 	GLint projectionID = glGetUniformLocation(gShaderProgram, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &Projection[0][0]);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
 
 int main()
@@ -207,15 +180,13 @@ int main()
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
 	window.setMouseCursorVisible(false);
-
+	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj"));
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
 
 	CreateShaders();
 
-	CreateTriangleData();
-
-	CreateModel();
+	CreateModels();
 
 	// run the main loop
 	bool running = true;
