@@ -1,8 +1,18 @@
 #include "Model.h"
 
-std::vector<std::vector<Vertex>> Model::getFaces() const
+std::vector<std::vector<Vertex>> Model::getFaces()
 {
 	return this->faces;
+}
+
+glm::mat4 Model::getModelMatrix()
+{
+	return this->modelMatrix;
+}
+
+void Model::rotate(glm::mat4 rotationMatrix)
+{
+	this->modelMatrix *= rotationMatrix;
 }
 
 void Model::read(std::string filename)
@@ -123,7 +133,8 @@ void Model::read(std::string filename)
 					strIndices >> i;
 					aVertex.normal = vertexNormals.at(i);
 				}
-				aVertex.colour = glm::vec4(1,1,1,1);
+				aVertex.colour = glm::vec4(0,0,1,1);
+				aVertex.modelMatrix = glm::mat4(1.0f);
 				//Adds the vertex to this face
 				aFace.push_back(aVertex);
 			}
@@ -176,11 +187,13 @@ void Model::read(std::string filename)
 
 Model::Model(std::string filename)
 {
+	modelMatrix = glm::mat4(1.0f);
 	read(filename);
 }
 
 Model::Model()
 {
+	modelMatrix = glm::mat4(1.0f);
 	this->faces = std::vector<std::vector<Vertex>>();
 }
 

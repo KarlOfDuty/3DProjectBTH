@@ -12,14 +12,18 @@ struct Vertex
 	glm::vec2 tex;
 	glm::vec4 colour;
 	glm::vec3 normal;
+	glm::mat4 modelMatrix;
 };
 class Model
 {
 private:
 	std::vector<std::vector<Vertex>> faces;
+	glm::mat4 modelMatrix;
 public:
-	std::vector<std::vector<Vertex>> getFaces() const;
-	void Model::read(std::string filename);
+	std::vector<std::vector<Vertex>> getFaces();
+	glm::mat4 getModelMatrix();
+	void rotate(glm::mat4 rotationMatrix);
+	void read(std::string filename);
 	Model(std::string filename);
 	Model();
 	~Model();
