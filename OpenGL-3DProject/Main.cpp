@@ -140,8 +140,12 @@ void CreateModels()
 	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
 	GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
 	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
-	GLint vertexModelMatrix = glGetAttribLocation(gShaderProgram, "modelMatrix");
-	glVertexAttribPointer(vertexModelMatrix, 16, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 12));
+	GLint vertexModelMatrixX = glGetAttribLocation(gShaderProgram, "modelX");
+	glVertexAttribPointer(vertexModelMatrixX, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 12));
+	GLint vertexModelMatrixY = glGetAttribLocation(gShaderProgram, "modelY");
+	glVertexAttribPointer(vertexModelMatrixY, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 16));
+	GLint vertexModelMatrixZ = glGetAttribLocation(gShaderProgram, "modelZ");
+	glVertexAttribPointer(vertexModelMatrixZ, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 20));
 }
 
 void Update(sf::Window &window)

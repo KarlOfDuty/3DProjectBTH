@@ -12,7 +12,9 @@ struct Vertex
 	glm::vec2 tex;
 	glm::vec4 colour;
 	glm::vec3 normal;
-	glm::mat4 modelMatrix;
+	glm::vec4 modelX;
+	glm::vec4 modelY;
+	glm::vec4 modelZ;
 };
 class Model
 {
