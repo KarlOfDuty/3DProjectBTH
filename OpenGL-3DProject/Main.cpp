@@ -36,7 +36,6 @@ glm::mat4 View = glm::lookAt(
 );
 glm::mat4 Projection = glm::perspective(45.0f, (float)800 / (float)600, 0.1f, 20.0f);
 glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-int numVertices = 0;
 std::vector<Model> allModels;
 
 
@@ -108,44 +107,28 @@ void CreateShaders()
 
 void rotateModels()
 {
-	allModels.at(0).rotate(rotation);
-}
-void CreateModels()
-{
-	std::vector<Vertex> tempTest = std::vector<Vertex>();
-	//Iterate through all models
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		//Iterate through all faces
-		for (int j = 0; j < allModels.at(i).getFaces().size(); j++)
-		{
-			//Iterate through vertices in the face
-			for (int k = 0; k < 3; k++)
-			{
-				tempTest.push_back(allModels.at(i).getFaces().at(j).at(k));
-				numVertices++;
-			}
-		}
+		allModels.at(i).rotate(rotation);
 	}
-	//
-	glGenVertexArrays(1, &gVertexAttribute);
-	glBindVertexArray(gVertexAttribute);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+}
 
-	glGenBuffers(1, &gVertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, tempTest.size()* sizeof(Vertex), &tempTest.front(), GL_STATIC_DRAW);
-	GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
-	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
-	GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
-	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
-	GLint vertexModelMatrixX = glGetAttribLocation(gShaderProgram, "modelX");
-	glVertexAttribPointer(vertexModelMatrixX, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 12));
-	GLint vertexModelMatrixY = glGetAttribLocation(gShaderProgram, "modelY");
-	glVertexAttribPointer(vertexModelMatrixY, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 16));
-	GLint vertexModelMatrixZ = glGetAttribLocation(gShaderProgram, "modelZ");
-	glVertexAttribPointer(vertexModelMatrixZ, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 20));
+void CreateModels()
+{
+	glm::mat4 modelMat1 = {
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+	};
+	glm::mat4 modelMat2 = {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 2.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+	};
+	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj", modelMat1));
+	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj", modelMat2));
 }
 
 void Update(sf::Window &window)
@@ -159,19 +142,44 @@ void Render()
 {
 	// clear the buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// draw...
 	glUseProgram(gShaderProgram);
-	glBindVertexArray(gVertexAttribute);
-
-	GLint modelID = glGetUniformLocation(gShaderProgram, "model");
-	glUniformMatrix4fv(modelID, 1, GL_FALSE, &allModels.at(0).getModelMatrix()[0][0]);
 	GLint viewID = glGetUniformLocation(gShaderProgram, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &View[0][0]);
 	GLint projectionID = glGetUniformLocation(gShaderProgram, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &Projection[0][0]);
+	glGenVertexArrays(1, &gVertexAttribute);
 
-	glDrawArrays(GL_TRIANGLES, 0, numVertices);
+	glGenBuffers(1, &gVertexBuffer);
+
+	//Iterate through all models
+	for (int i = 0; i < allModels.size(); i++)
+	{
+		glBindVertexArray(gVertexAttribute);
+		int numVertices = 0;
+		std::vector<Vertex> tempTest = std::vector<Vertex>();
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		//Iterate through all faces
+		for (int j = 0; j < allModels.at(i).getFaces().size(); j++)
+		{
+			//Iterate through vertices in the face
+			for (int k = 0; k < 3; k++)
+			{
+				tempTest.push_back(allModels.at(i).getFaces().at(j).at(k));
+				numVertices++;
+			}
+		}
+		glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
+		glBufferData(GL_ARRAY_BUFFER, tempTest.size() * sizeof(Vertex), &tempTest.front(), GL_STATIC_DRAW);
+		GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
+		glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
+		GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
+		glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
+		// draw...
+		GLint modelID = glGetUniformLocation(gShaderProgram, "model");
+		glUniformMatrix4fv(modelID, 1, GL_FALSE, &allModels.at(i).getModelMatrix()[0][0]);
+		glDrawArrays(GL_TRIANGLES, 0, numVertices);
+	}
 }
 
 int main()
@@ -184,10 +192,9 @@ int main()
 	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
 	window.setMouseCursorVisible(false);
-	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj"));
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
-
+	glEnable(GL_DEPTH_TEST);
 	CreateShaders();
 
 	CreateModels();

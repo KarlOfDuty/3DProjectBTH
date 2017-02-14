@@ -12,9 +12,6 @@ struct Vertex
 	glm::vec2 tex;
 	glm::vec4 colour;
 	glm::vec3 normal;
-	glm::vec4 modelX;
-	glm::vec4 modelY;
-	glm::vec4 modelZ;
 };
 class Model
 {
@@ -27,6 +24,7 @@ public:
 	void rotate(glm::mat4 rotationMatrix);
 	void read(std::string filename);
 	Model(std::string filename);
+	Model(std::string filename, glm::mat4 modelMat);
 	Model();
 	~Model();
 };

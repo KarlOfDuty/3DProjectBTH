@@ -134,9 +134,6 @@ void Model::read(std::string filename)
 					aVertex.normal = vertexNormals.at(i);
 				}
 				aVertex.colour = glm::vec4(0,0,1,1);
-				aVertex.modelX = glm::vec4(1, 0, 0, 0);
-				aVertex.modelY = glm::vec4(0, 1, 0, 0);
-				aVertex.modelZ = glm::vec4(0, 0, 1, 0);
 				//Adds the vertex to this face
 				aFace.push_back(aVertex);
 			}
@@ -188,6 +185,18 @@ void Model::read(std::string filename)
 }
 
 Model::Model(std::string filename)
+{
+	modelMatrix =
+	{
+		glm::vec4(1,0,0,0),
+		glm::vec4(0,1,0,0),
+		glm::vec4(0,0,1,0),
+		glm::vec4(0,0,0,1)
+	};
+	read(filename);
+}
+
+Model::Model(std::string filename, glm::mat4 modelMat)
 {
 	modelMatrix =
 	{
