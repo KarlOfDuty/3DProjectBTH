@@ -10,20 +10,17 @@
 #include "Model.h"
 #include <iostream>
 #include "Camera.h"
+#include "Shader.h"
 #pragma comment(lib, "opengl32.lib")
 
 //using namespace std;
-
-#define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 
 Camera playerCamera;
 
-GLuint gShaderProgram = 0;
-GLuint gVertexAttribute = 0;
-GLuint gVertexBuffer = 0;
+Shader shaderProgram;
 
 sf::Clock deltaClock;
 sf::Time deltaTime;
@@ -35,150 +32,61 @@ glm::mat4 View = glm::lookAt(
 	glm::vec3(0, 1, 0)
 );
 glm::mat4 Projection = glm::perspective(45.0f, (float)800 / (float)600, 0.1f, 20.0f);
-glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 std::vector<Model> allModels;
-
-
-void CreateShaders()
-{
-	//create vertex shader
-	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-	// open glsl file and put it in a string
-	std::ifstream shaderFile("VertexShader.glsl");
-	std::string shaderText((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
-	shaderFile.close();
-	// make a double pointer (only valid here)
-	const char* shaderTextPtr = shaderText.c_str();
-	// ask GL to load this
-	glShaderSource(vs, 1, &shaderTextPtr, nullptr);
-	// ask GL to compile it
-	glCompileShader(vs);
-
-	//create fragment shader | same process.
-	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-	shaderFile.open("FragmentShader.glsl");
-	shaderText.assign((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
-	shaderFile.close();
-	shaderTextPtr = shaderText.c_str();
-	glShaderSource(fs, 1, &shaderTextPtr, nullptr);
-	glCompileShader(fs);
-
-	GLint isCompiled = 0;
-	glGetShaderiv(vs, GL_COMPILE_STATUS, &isCompiled);
-	if (isCompiled == GL_FALSE)
-	{
-		// The maxLength includes the NULL character
-		GLchar log_string[1024] = {};
-		glGetShaderInfoLog(vs, 1024, nullptr, log_string);
-		OutputDebugStringA((char*)log_string);
-
-		// Provide the infolog in whatever manor you deem best.
-		// Exit with failure.
-		glDeleteShader(vs); // Don't leak the shader.
-		return;
-	}
-
-	//link shader program (connect vs and ps)
-	gShaderProgram = glCreateProgram();
-	glAttachShader(gShaderProgram, fs);
-	glAttachShader(gShaderProgram, vs);
-	glLinkProgram(gShaderProgram);
-
-	GLint isLinked = 0;
-	glGetProgramiv(gShaderProgram, GL_LINK_STATUS, (int *)&isLinked);
-	if (isLinked == GL_FALSE)
-	{
-		GLint maxLength = 0;
-		glGetProgramiv(gShaderProgram, GL_INFO_LOG_LENGTH, &maxLength);
-
-		//The maxLength includes the NULL character
-		GLchar log_string[1024] = {};
-		glGetProgramInfoLog(gShaderProgram, 1024, nullptr, log_string);
-		OutputDebugStringA((char*)log_string);
-
-		//We don't need the program anymore.
-		glDeleteProgram(gShaderProgram);
-		//Use the infoLog as you see fit.
-
-		//In this simple program, we'll just leave
-		return;
-	}
-}
-
-void rotateModels()
-{
-	for (int i = 0; i < allModels.size(); i++)
-	{
-		allModels.at(i).rotate(rotation);
-	}
-}
 
 void CreateModels()
 {
-	glm::mat4 modelMat1 = {
-		1.0, 0.0, 0.0, 1.0,
+	//{
+	//	scaleX, 0.0, 0.0, 0.0,
+	//	0.0, scaleY, 0.0, 0.0,
+	//	0.0, 0.0, scaleZ, 0.0,
+	//	posX, posY, posZ, 1.0
+	//};
+	//Rotate using glm::rotate
+
+	//Model matrices
+	glm::mat4 modelMat1 = 
+	{
+		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0,
+		0.0, 0.0, 0.0, 1.0
 	};
-	glm::mat4 modelMat2 = {
+	glm::mat4 modelMat2 = 
+	{
 		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 2.0,
+		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0, 1.0
 	};
+	//Rotation matrices
+	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotation1 = glm::rotate(glm::mat4(), glm::radians(4.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	//Create the models and store them in the vector of all models
 	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj", modelMat1));
 	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj", modelMat2));
 }
 
 void Update(sf::Window &window)
 {
+	//Controls update timings
 	deltaTime = deltaClock.restart();
 	View = playerCamera.Update(deltaTime.asSeconds(), window.hasFocus());
-	rotateModels();
 }
 
 void Render()
 {
-	// clear the buffers
+	//Clear the buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(gShaderProgram);
-	GLint viewID = glGetUniformLocation(gShaderProgram, "view");
+	shaderProgram.use();
+	GLint viewID = glGetUniformLocation(shaderProgram.program, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &View[0][0]);
-	GLint projectionID = glGetUniformLocation(gShaderProgram, "projection");
+	GLint projectionID = glGetUniformLocation(shaderProgram.program, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &Projection[0][0]);
-	glGenVertexArrays(1, &gVertexAttribute);
-
-	glGenBuffers(1, &gVertexBuffer);
-
-	//Iterate through all models
+	//Iterate through all models and draw them
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		glBindVertexArray(gVertexAttribute);
-		int numVertices = 0;
-		std::vector<Vertex> tempTest = std::vector<Vertex>();
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		//Iterate through all faces
-		for (int j = 0; j < allModels.at(i).getFaces().size(); j++)
-		{
-			//Iterate through vertices in the face
-			for (int k = 0; k < 3; k++)
-			{
-				tempTest.push_back(allModels.at(i).getFaces().at(j).at(k));
-				numVertices++;
-			}
-		}
-		glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, tempTest.size() * sizeof(Vertex), &tempTest.front(), GL_STATIC_DRAW);
-		GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
-		glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
-		GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
-		glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
-		// draw...
-		GLint modelID = glGetUniformLocation(gShaderProgram, "model");
-		glUniformMatrix4fv(modelID, 1, GL_FALSE, &allModels.at(i).getModelMatrix()[0][0]);
-		glDrawArrays(GL_TRIANGLES, 0, numVertices);
+		allModels.at(i).draw(shaderProgram);
 	}
 }
 
@@ -195,7 +103,7 @@ int main()
 	// load resources, initialize the OpenGL states, ...
 	glewInit();
 	glEnable(GL_DEPTH_TEST);
-	CreateShaders();
+	shaderProgram = Shader("VertexShader.glsl", "FragmentShader.glsl");
 
 	CreateModels();
 

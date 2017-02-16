@@ -1,5 +1,5 @@
 #include "Model.h"
-
+#define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 std::vector<std::vector<Vertex>> Model::getFaces()
 {
 	return this->faces;
@@ -10,22 +10,24 @@ glm::mat4 Model::getModelMatrix()
 	return this->modelMatrix;
 }
 
-void Model::rotate(glm::mat4 rotationMatrix)
+void Model::rotate()
 {
 	this->modelMatrix *= rotationMatrix;
 }
-
+//Reads a .obj file and creates a Model object from the data
 void Model::read(std::string filename)
 {
 	//Removes any old properties
 	faces = std::vector<std::vector<Vertex>>();
-	//Reads a .obj file and creates a Model object from the data
 	std::ifstream file(filename);
-	std::string str;
+	std::string str = "";
+	//Vector of all vertex positions
 	std::vector<glm::vec3> vertexPos = std::vector<glm::vec3>();
 	vertexPos.push_back(glm::vec3(0, 0, 0));
+	//All vertex normals
 	std::vector<glm::vec3> vertexNormals = std::vector<glm::vec3>();
 	vertexNormals.push_back(glm::vec3(0, 0, 0));
+	//All texture coordinates
 	std::vector<glm::vec2> vertexTex = std::vector<glm::vec2>();
 	vertexTex.push_back(glm::vec3(0, 0, 0));
 	//Gets a single line of the file at a time
@@ -40,71 +42,72 @@ void Model::read(std::string filename)
 		{
 			//A vertex position
 			glm::vec3 aVertexPos;
-			//std::cout << "Vertex (v): ";
+			if(debug)std::cout << "Vertex (v): ";
 			//X
 			line >> data;
 			aVertexPos.x = data;
-			//std::cout << data << " ";
+			if (debug)std::cout << data << " ";
 			//Y
 			line >> data;
 			aVertexPos.y = data;
-			//std::cout << data << " ";
+			if (debug)std::cout << data << " ";
 			//Z
 			line >> data;
 			aVertexPos.z = data;
-			//std::cout << data << " ";
+			if (debug)std::cout << data << " ";
 
 			vertexPos.push_back(aVertexPos);
-			//std::cout << std::endl;
+			if (debug)std::cout << std::endl;
 		}
 		else if (str == "vt")
 		{
 			//A texture position
 			glm::vec2 aVertexTex;
-			//std::cout << "Texture Position (vt): ";
+			if (debug)std::cout << "Texture Position (vt): ";
 			//U
 			line >> data;
 			aVertexTex.x = data;
-			//std::cout << data << " ";
+			if (debug)std::cout << data << " ";
 			//V
 			line >> data;
 			aVertexTex.y = data;
-			//std::cout << data << " ";
+			if (debug)std::cout << data << " ";
 
 			vertexTex.push_back(aVertexTex);
-			//std::cout << std::endl;
+			if (debug)std::cout << std::endl;
 		}
 		else if (str == "vn")
 		{
 			//A normal
 			glm::vec3 normal;
-			//std::cout << "Normal (vn): ";
+			if (debug)std::cout << "Normal (vn): ";
 			//X
 			line >> data;
 			normal.x = data;
-			//std::cout << data << " ";
+			if (debug)std::cout << data << " ";
 			//Y
 			line >> data;
 			normal.y = data;
-			//std::cout << data << " ";
+			if (debug)std::cout << data << " ";
 			//Z
 			line >> data;
 			normal.z = data;
-			//std::cout << data << " ";
+			if (debug)std::cout << data << " ";
 
 			vertexNormals.push_back(normal);
-			//std::cout << std::endl;
+			if (debug)std::cout << std::endl;
 		}
 		else if (str == "f")
 		{
 			//Faces
-			//std::cout << "Face (f): ";
+			if (debug)std::cout << "Face (f): ";
 			std::vector<Vertex> aFace = std::vector<Vertex>();
 			//Split the rest of the line into seperate words
 			while (line >> str)
 			{
 				std::stringstream strIndices;
 				strIndices << str;
+				if (debug)std::cout << str << " ";
 				int i = 0;
 				std::stringstream intIndices;
 				//Splits up the indices to be seperated by spaces instead of slashes.
@@ -122,7 +125,7 @@ void Model::read(std::string filename)
 					intIndices >> i;
 					aVertex.pos = vertexPos.at(i);
 					intIndices >> i;
-					aVertex.tex = vertexTex.at(i);
+					aVertex.texPos = vertexTex.at(i);
 					intIndices >> i;
 					aVertex.normal = vertexNormals.at(i);
 				}
@@ -139,84 +142,116 @@ void Model::read(std::string filename)
 			}
 			//Adds the face to the model
 			this->faces.push_back(aFace);
-			//std::cout << std::endl;
+			if (debug)std::cout << std::endl;
 		}
 		else if (str == "g")
 		{
 			//Groups
-			//std::cout << "Group name (g): ";
+			if (debug)std::cout << "Group name (g): ";
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				if (debug)std::cout << str << " ";
 			}
-			//std::cout << std::endl;
+			if (debug)std::cout << std::endl;
 		}
 		else if (str == "s")
 		{
-			//Groups
-			//std::cout << "Smoothing group (s): ";
+			//Smoothing groups
+			if (debug)std::cout << "Smoothing group (s): ";
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				if (debug)std::cout << str << " ";
 			}
-			//std::cout << std::endl;
+			if (debug)std::cout << std::endl;
 		}
 		else if (str == "mtllib")
 		{
 			//Material library
-			//std::cout << "Material Library (mtllib): ";
+			if (debug)std::cout << "Material Library (mtllib): ";
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				if (debug)std::cout << str << " ";
 			}
-			//std::cout << std::endl;
+			if (debug)std::cout << std::endl;
 		}
 		else if (str == "usemtl")
 		{
 			//Material name
-			//std::cout << "Material name (usemtl): ";
+			if (debug)std::cout << "Material name (usemtl): ";
 			while (line >> str)
 			{
-				//std::cout << str << " ";
+				if (debug)std::cout << str << " ";
 			}
-			//std::cout << std::endl;
+			if (debug)std::cout << std::endl;
 		}
 	}
 }
 
+void Model::draw(Shader shader)
+{
+	//Bind the vertex array object
+	glGenVertexArrays(1,&VAO);
+	glBindVertexArray(VAO);
+	int numVertices = 0;
+	std::vector<Vertex> vertices = std::vector<Vertex>();
+	//Iterate through all faces
+	for (int i = 0; i < faces.size(); i++)
+	{
+		//Iterate through vertices in the face
+		for (int j = 0; j < 3; j++)
+		{
+			vertices.push_back(faces.at(i).at(j));
+			numVertices++;
+		}
+	}
+	//Bind the vertex buffer
+	glGenBuffers(1,&VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
+	//Position
+	glEnableVertexAttribArray(0);
+	GLint vertexPos = glGetAttribLocation(shader.program, "vertexPos");
+	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
+	//Color
+	glEnableVertexAttribArray(1);
+	GLint vertexColor = glGetAttribLocation(shader.program, "vertexColor");
+	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
+	//Model Matrix
+	GLint modelID = glGetUniformLocation(shader.program, "model");
+	glUniformMatrix4fv(modelID, 1, GL_FALSE, &modelMatrix[0][0]);
+	//Draw vertices
+	glDrawArrays(GL_TRIANGLES, 0, numVertices);
+}
+
 Model::Model(std::string filename)
 {
-	modelMatrix =
-	{
-		glm::vec4(1,0,0,0),
-		glm::vec4(0,1,0,0),
-		glm::vec4(0,0,1,0),
-		glm::vec4(0,0,0,1)
-	};
+	//Initializes the model without a rotation or model matrix
+	this->modelMatrix = glm::mat4(1.0);
+	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
 }
 
 Model::Model(std::string filename, glm::mat4 modelMat)
 {
-	modelMatrix =
-	{
-		glm::vec4(1,0,0,0),
-		glm::vec4(0,1,0,0),
-		glm::vec4(0,0,1,0),
-		glm::vec4(0,0,0,1)
-	};
+	//Initializes the model without a rotation
+	this->modelMatrix = modelMat;
+	this->rotationMatrix = glm::mat4(1.0);
+	read(filename);
+}
+
+Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
+{
+	//Initializes the model
+	this->modelMatrix = modelMat;
+	this->rotationMatrix = rotation;
 	read(filename);
 }
 
 Model::Model()
 {
-	modelMatrix =
-	{
-		glm::vec4(1,0,0,0),
-		glm::vec4(0,1,0,0),
-		glm::vec4(0,0,1,0),
-		glm::vec4(0,0,0,1)
-	};
+	//Initializes the model with no data
+	this->modelMatrix = glm::mat4(1.0);
+	this->rotationMatrix = glm::mat4(1.0);
 	this->faces = std::vector<std::vector<Vertex>>();
 }
 
