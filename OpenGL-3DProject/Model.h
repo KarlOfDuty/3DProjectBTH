@@ -34,7 +34,7 @@ struct Vertex
 	Material material;
 };
 //Turns on console feedback for reading of model files
-static bool debug = false;
+static bool modelDebug = false;
 //Turns on console feedback for reading of material files
 static bool matDebug = false;
 class Model

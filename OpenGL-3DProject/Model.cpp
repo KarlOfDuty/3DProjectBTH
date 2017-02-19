@@ -81,72 +81,72 @@ void Model::read(std::string filename)
 		{
 			//A vertex position
 			glm::vec3 aVertexPos;
-			if(debug)std::cout << "Vertex (v): ";
+			if(modelDebug)std::cout << "Vertex (v): ";
 			//X
 			line >> data;
 			aVertexPos.x = data;
-			if (debug)std::cout << data << " ";
+			if (modelDebug)std::cout << data << " ";
 			//Y
 			line >> data;
 			aVertexPos.y = data;
-			if (debug)std::cout << data << " ";
+			if (modelDebug)std::cout << data << " ";
 			//Z
 			line >> data;
 			aVertexPos.z = data;
-			if (debug)std::cout << data << " ";
+			if (modelDebug)std::cout << data << " ";
 
 			vertexPos.push_back(aVertexPos);
-			if (debug)std::cout << std::endl;
+			if (modelDebug)std::cout << std::endl;
 		}
 		else if (str == "vt")
 		{
 			//A texture position
 			glm::vec2 aVertexTex;
-			if (debug)std::cout << "Texture Position (vt): ";
+			if (modelDebug)std::cout << "Texture Position (vt): ";
 			//U
 			line >> data;
 			aVertexTex.x = data;
-			if (debug)std::cout << data << " ";
+			if (modelDebug)std::cout << data << " ";
 			//V
 			line >> data;
 			aVertexTex.y = data;
-			if (debug)std::cout << data << " ";
+			if (modelDebug)std::cout << data << " ";
 
 			vertexTex.push_back(aVertexTex);
-			if (debug)std::cout << std::endl;
+			if (modelDebug)std::cout << std::endl;
 		}
 		else if (str == "vn")
 		{
 			//A normal
 			glm::vec3 normal;
-			if (debug)std::cout << "Normal (vn): ";
+			if (modelDebug)std::cout << "Normal (vn): ";
 			//X
 			line >> data;
 			normal.x = data;
-			if (debug)std::cout << data << " ";
+			if (modelDebug)std::cout << data << " ";
 			//Y
 			line >> data;
 			normal.y = data;
-			if (debug)std::cout << data << " ";
+			if (modelDebug)std::cout << data << " ";
 			//Z
 			line >> data;
 			normal.z = data;
-			if (debug)std::cout << data << " ";
+			if (modelDebug)std::cout << data << " ";
 
 			vertexNormals.push_back(normal);
-			if (debug)std::cout << std::endl;
+			if (modelDebug)std::cout << std::endl;
 		}
 		else if (str == "f")
 		{
 			//Faces
-			if (debug)std::cout << "Face (f): ";
+			if (modelDebug)std::cout << "Face (f): ";
 			std::vector<Vertex> aFace = std::vector<Vertex>();
 			//Split the rest of the line into seperate words
 			while (line >> str)
 			{
 				std::stringstream strIndices;
 				strIndices << str;
-				if (debug)std::cout << str << " ";
+				if (modelDebug)std::cout << str << " ";
 				int i = 0;
 				std::stringstream intIndices;
 				//Splits up the indices to be seperated by spaces instead of slashes.
@@ -182,33 +182,33 @@ void Model::read(std::string filename)
 			}
 			//Adds the face to the model
 			this->faces.push_back(aFace);
-			if (debug)std::cout << std::endl;
+			if (modelDebug)std::cout << std::endl;
 		}
 		else if (str == "g")
 		{
 			//Groups
-			if (debug)std::cout << "Group name (g): ";
+			if (modelDebug)std::cout << "Group name (g): ";
 			while (line >> str)
 			{
-				if (debug)std::cout << str << " ";
+				if (modelDebug)std::cout << str << " ";
 			}
-			if (debug)std::cout << std::endl;
+			if (modelDebug)std::cout << std::endl;
 		}
 		else if (str == "s")
 		{
 			//Smoothing groups
-			if (debug)std::cout << "Smoothing group (s): ";
+			if (modelDebug)std::cout << "Smoothing group (s): ";
 			while (line >> str)
 			{
-				if (debug)std::cout << str << " ";
+				if (modelDebug)std::cout << str << " ";
 			}
-			if (debug)std::cout << std::endl;
+			if (modelDebug)std::cout << std::endl;
 		}
 		else if (str == "mtllib")
 		{
 			//Material library
 			line >> str;
-			if (debug)std::cout << std::endl << "Material Library (mtllib): " << str << std::endl;
+			if (modelDebug)std::cout << std::endl << "Material Library (mtllib): " << str << std::endl;
 			std::ifstream mtlFile(str);
 			while (std::getline(mtlFile, str))
 			{
@@ -326,7 +326,7 @@ void Model::read(std::string filename)
 		else if (str == "usemtl")
 		{
 			//Material name
-			if (debug)std::cout << "Material name (usemtl): ";
+			if (modelDebug)std::cout << "Material name (usemtl): ";
 			while (line >> str)
 			{
 				//Set the current material so it can be assigned to faces
@@ -335,9 +335,9 @@ void Model::read(std::string filename)
 				{
 					currentMaterial = materials.at(index);
 				}
-				if (debug)std::cout << str << " ";
+				if (modelDebug)std::cout << str << " ";
 			}
-			if (debug)std::cout << std::endl;
+			if (modelDebug)std::cout << std::endl;
 		}
 	}
 }

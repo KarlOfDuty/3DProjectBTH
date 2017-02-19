@@ -7,30 +7,36 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include "Model.h"
 #include <iostream>
+#include <AntTweakBar.h>
+#include "Model.h"
 #include "Camera.h"
 #include "Shader.h"
 #pragma comment(lib, "opengl32.lib")
-
+//Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
-
+const int windowWidth = 800;
+const int windowHeight = 600;
+bool debug = false;
+float stuff = 4345435.0;
+//Camera
 Camera playerCamera;
-
+//Shader program
 Shader shaderProgram;
-
+//Timing control for controls and camera
 sf::Clock deltaClock;
 sf::Time deltaTime;
-
+//Matrices
 glm::mat4 viewMatrix = glm::lookAt(
 	glm::vec3(0, 0, 2),
 	glm::vec3(0, 0, 0),
-	glm::vec3(0, 1, 0)
-);
-glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)800 / (float)600, 0.1f, 20.0f);
+	glm::vec3(0, 1, 0));
+glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 20.0f);
+//All models in the program
 std::vector<Model> allModels;
-
+//AntTweakBar
+TwBar *debugInterface;
 void createModels()
 {
 	/*
@@ -55,6 +61,12 @@ void createModels()
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		1.0, 1.0, 0.0, 1.0 }));
+}
+
+void setUpTweakBar()
+{
+	debugInterface = TwNewBar("Debug Interface");
+	TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
 }
 
 void update(sf::Window &window)
@@ -87,7 +99,11 @@ int main()
 	settings.depthBits = 24;
 	settings.stencilBits = 8;
 	settings.antialiasingLevel = 2;
-	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
+	sf::Window window(sf::VideoMode(windowWidth, windowHeight), "OpenGL", sf::Style::Default, settings);
+	//Initialise AntTweakBar
+	TwInit(TW_OPENGL, NULL);
+	TwWindowSize(windowWidth, windowHeight);
+	setUpTweakBar();
 	//V-Sync
 	window.setVerticalSyncEnabled(true);
 	//Disable cursor
@@ -129,6 +145,7 @@ int main()
 		}
 		update(window);
 		render();
+		if(debug)TwDraw();
 		//End the current frame (internally swaps the front and back buffers)
 		window.display();
 	}
