@@ -1,13 +1,52 @@
 #include "Model.h"
 #define BUFFER_OFFSET(i) ((char *)nullptr + (i))
-std::vector<std::vector<Vertex>> Model::getFaces()
+
+int Material::findMaterial(std::string name, std::vector<Material> materials)
 {
-	return this->faces;
+	//Returns the index of a material in the vector matching provided name, -1 if not found
+	int index = -1;
+	for (int i = 0; i < materials.size() && index == -1; i++)
+	{
+		if (materials.at(i).name == name)
+		{
+			index = i;
+		}
+	}
+	return index;
 }
 
-glm::mat4 Model::getModelMatrix()
+int Material::findMaterial(std::vector<Material> materials)
+{
+	//Returns the index of a material in the vector matching this material's name, -1 if not found
+	int index = -1;
+	for (int i = 0; i < materials.size() && index == -1; i++)
+	{
+		if (materials.at(i).name == this->name)
+		{
+			index = i;
+		}
+	}
+	return index;
+}
+
+glm::mat4 Model::getModelMatrix() const
 {
 	return this->modelMatrix;
+}
+
+glm::mat4 Model::getRotationMatrix() const
+{
+	return this->rotationMatrix;
+}
+
+void Model::setModelMatrix(glm::mat4 modelMat)
+{
+	this->modelMatrix = modelMat;
+}
+
+void Model::setRotationMatrix(glm::mat4 rotationMat)
+{
+	this->rotationMatrix = rotationMat;
 }
 
 void Model::rotate()
@@ -19,6 +58,7 @@ void Model::read(std::string filename)
 {
 	//Removes any old properties
 	faces = std::vector<std::vector<Vertex>>();
+	//Temporary containers
 	std::ifstream file(filename);
 	std::string str = "";
 	//Vector of all vertex positions
@@ -30,12 +70,14 @@ void Model::read(std::string filename)
 	//All texture coordinates
 	std::vector<glm::vec2> vertexTex = std::vector<glm::vec2>();
 	vertexTex.push_back(glm::vec3(0, 0, 0));
+	//Current material file's materials
+	std::vector<Material> materials = std::vector<Material>();
 	//Gets a single line of the file at a time
 	while (std::getline(file, str))
 	{
 		std::stringstream line;
 		double data;
-		//Read words of the line one by one
+		//Takes the first word of the line and compares it to variable names
 		line << str;
 		line >> str;
 		if (str == "v")
@@ -167,12 +209,121 @@ void Model::read(std::string filename)
 		else if (str == "mtllib")
 		{
 			//Material library
-			if (debug)std::cout << "Material Library (mtllib): ";
-			while (line >> str)
+			line >> str;
+			if (debug)std::cout << std::endl << "Material Library (mtllib): " << str << std::endl;
+			std::ifstream mtlFile(str);
+			while (std::getline(mtlFile, str))
 			{
-				if (debug)std::cout << str << " ";
+				//Takes the first word of the line and compares it to variable names
+				std::stringstream mtlWord;
+				mtlWord << str;
+				mtlWord >> str;
+				if (str == "newmtl")
+				{
+					//Check if the material already exists to avoid duplicates
+					mtlWord >> str;
+					if (Material::findMaterial(str, materials) == -1)
+					{
+						//Create new material and enter material name
+						Material newMaterial;
+						newMaterial.name = str;
+						if (matDebug)std::cout << "Material name: " << str << std::endl;
+						materials.push_back(newMaterial);
+					}
+				}
+				else if (str == "Ka")
+				{
+					if (matDebug)std::cout << "Ambient colour: ";
+					float data = 0.0;
+					//R
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).ambientColour.x = data;
+					//G
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).ambientColour.y = data;
+					//B
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).ambientColour.z = data;
+					if (matDebug)std::cout << std::endl;
+				}
+				else if (str == "Kd")
+				{
+					if (matDebug)std::cout << "Diffuse colour: ";
+					float data = 0.0;
+					//R
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).diffuseColour.x = data;
+					//G
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).diffuseColour.y = data;
+					//B
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).diffuseColour.z = data;
+					if (matDebug)std::cout << std::endl;
+				}
+				else if (str == "Ks")
+				{
+					if (matDebug)std::cout << "Specular colour: ";
+					float data = 0.0;
+					//R
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).specularColour.x = data;
+					//G
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).specularColour.y = data;
+					//B
+					mtlWord >> data;
+					if (matDebug)std::cout << data << " ";
+					materials.at(materials.size() - 1).specularColour.z = data;
+					if (matDebug)std::cout << std::endl;
+				}
+				else if (str == "Tr")
+				{
+					//Transpareny
+					float data = 0.0;
+					mtlWord >> data;
+					if (matDebug)std::cout << "Transparency: " << data << std::endl;
+					materials.at(materials.size() - 1).transparency = data;
+				}
+				else if (str == "illum")
+				{
+					//Illumination mode
+					int data = 0;
+					mtlWord >> data;
+					if (matDebug)std::cout << "Illumination mode: " << data << std::endl;
+					materials.at(materials.size() - 1).illuminationMode = data;
+				}
+				else if (str == "map_Ka")
+				{
+					//Name of the file containing the ambient texture map
+					mtlWord >> str;
+					if (matDebug)std::cout << "Ambient texture map: " << str << std::endl;
+					materials.at(materials.size() - 1).textureMapAmbientFile = str;
+				}
+				else if (str == "map_Kd")
+				{
+					//Name of the file containing the diffuse texture map
+					mtlWord >> str;
+					if (matDebug)std::cout << "Diffuse texture map: " << str << std::endl;
+					materials.at(materials.size() - 1).textureMapDiffuseFile = str;
+				}
+				else if (str == "map_Ks")
+				{
+					//Name of the file containing the specular texture map
+					mtlWord >> str;
+					if (matDebug)std::cout << "Specular texture map: " << str << std::endl;
+					materials.at(materials.size() - 1).textureMapSpecularFile = str;
+				}
 			}
-			if (debug)std::cout << std::endl;
+			if (matDebug)std::cout << std::endl;
 		}
 		else if (str == "usemtl")
 		{
@@ -180,6 +331,11 @@ void Model::read(std::string filename)
 			if (debug)std::cout << "Material name (usemtl): ";
 			while (line >> str)
 			{
+				int index = Material::findMaterial(str, materials);
+				if (index != -1)
+				{
+
+				}
 				if (debug)std::cout << str << " ";
 			}
 			if (debug)std::cout << std::endl;
@@ -259,3 +415,4 @@ Model::~Model()
 {
 
 }
+
