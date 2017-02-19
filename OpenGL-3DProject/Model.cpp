@@ -1,9 +1,8 @@
 #include "Model.h"
 #define BUFFER_OFFSET(i) ((char *)nullptr + (i))
-
+//Returns the index of a material in the vector matching provided name, -1 if not found
 int Material::findMaterial(std::string name, std::vector<Material> materials)
 {
-	//Returns the index of a material in the vector matching provided name, -1 if not found
 	int index = -1;
 	for (int i = 0; i < materials.size() && index == -1; i++)
 	{
@@ -14,10 +13,9 @@ int Material::findMaterial(std::string name, std::vector<Material> materials)
 	}
 	return index;
 }
-
+//Returns the index of a material in the vector matching this material's name, -1 if not found
 int Material::findMaterial(std::vector<Material> materials)
 {
-	//Returns the index of a material in the vector matching this material's name, -1 if not found
 	int index = -1;
 	for (int i = 0; i < materials.size() && index == -1; i++)
 	{
@@ -28,27 +26,25 @@ int Material::findMaterial(std::vector<Material> materials)
 	}
 	return index;
 }
-
+//Getters
 glm::mat4 Model::getModelMatrix() const
 {
 	return this->modelMatrix;
 }
-
 glm::mat4 Model::getRotationMatrix() const
 {
 	return this->rotationMatrix;
 }
-
+//Setters
 void Model::setModelMatrix(glm::mat4 modelMat)
 {
 	this->modelMatrix = modelMat;
 }
-
 void Model::setRotationMatrix(glm::mat4 rotationMat)
 {
 	this->rotationMatrix = rotationMat;
 }
-
+//Multiplies the model matrix with the rotation matrix (used for constant rotation)
 void Model::rotate()
 {
 	this->modelMatrix *= rotationMatrix;
@@ -72,6 +68,7 @@ void Model::read(std::string filename)
 	vertexTex.push_back(glm::vec3(0, 0, 0));
 	//Current material file's materials
 	std::vector<Material> materials = std::vector<Material>();
+	Material currentMaterial = Material();
 	//Gets a single line of the file at a time
 	while (std::getline(file, str))
 	{
@@ -178,7 +175,8 @@ void Model::read(std::string filename)
 					strIndices >> i;
 					aVertex.normal = vertexNormals.at(i);
 				}
-				aVertex.colour = glm::vec4(0,0,1,1);
+				aVertex.material = currentMaterial;
+				aVertex.colour = glm::vec4(aVertex.material.diffuseColour, 1.0);
 				//Adds the vertex to this face
 				aFace.push_back(aVertex);
 			}
@@ -331,10 +329,11 @@ void Model::read(std::string filename)
 			if (debug)std::cout << "Material name (usemtl): ";
 			while (line >> str)
 			{
+				//Set the current material so it can be assigned to faces
 				int index = Material::findMaterial(str, materials);
 				if (index != -1)
 				{
-
+					currentMaterial = materials.at(index);
 				}
 				if (debug)std::cout << str << " ";
 			}
@@ -342,7 +341,7 @@ void Model::read(std::string filename)
 		}
 	}
 }
-
+//Draws the model
 void Model::draw(Shader shader)
 {
 	//Bind the vertex array object
@@ -378,7 +377,7 @@ void Model::draw(Shader shader)
 	//Draw vertices
 	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
-
+//Constructors
 Model::Model(std::string filename)
 {
 	//Initializes the model without a rotation or model matrix
@@ -386,7 +385,6 @@ Model::Model(std::string filename)
 	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
 }
-
 Model::Model(std::string filename, glm::mat4 modelMat)
 {
 	//Initializes the model without a rotation
@@ -394,7 +392,6 @@ Model::Model(std::string filename, glm::mat4 modelMat)
 	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
 }
-
 Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
 {
 	//Initializes the model
@@ -402,7 +399,6 @@ Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
 	this->rotationMatrix = rotation;
 	read(filename);
 }
-
 Model::Model()
 {
 	//Initializes the model with no data
@@ -410,7 +406,7 @@ Model::Model()
 	this->rotationMatrix = glm::mat4(1.0);
 	this->faces = std::vector<std::vector<Vertex>>();
 }
-
+//Destructor
 Model::~Model()
 {
 

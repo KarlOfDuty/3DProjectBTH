@@ -33,11 +33,10 @@ struct Vertex
 	glm::vec3 normal;
 	Material material;
 };
-
 //Turns on console feedback for reading of model files
-static bool debug = true;
+static bool debug = false;
 //Turns on console feedback for reading of material files
-static bool matDebug = true;
+static bool matDebug = false;
 class Model
 {
 private:
