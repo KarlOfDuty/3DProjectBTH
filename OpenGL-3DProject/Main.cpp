@@ -7,203 +7,131 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include "Model.h"
 #include <iostream>
+#include <AntTweakBar.h>
+#include "Model.h"
 #include "Camera.h"
+#include "Shader.h"
 #pragma comment(lib, "opengl32.lib")
-
-//using namespace std;
-
-#define BUFFER_OFFSET(i) ((char *)nullptr + (i))
-
+//Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
-
+const int windowWidth = 800;
+const int windowHeight = 600;
+bool debug = false;
+float stuff = 4345435.0;
+//Camera
 Camera playerCamera;
-
-GLuint gShaderProgram = 0;
-GLuint gVertexAttribute = 0;
-GLuint gVertexBuffer = 0;
-
+//Shader program
+Shader shaderProgram;
+//Timing control for controls and camera
 sf::Clock deltaClock;
 sf::Time deltaTime;
-
-glm::mat4 modelMatrix = glm::mat4(1.0f);
-glm::mat4 View = glm::lookAt(
+//Matrices
+glm::mat4 viewMatrix = glm::lookAt(
 	glm::vec3(0, 0, 2),
 	glm::vec3(0, 0, 0),
-	glm::vec3(0, 1, 0)
-);
-glm::mat4 Projection = glm::perspective(45.0f, (float)800 / (float)600, 0.1f, 20.0f);
-glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-int numVertices = 0;
+	glm::vec3(0, 1, 0));
+glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 20.0f);
+//All models in the program
 std::vector<Model> allModels;
-
-
-void CreateShaders()
+//AntTweakBar
+TwBar *debugInterface;
+void createModels()
 {
-	//create vertex shader
-	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-	// open glsl file and put it in a string
-	std::ifstream shaderFile("VertexShader.glsl");
-	std::string shaderText((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
-	shaderFile.close();
-	// make a double pointer (only valid here)
-	const char* shaderTextPtr = shaderText.c_str();
-	// ask GL to load this
-	glShaderSource(vs, 1, &shaderTextPtr, nullptr);
-	// ask GL to compile it
-	glCompileShader(vs);
-
-	//create fragment shader | same process.
-	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-	shaderFile.open("FragmentShader.glsl");
-	shaderText.assign((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
-	shaderFile.close();
-	shaderTextPtr = shaderText.c_str();
-	glShaderSource(fs, 1, &shaderTextPtr, nullptr);
-	glCompileShader(fs);
-
-	GLint isCompiled = 0;
-	glGetShaderiv(vs, GL_COMPILE_STATUS, &isCompiled);
-	if (isCompiled == GL_FALSE)
+	/*
+	Model matrix:
 	{
-		// The maxLength includes the NULL character
-		GLchar log_string[1024] = {};
-		glGetShaderInfoLog(vs, 1024, nullptr, log_string);
-		OutputDebugStringA((char*)log_string);
+		scaleX, 0.0, 0.0, 0.0,
+		0.0, scaleY, 0.0, 0.0,
+		0.0, 0.0, scaleZ, 0.0,
+		posX, posY, posZ, 1.0
+	};
+	Rotation matrix is set up using glm::rotate()
+	*/
 
-		// Provide the infolog in whatever manor you deem best.
-		// Exit with failure.
-		glDeleteShader(vs); // Don't leak the shader.
-		return;
-	}
-
-	//link shader program (connect vs and ps)
-	gShaderProgram = glCreateProgram();
-	glAttachShader(gShaderProgram, fs);
-	glAttachShader(gShaderProgram, vs);
-	glLinkProgram(gShaderProgram);
-
-	GLint isLinked = 0;
-	glGetProgramiv(gShaderProgram, GL_LINK_STATUS, (int *)&isLinked);
-	if (isLinked == GL_FALSE)
-	{
-		GLint maxLength = 0;
-		glGetProgramiv(gShaderProgram, GL_INFO_LOG_LENGTH, &maxLength);
-
-		//The maxLength includes the NULL character
-		GLchar log_string[1024] = {};
-		glGetProgramInfoLog(gShaderProgram, 1024, nullptr, log_string);
-		OutputDebugStringA((char*)log_string);
-
-		//We don't need the program anymore.
-		glDeleteProgram(gShaderProgram);
-		//Use the infoLog as you see fit.
-
-		//In this simple program, we'll just leave
-		return;
-	}
+	//Create the models and store them in the vector of all models
+	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj", {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0 }));
+	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj", {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		1.0, 1.0, 0.0, 1.0 }));
 }
 
-void rotateModels()
+void setUpTweakBar()
 {
-	allModels.at(0).rotate(rotation);
+	debugInterface = TwNewBar("Debug Interface");
+	TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
 }
-void CreateModels()
+
+void update(sf::Window &window)
 {
-	std::vector<Vertex> tempTest = std::vector<Vertex>();
-	//Iterate through all models
+	//Controls update timings
+	deltaTime = deltaClock.restart();
+	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window.hasFocus());
+}
+
+void render()
+{
+	//Clear the buffers
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	shaderProgram.use();
+	GLint viewID = glGetUniformLocation(shaderProgram.program, "view");
+	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
+	GLint projectionID = glGetUniformLocation(shaderProgram.program, "projection");
+	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projectionMatrix[0][0]);
+	//Iterate through all models and draw them
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		//Iterate through all faces
-		for (int j = 0; j < allModels.at(i).getFaces().size(); j++)
-		{
-			//Iterate through vertices in the face
-			for (int k = 0; k < 3; k++)
-			{
-				tempTest.push_back(allModels.at(i).getFaces().at(j).at(k));
-				numVertices++;
-			}
-		}
+		allModels.at(i).draw(shaderProgram);
 	}
-	//
-	glGenVertexArrays(1, &gVertexAttribute);
-	glBindVertexArray(gVertexAttribute);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	glGenBuffers(1, &gVertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, gVertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, tempTest.size()* sizeof(Vertex), &tempTest.front(), GL_STATIC_DRAW);
-	GLint vertexPos = glGetAttribLocation(gShaderProgram, "vertexPos");
-	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
-	GLint vertexColor = glGetAttribLocation(gShaderProgram, "vertexColor");
-	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
-	GLint vertexModelMatrix = glGetAttribLocation(gShaderProgram, "modelMatrix");
-	glVertexAttribPointer(vertexModelMatrix, 16, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 12));
-}
-
-void Update(sf::Window &window)
-{
-	deltaTime = deltaClock.restart();
-	View = playerCamera.Update(deltaTime.asSeconds(), window.hasFocus());
-	rotateModels();
-}
-
-void Render()
-{
-	// clear the buffers
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// draw...
-	glUseProgram(gShaderProgram);
-	glBindVertexArray(gVertexAttribute);
-
-	GLint modelID = glGetUniformLocation(gShaderProgram, "model");
-	glUniformMatrix4fv(modelID, 1, GL_FALSE, &allModels.at(0).getModelMatrix()[0][0]);
-	GLint viewID = glGetUniformLocation(gShaderProgram, "view");
-	glUniformMatrix4fv(viewID, 1, GL_FALSE, &View[0][0]);
-	GLint projectionID = glGetUniformLocation(gShaderProgram, "projection");
-	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &Projection[0][0]);
-
-	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
 
 int main()
 {
-	// create the window
+	//Create the window
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
 	settings.stencilBits = 8;
 	settings.antialiasingLevel = 2;
-	sf::Window window(sf::VideoMode(800, 600), "OpenGL", sf::Style::Default, settings);
+	sf::Window window(sf::VideoMode(windowWidth, windowHeight), "OpenGL", sf::Style::Default, settings);
+	//Initialise AntTweakBar
+	TwInit(TW_OPENGL, NULL);
+	TwWindowSize(windowWidth, windowHeight);
+	setUpTweakBar();
+	//V-Sync
 	window.setVerticalSyncEnabled(true);
+	//Disable cursor
 	window.setMouseCursorVisible(false);
-	allModels.push_back(Model("cube_green_phong_12_tris_TRIANGULATED.obj"));
-	// load resources, initialize the OpenGL states, ...
+	//Load resources, initialize the OpenGL states, ...
 	glewInit();
-
-	CreateShaders();
-
-	CreateModels();
-
-	// run the main loop
+	//Enables depth test so vertices are drawn in the correct order
+	glEnable(GL_DEPTH_TEST);
+	//Create shaders
+	shaderProgram = Shader("VertexShader.glsl", "FragmentShader.glsl");
+	//Create models
+	createModels();
+	//Main loop
 	bool running = true;
 	while (running)
 	{
-		// handle events
+		//Handle events
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
 			if (event.type == sf::Event::Closed)
 			{
-				// end the program
+				//End the program
 				running = false;
 			}
 			else if (event.type == sf::Event::Resized)
 			{
-				// adjust the viewport when the window is resized
+				//Resize the viewport when the window is resized
 				glViewport(0, 0, event.size.width, event.size.height);
 			}
 			if (event.type == sf::Event::KeyPressed)
@@ -215,15 +143,11 @@ int main()
 				}
 			}
 		}
-
-		Update(window);
-		Render();
-
-		// end the current frame (internally swaps the front and back buffers)
+		update(window);
+		render();
+		if(debug)TwDraw();
+		//End the current frame (internally swaps the front and back buffers)
 		window.display();
 	}
-
-	// release resources...
-
 	return 0;
 }
