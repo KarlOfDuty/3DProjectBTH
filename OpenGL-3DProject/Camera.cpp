@@ -20,7 +20,7 @@ Camera::~Camera()
 }
 glm::mat4 Camera::Update(float deltaTime, bool inFocus)
 {
-	if (inFocus)
+	if (inFocus && !sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
 		cameraSpeed = 5 * deltaTime;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))

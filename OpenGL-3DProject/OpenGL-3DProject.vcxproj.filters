@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\gBuffer">
+      <UniqueIdentifier>{9aa3373f-5c16-46dd-bfe4-a8f93b74947e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -34,6 +37,18 @@
     </None>
     <None Include="FragmentShader.glsl">
       <Filter>Source Files</Filter>
+    </None>
+    <None Include="gBufferGeometryFragment.glsl">
+      <Filter>Source Files\gBuffer</Filter>
+    </None>
+    <None Include="gBufferGeometryVertex.glsl">
+      <Filter>Source Files\gBuffer</Filter>
+    </None>
+    <None Include="gBufferLightningFragment.glsl">
+      <Filter>Source Files\gBuffer</Filter>
+    </None>
+    <None Include="gBufferLightningVertex.glsl">
+      <Filter>Source Files\gBuffer</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

@@ -363,17 +363,26 @@ void Model::draw(Shader shader)
 	glGenBuffers(1,&VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
+	
 	//Position
 	glEnableVertexAttribArray(0);
 	GLint vertexPos = glGetAttribLocation(shader.program, "vertexPos");
 	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
-	//Color
+	
+	//Texture Coordinates
 	glEnableVertexAttribArray(1);
-	GLint vertexColor = glGetAttribLocation(shader.program, "vertexColor");
-	glVertexAttribPointer(vertexColor, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
+	GLint vertexTexture = glGetAttribLocation(shader.program, "vertexTexture");
+	glVertexAttribPointer(vertexTexture, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
+	
+	//Normal
+	glEnableVertexAttribArray(2);
+	GLint vertexNormal = glGetAttribLocation(shader.program, "vertexNormal");
+	glVertexAttribPointer(vertexNormal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
+	
 	//Model Matrix
 	GLint modelID = glGetUniformLocation(shader.program, "model");
 	glUniformMatrix4fv(modelID, 1, GL_FALSE, &modelMatrix[0][0]);
+	
 	//Draw vertices
 	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
