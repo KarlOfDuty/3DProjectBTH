@@ -53,6 +53,7 @@ public:
 	void rotate();
 	void read(std::string filename);
 	void draw(Shader shader);
+	void setupMesh();
 	Model(std::string filename);
 	Model(std::string filename, glm::mat4 modelMat);
 	Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation);
