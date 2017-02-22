@@ -344,6 +344,7 @@ void Model::read(std::string filename)
 //Draws the model
 void Model::draw(Shader shader)
 {
+	/*
 	//Bind the vertex array object
 	glGenVertexArrays(1,&VAO);
 	glBindVertexArray(VAO);
@@ -368,7 +369,11 @@ void Model::draw(Shader shader)
 	glEnableVertexAttribArray(0);
 	GLint vertexPos = glGetAttribLocation(shader.program, "vertexPos");
 	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
-	
+	//Color
+	glEnableVertexAttribArray(1);
+	GLint vertexTexture = glGetAttribLocation(shader.program, "vertexColor");
+	glVertexAttribPointer(vertexTexture, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
+
 	//Texture Coordinates
 	glEnableVertexAttribArray(1);
 	GLint vertexTexture = glGetAttribLocation(shader.program, "vertexTexture");
@@ -382,9 +387,46 @@ void Model::draw(Shader shader)
 	//Model Matrix
 	GLint modelID = glGetUniformLocation(shader.program, "model");
 	glUniformMatrix4fv(modelID, 1, GL_FALSE, &modelMatrix[0][0]);
-	
+	*/
 	//Draw vertices
-	glDrawArrays(GL_TRIANGLES, 0, numVertices);
+	glBindVertexArray(this->VAO);
+	glDrawArrays(GL_TRIANGLES, 0, faces.size()*3);
+	glBindVertexArray(0);
+}
+
+void Model::setupMesh()
+{
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	int numVertices = 0;
+	std::vector<Vertex> vertices = std::vector<Vertex>();
+	//Iterate through all faces
+	for (int i = 0; i < faces.size(); i++)
+	{
+		//Iterate through vertices in the face
+		for (int j = 0; j < 3; j++)
+		{
+			vertices.push_back(faces.at(i).at(j));
+			numVertices++;
+		}
+	}
+	
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
+	//Position
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
+	//Texture Coordinates
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
+	//Normal
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
+
+	glBindVertexArray(0);
 }
 //Constructors
 Model::Model(std::string filename)
@@ -400,6 +442,7 @@ Model::Model(std::string filename, glm::mat4 modelMat)
 	this->modelMatrix = modelMat;
 	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
+	setupMesh();
 }
 Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
 {
