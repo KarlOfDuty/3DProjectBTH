@@ -28,8 +28,7 @@ GLuint gBuffer;
 //gBuffer Shaders
 Shader shaderGeometryPass;
 Shader shaderLightningPass;
-Shader shaderProgam;
-//gBuffer Textures
+//Textures
 GLuint gPosition, gNormal, gAlbedoSpec;
 //Quad VAO and VBO
 GLuint quadVAO = 0;
@@ -194,8 +193,10 @@ void render()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	
+	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, testTexture);
+	
 	shaderGeometryPass.use();
 	GLint viewID = glGetUniformLocation(shaderGeometryPass.program, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
@@ -243,7 +244,6 @@ int main()
 	//Enables depth test so vertices are drawn in the correct order
 	glEnable(GL_DEPTH_TEST);
 	//Create gBuffer
-	shaderProgam = Shader("VertexShader.glsl", "FragmentShader.glsl");
 	CreateGBuffer();
 	//Create models
 	createModels();

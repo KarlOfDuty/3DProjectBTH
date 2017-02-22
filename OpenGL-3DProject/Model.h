@@ -8,6 +8,7 @@
 #include <GL\GL.h>
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
+#include <SOIL.h>
 #include "Shader.h"
 //A material specifying how shading, coloring and texturing works
 struct Material
@@ -16,6 +17,7 @@ struct Material
 	glm::vec3 ambientColour;
 	glm::vec3 diffuseColour;
 	glm::vec3 specularColour;
+	GLuint diffuseTexture;
 	std::string textureMapAmbientFile;
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;

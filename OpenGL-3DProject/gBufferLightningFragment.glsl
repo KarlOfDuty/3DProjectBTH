@@ -24,7 +24,7 @@ void main()
 	}
 	else if (TexCoords.x < 0.5  && TexCoords.y > 0.5)
 	{
-		FragColor = vec4(texture(gAlbedoSpec,TexCoords*2).rgb,1);
+		FragColor = texture(gAlbedoSpec,TexCoords*2);
 	}
 	else if (TexCoords.x > 0.5  && TexCoords.y > 0.5)
 	{
