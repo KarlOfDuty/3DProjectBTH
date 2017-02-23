@@ -28,7 +28,7 @@ GLuint gBuffer;
 //gBuffer Shaders
 Shader shaderGeometryPass;
 Shader shaderLightningPass;
-//Textures
+//gBuffer Textures
 GLuint gPosition, gNormal, gAlbedoSpec;
 //Quad VAO and VBO
 GLuint quadVAO = 0;
@@ -116,7 +116,7 @@ void CreateGBuffer()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
-	// - Tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
+	// - Tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
 	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
 	glDrawBuffers(3, attachments);
 
@@ -144,23 +144,6 @@ void createModels()
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		1.0, 1.0, 0.0, 1.0 }));
-	/*
-	glGenTextures(1, &testTexture);
-	glBindTexture(GL_TEXTURE_2D, testTexture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
-										   // Set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// Set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// Load image, create texture and generate mipmaps
-	int width, height;
-	unsigned char* image = SOIL_load_image("models/wall.jpg", &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
-	*/
 }
 
 void setUpTweakBar()
@@ -174,10 +157,6 @@ void update(sf::Window &window)
 	//Controls update timings
 	deltaTime = deltaClock.restart();
 	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window.hasFocus());
-	//allModels[0].setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	//allModels[0].rotate();
-	//allModels[1].setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	//allModels[1].rotate();
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -193,10 +172,6 @@ void render()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, testTexture);
-	
 	shaderGeometryPass.use();
 	GLint viewID = glGetUniformLocation(shaderGeometryPass.program, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
@@ -204,9 +179,7 @@ void render()
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projectionMatrix[0][0]);
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		//glm::mat4 tempModel = glm::mat4(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0);
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
-		//glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &tempModel[0][0]);
 		allModels.at(i).draw(shaderGeometryPass);
 	}
 

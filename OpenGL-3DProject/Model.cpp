@@ -345,50 +345,6 @@ void Model::read(std::string filename)
 //Draws the model
 void Model::draw(Shader shader)
 {
-	/*
-	//Bind the vertex array object
-	glGenVertexArrays(1,&VAO);
-	glBindVertexArray(VAO);
-	int numVertices = 0;
-	std::vector<Vertex> vertices = std::vector<Vertex>();
-	//Iterate through all faces
-	for (int i = 0; i < faces.size(); i++)
-	{
-		//Iterate through vertices in the face
-		for (int j = 0; j < 3; j++)
-		{
-			vertices.push_back(faces.at(i).at(j));
-			numVertices++;
-		}
-	}
-	//Bind the vertex buffer
-	glGenBuffers(1,&VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
-	
-	//Position
-	glEnableVertexAttribArray(0);
-	GLint vertexPos = glGetAttribLocation(shader.program, "vertexPos");
-	glVertexAttribPointer(vertexPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
-	//Color
-	glEnableVertexAttribArray(1);
-	GLint vertexTexture = glGetAttribLocation(shader.program, "vertexColor");
-	glVertexAttribPointer(vertexTexture, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
-
-	//Texture Coordinates
-	glEnableVertexAttribArray(1);
-	GLint vertexTexture = glGetAttribLocation(shader.program, "vertexTexture");
-	glVertexAttribPointer(vertexTexture, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
-	
-	//Normal
-	glEnableVertexAttribArray(2);
-	GLint vertexNormal = glGetAttribLocation(shader.program, "vertexNormal");
-	glVertexAttribPointer(vertexNormal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
-	
-	//Model Matrix
-	GLint modelID = glGetUniformLocation(shader.program, "model");
-	glUniformMatrix4fv(modelID, 1, GL_FALSE, &modelMatrix[0][0]);
-	*/
 	//Draw vertices
 	glBindVertexArray(this->VAO);
 	for (int i = 0; i < faces.size(); i++)
