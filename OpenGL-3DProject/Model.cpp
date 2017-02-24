@@ -347,11 +347,6 @@ void Model::draw(Shader shader)
 {
 	//Draw vertices
 	glBindVertexArray(this->VAO);
-	for (int i = 0; i < faces.size(); i++)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, faces[i][0].material.diffuseTexture);
-	}
 	glDrawArrays(GL_TRIANGLES, 0, faces.size()*3);
 	glBindVertexArray(0);
 }
@@ -375,21 +370,6 @@ void Model::setupMesh()
 			vertices.push_back(faces.at(i).at(j));
 			numVertices++;
 		}
-		glGenTextures(1, &vertices[i].material.diffuseTexture);
-		glBindTexture(GL_TEXTURE_2D, vertices[i].material.diffuseTexture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
-												   // Set the texture wrapping parameters
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		// Set texture filtering parameters
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		// Load image, create texture and generate mipmaps
-		int width, height;
-		unsigned char* image = SOIL_load_image(vertices[i].material.textureMapDiffuseFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		SOIL_free_image_data(image);
-		glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
 	}
 	
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);

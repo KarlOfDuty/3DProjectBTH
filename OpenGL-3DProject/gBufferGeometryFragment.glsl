@@ -4,6 +4,7 @@ layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gAlbedoSpec;
 
 uniform sampler2D diffuseTexture;
+uniform sampler2D specularTexture;
 
 in vec2 TexCoords;
 in vec3 FragPos;
@@ -13,5 +14,6 @@ void main()
 {
 	gPosition = FragPos;
 	gNormal = normalize(Normal);
-	gAlbedoSpec = texture(diffuseTexture,TexCoords);
+	gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
+	gAlbedoSpec.a = texture(specularTexture, TexCoords).r;
 } 

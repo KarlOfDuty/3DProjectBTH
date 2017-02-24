@@ -22,5 +22,6 @@ public:
 	Camera();
 	~Camera();
 	glm::mat4 Update(float deltaTime, bool inFocus);
+	glm::vec3 getCameraPos();
 };
 
