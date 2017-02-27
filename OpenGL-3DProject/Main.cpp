@@ -139,17 +139,26 @@ void CreateGBuffer()
 void createModels()
 {
 	//Create the models and store them in the vector of all models
-	allModels.push_back(Model("models/cube/cube.obj", {
+	
+	allModels.push_back(Model("models/nanosuit/nanosuit.obj", {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		0.0, -0.7, 0.0, 1.0 }));
+	
+	/*allModels.push_back(Model("models/cube/cube.obj", {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(Model("models/cube/cube.obj", {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		1.0, 1.0, 0.0, 1.0 }));
+		0.0, 0.0, 0.0, 1.0 }));*/
 
+	/*allModels.push_back(Model("models/cube/cube.obj", {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		1.0, 1.0, 0.0, 1.0 }));*/
+
+	/*
 	//Diffuse Texture loading
 	glGenTextures(1, &diffuseTexture);
 	glBindTexture(GL_TEXTURE_2D, diffuseTexture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
@@ -183,7 +192,10 @@ void createModels()
 	SOIL_free_image_data(image);
 	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
 
+	*/
+
 	//Some light with random values
+	std::srand(std::time(0));
 	std::srand(13);
 	for (int i = 0; i < NR_LIGHTS; i++)
 	{
@@ -228,7 +240,7 @@ void update(sf::Window &window)
 	}
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		allModels[i].rotate();
+		//allModels[i].rotate();
 	}
 }
 
@@ -238,13 +250,6 @@ void render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	shaderGeometryPass.use();
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
-	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "diffuseTexture"), 0);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, specularTexture);
-	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "specularTexture"), 1);
 
 	GLint viewID = glGetUniformLocation(shaderGeometryPass.program, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
