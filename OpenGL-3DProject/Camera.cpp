@@ -73,3 +73,7 @@ glm::mat4 Camera::Update(float deltaTime, bool inFocus)
 	}
 	return glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 }
+glm::vec3 Camera::getCameraPos()
+{
+	return this->cameraPos;
+}
