@@ -49,6 +49,8 @@ private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
 	std::vector<Mesh> meshes;
+	void setupMesh();
+	void loadTextures(int meshNr);
 public:
 	//std::vector<std::vector<Vertex>> faces;
 	GLuint VAO; //Vertex Array Object
@@ -60,8 +62,6 @@ public:
 	void rotate();
 	void read(std::string filename);
 	void draw(Shader shader);
-	void setupMesh();
-	void loadTextures(int meshNr);
 	Model(std::string filename);
 	Model(std::string filename, glm::mat4 modelMat);
 	Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation);
