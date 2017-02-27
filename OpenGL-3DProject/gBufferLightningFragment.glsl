@@ -23,7 +23,8 @@ void main()
     // Retrieve data from G-buffer
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
     vec3 Normal = texture(gNormal, TexCoords).rgb;
-    vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
+    //vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
+	vec3 Diffuse = vec3(1.0,1.0,1.0);
 	float Specular = texture(gAlbedoSpec, TexCoords).a;
 
 	vec3 lighting = Diffuse * 0.1;

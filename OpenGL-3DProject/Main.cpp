@@ -37,6 +37,7 @@ GLuint quadVBO;
 //Temp values for textures and all the lights
 GLuint diffuseTexture;
 GLuint specularTexture;
+GLuint normalMap;
 const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
@@ -150,6 +151,16 @@ void createModels()
 		0.0, 0.0, 1.0, 0.0,
 		1.0, 1.0, 0.0, 1.0 }));
 
+	//Make all models rotate at a fixed speed
+	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	for (int i = 0; i < allModels.size(); i++)
+	{
+		allModels[i].setRotationMatrix(rotation);
+	}
+
+	int width, height;
+	unsigned char* image;
+
 	//Diffuse Texture loading
 	glGenTextures(1, &diffuseTexture);
 	glBindTexture(GL_TEXTURE_2D, diffuseTexture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
@@ -160,8 +171,7 @@ void createModels()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// Load image, create texture and generate mipmaps
-	int width, height;
-	unsigned char* image = SOIL_load_image("models/cube/containerDiff.png", &width, &height, 0, SOIL_LOAD_RGB);
+	image = SOIL_load_image(allModels.at(0).getMaterial(0).textureMapDiffuseFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	SOIL_free_image_data(image);
@@ -177,13 +187,29 @@ void createModels()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// Load image, create texture and generate mipmaps
-	image = SOIL_load_image("models/cube/containerSpec.png", &width, &height, 0, SOIL_LOAD_RGB);
+	image = SOIL_load_image(allModels.at(0).getMaterial(0).textureMapSpecularFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	SOIL_free_image_data(image);
 	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
 
-	//Some light with random values
+	//Normal map loading
+	glGenTextures(1, &normalMap);
+	glBindTexture(GL_TEXTURE_2D, normalMap);
+	// Set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// Load image, create texture and generate mipmaps
+	image = SOIL_load_image(allModels.at(0).getMaterial(0).normalMapFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	//Some lights with random values
 	std::srand(13);
 	for (int i = 0; i < NR_LIGHTS; i++)
 	{
@@ -198,12 +224,7 @@ void createModels()
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
 
-	//Rotation for all models
-	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	for (int i = 0; i < allModels.size(); i++)
-	{
-		allModels[i].setRotationMatrix(rotation);
-	}
+
 }
 
 void setUpTweakBar()
@@ -237,14 +258,17 @@ void render()
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	//Geometry pass
 	shaderGeometryPass.use();
-
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
 	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "diffuseTexture"), 0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, specularTexture);
 	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "specularTexture"), 1);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, normalMap);
+	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "normalMap"), 2);
 
 	GLint viewID = glGetUniformLocation(shaderGeometryPass.program, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
@@ -255,10 +279,10 @@ void render()
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
 		allModels.at(i).draw(shaderGeometryPass);
 	}
-
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//Lighting pass
 	shaderLightningPass.use();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);

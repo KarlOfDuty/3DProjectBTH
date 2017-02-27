@@ -1,9 +1,9 @@
 #ifndef MODEL_H
 #define MODEL_H
 #include <vector>
-#include<fstream>
-#include<sstream>
-#include<iostream>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 #include <GL\glew.h>
 #include <GL\GL.h>
 #include <glm\glm.hpp>
@@ -21,8 +21,11 @@ struct Material
 	std::string textureMapAmbientFile;
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
+	std::string normalMapFile;
 	float transparency;
 	int illuminationMode;
+	bool hasTextures = false;
+	//Searching Functions
 	static int findMaterial(std::string name, std::vector<Material> materials);
 	int findMaterial(std::vector<Material> materials);
 };
@@ -38,7 +41,7 @@ struct Vertex
 //Turns on console feedback for reading of model files
 static bool modelDebug = false;
 //Turns on console feedback for reading of material files
-static bool matDebug = false;
+static bool matDebug = true;
 class Model
 {
 private:
@@ -48,6 +51,7 @@ private:
 public:
 	GLuint VAO; //Vertex Array Object
 	GLuint VBO; //Vertex Buffer Object
+	Material getMaterial(int index);
 	glm::mat4 getModelMatrix() const;
 	glm::mat4 getRotationMatrix() const;
 	void setModelMatrix(glm::mat4 modelMat);
