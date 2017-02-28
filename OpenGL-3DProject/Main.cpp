@@ -53,6 +53,7 @@ glm::mat4 viewMatrix = glm::lookAt(
 glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 20.0f);
 //All models in the program
 std::vector<Model> allModels;
+std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
 
@@ -135,6 +136,21 @@ void CreateGBuffer()
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer not complete!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void loadModels()
+{
+	modelLibrary.push_back(Model("models/cube/cube.obj", {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		-1.0, 0.0, 0.0, 1.0 }));
+
+	modelLibrary.push_back(Model("models/cube/cube.obj", {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		1.0, 1.0, 0.0, 1.0 }));
 }
 
 void createModels()

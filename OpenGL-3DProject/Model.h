@@ -53,7 +53,7 @@ private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
 	std::vector<Mesh> meshes;
-	void setupMesh();
+	void setupModel();
 	void loadTextures(int meshNr);
 public:
 	//std::vector<std::vector<Vertex>> faces;
@@ -70,7 +70,9 @@ public:
 	Model(std::string filename);
 	Model(std::string filename, glm::mat4 modelMat);
 	Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation);
+	Model(Model &otherModel);
 	Model();
+
 	~Model();
 };
 #endif

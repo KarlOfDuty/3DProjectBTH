@@ -401,8 +401,8 @@ void Model::draw(Shader shader)
 
 	glBindVertexArray(0);
 }
-//Sets the model up to be drawn TODO: Namechange?
-void Model::setupMesh()
+//Sets the model up to be drawn
+void Model::setupModel()
 {
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -478,10 +478,11 @@ void Model::loadTextures(int meshNr)
 //Constructors
 Model::Model(std::string filename)
 {
-	//Initializes the model without a rotation or model matrix
+	//Initializes the model without a rotation or model matrix. Does not set the model up so it can be drawn.
 	this->modelMatrix = glm::mat4(1.0);
 	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
+	setupModel();
 }
 Model::Model(std::string filename, glm::mat4 modelMat)
 {
@@ -489,7 +490,7 @@ Model::Model(std::string filename, glm::mat4 modelMat)
 	this->modelMatrix = modelMat;
 	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
-	setupMesh();
+	setupModel();
 }
 Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
 {
@@ -497,6 +498,7 @@ Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
 	this->modelMatrix = modelMat;
 	this->rotationMatrix = rotation;
 	read(filename);
+	setupModel();
 }
 Model::Model()
 {
@@ -504,6 +506,14 @@ Model::Model()
 	this->modelMatrix = glm::mat4(1.0);
 	this->rotationMatrix = glm::mat4(1.0);
 	//this->faces = std::vector<std::vector<Vertex>>();
+}
+Model::Model(Model &otherModel)
+{
+	//Initializes the model without a rotation or model matrix. Does not set the model up so it can be drawn.
+	this->modelMatrix = otherModel.modelMatrix;
+	this->rotationMatrix = otherModel.rotationMatrix;
+	this->meshes = otherModel.meshes;
+	setupModel();
 }
 //Destructor
 Model::~Model()
