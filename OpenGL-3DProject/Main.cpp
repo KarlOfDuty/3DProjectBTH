@@ -13,14 +13,14 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "Cannon.h"
 #pragma comment(lib, "opengl32.lib")
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 const int windowWidth = 800;
 const int windowHeight = 600;
-bool debug = false;
-float stuff = 4345435.0;
+bool debug = true;
 //Camera
 Camera playerCamera;
 //gBuffer
@@ -50,11 +50,17 @@ glm::mat4 viewMatrix = glm::lookAt(
 	glm::vec3(0, 0, 2),
 	glm::vec3(0, 0, 0),
 	glm::vec3(0, 1, 0));
-glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 20.0f);
+glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
 //All models in the program
 std::vector<Model> allModels;
+//Cannon
+Cannon aCannon;
 //AntTweakBar
 TwBar *debugInterface;
+float ballX;
+float ballY;
+float ballZ;
+float speed;
 
 void RenderQuad()
 {
@@ -162,7 +168,7 @@ void createModels()
 
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	for (int i = 0; i < allModels.size(); i++)
+	for (int i = 0; i < allModels.size()-1; i++)
 	{
 		allModels[i].setRotationMatrix(rotation);
 	}
@@ -180,14 +186,16 @@ void createModels()
 		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
-
-
 }
 
 void setUpTweakBar()
 {
 	debugInterface = TwNewBar("Debug Interface");
-	TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
+	TwDefine(" 'Debug Interface' refresh=0.1 ");
+	TwAddVarRW(debugInterface, "CannonBall X", TW_TYPE_FLOAT, &ballX, "");
+	TwAddVarRW(debugInterface, "CannonBall Y", TW_TYPE_FLOAT, &ballY, "");
+	TwAddVarRW(debugInterface, "CannonBall Z", TW_TYPE_FLOAT, &ballZ, "");
+	TwAddVarRW(debugInterface, "CannonBall Speed", TW_TYPE_FLOAT, &speed, "");
 }
 
 void update(sf::Window &window)
@@ -195,7 +203,6 @@ void update(sf::Window &window)
 	//Controls update timings
 	deltaTime = deltaClock.restart();
 	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
-	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -208,6 +215,18 @@ void update(sf::Window &window)
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		allModels[i].rotate();
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+	{
+		aCannon.shoot(playerCamera.getCameraPos());
+	}
+	aCannon.update(deltaTime.asSeconds());
+	if (!aCannon.allCannonBalls.empty())
+	{
+		ballX = aCannon.getMovementVector(0).x;
+		ballY = aCannon.getMovementVector(0).y;
+		ballZ = aCannon.getMovementVector(0).z;
+		speed = aCannon.allCannonBalls[0].velocity;
 	}
 }
 
@@ -227,6 +246,7 @@ void render()
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
 		allModels.at(i).draw(shaderGeometryPass);
 	}
+	aCannon.draw(shaderGeometryPass);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -304,6 +324,17 @@ int main()
 				{
 					window.close();
 					running = false;
+				}
+				if (event.key.code == sf::Keyboard::Return)
+				{
+					//aCannon.shoot(playerCamera.getCameraPos());
+				}
+			}
+			if (event.type == sf::Event::MouseButtonPressed)
+			{
+				if (event.key.code == sf::Mouse::Button::Left)
+				{
+					playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
 				}
 			}
 		}
