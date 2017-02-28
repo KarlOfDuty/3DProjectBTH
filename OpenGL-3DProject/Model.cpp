@@ -28,7 +28,7 @@ int Material::findMaterial(std::vector<Material> materials)
 }
 Material Model::getMaterial(int index)
 {
-	return this->faces.at(index).at(0).material;
+	return this->meshes.at(index).material;
 }
 //Getters
 glm::mat4 Model::getModelMatrix() const
@@ -57,7 +57,7 @@ void Model::rotate()
 void Model::read(std::string filename)
 {
 	//Removes any old properties
-	faces = std::vector<std::vector<Vertex>>();
+	//faces = std::vector<std::vector<Vertex>>();
 	//Temporary containers
 	std::ifstream file(filename);
 	std::string str = "";
@@ -73,6 +73,9 @@ void Model::read(std::string filename)
 	//Current material file's materials
 	std::vector<Material> materials = std::vector<Material>();
 	Material currentMaterial = Material();
+	std::vector<Vertex> aMesh = std::vector<Vertex>();
+	Mesh mesh;
+
 	//Gets a single line of the file at a time
 	while (std::getline(file, str))
 	{
@@ -85,7 +88,7 @@ void Model::read(std::string filename)
 		{
 			//A vertex position
 			glm::vec3 aVertexPos;
-			if(modelDebug)std::cout << "Vertex (v): ";
+			if (modelDebug)std::cout << "Vertex (v): ";
 			//X
 			line >> data;
 			aVertexPos.x = data;
@@ -179,13 +182,9 @@ void Model::read(std::string filename)
 					strIndices >> i;
 					aVertex.normal = vertexNormals.at(i);
 				}
-				aVertex.material = currentMaterial;
-				aVertex.colour = glm::vec4(aVertex.material.diffuseColour, 1.0);
-				//Adds the vertex to this face
-				aFace.push_back(aVertex);
+				//Adds the vertex to this Mesh
+				aMesh.push_back(aVertex);
 			}
-			//Adds the face to the model
-			this->faces.push_back(aFace);
 			if (modelDebug)std::cout << std::endl;
 		}
 		else if (str == "g")
@@ -207,6 +206,16 @@ void Model::read(std::string filename)
 				if (modelDebug)std::cout << str << " ";
 			}
 			if (modelDebug)std::cout << std::endl;
+		}
+		else if (str == "o")
+		{
+			if (!aMesh.empty())
+			{
+				mesh.vertices = aMesh;
+				mesh.material = currentMaterial;
+				meshes.push_back(mesh);
+				aMesh = std::vector<Vertex>();
+			}
 		}
 		else if (str == "mtllib")
 		{
@@ -361,13 +370,35 @@ void Model::read(std::string filename)
 			if (modelDebug)std::cout << std::endl;
 		}
 	}
+
+	if (!aMesh.empty())
+	{
+		mesh.vertices = aMesh;
+		mesh.material = currentMaterial;
+		meshes.push_back(mesh);
+		aMesh = std::vector<Vertex>();
+	}
 }
 //Draws the model
 void Model::draw(Shader shader)
 {
 	//Draw vertices
 	glBindVertexArray(this->VAO);
-	glDrawArrays(GL_TRIANGLES, 0, faces.size()*3);
+	for (int i = 0; i < this->meshes.size(); i++)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
+		glUniform1i(glGetUniformLocation(shader.program, "diffuseTexture"), 0);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
+		glUniform1i(glGetUniformLocation(shader.program, "specularTexture"), 1);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.normalMapTexture);
+		glUniform1i(glGetUniformLocation(shader.program, "normalMap"), 2);
+		
+		glDrawArrays(GL_TRIANGLES, 0, this->meshes[i].vertices.size()*3);
+	}
+
 	glBindVertexArray(0);
 }
 //Sets the model up to be drawn TODO: Namechange?
@@ -379,19 +410,17 @@ void Model::setupMesh()
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	int numVertices = 0;
 	std::vector<Vertex> vertices = std::vector<Vertex>();
-	//Iterate through all faces
-	for (int i = 0; i < faces.size(); i++)
+	for (int i = 0; i < meshes.size(); i++)
 	{
 		//Iterate through vertices in the face
-		for (int j = 0; j < 3; j++)
+		for (int j = 0; j < meshes[i].vertices.size(); j++)
 		{
-			vertices.push_back(faces.at(i).at(j));
-			numVertices++;
+			vertices.push_back(meshes.at(i).vertices.at(j));
 		}
+		loadTextures(i);
 	}
-	
+
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
 	//Position
 	glEnableVertexAttribArray(0);
@@ -401,9 +430,50 @@ void Model::setupMesh()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
 	//Normal
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
 
 	glBindVertexArray(0);
+}
+
+void Model::loadTextures(int meshNr)
+{
+	//Loading diffuse texture for mesh
+	glGenTextures(1, &meshes.at(meshNr).material.diffuseTexture);
+	glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.diffuseTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	int width, height;
+	unsigned char* image = SOIL_load_image(meshes.at(meshNr).material.textureMapDiffuseFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//Loading specular texture for mesh
+	glGenTextures(1, &meshes.at(meshNr).material.specularTexture);
+	glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.specularTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	image = SOIL_load_image(meshes.at(meshNr).material.textureMapSpecularFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//Normal map
+	glGenTextures(1, &meshes.at(meshNr).material.normalMapTexture);
+	glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.normalMapTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	image = SOIL_load_image(meshes.at(meshNr).material.normalMapFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 //Constructors
 Model::Model(std::string filename)
@@ -433,7 +503,7 @@ Model::Model()
 	//Initializes the model with no data
 	this->modelMatrix = glm::mat4(1.0);
 	this->rotationMatrix = glm::mat4(1.0);
-	this->faces = std::vector<std::vector<Vertex>>();
+	//this->faces = std::vector<std::vector<Vertex>>();
 }
 //Destructor
 Model::~Model()

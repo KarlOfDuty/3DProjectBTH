@@ -15,7 +15,8 @@ void main()
 {
 	gPosition = FragPos;
 	//Normal map has it's texture coordinates inverted
-    gNormal = texture(normalMap, vec2(TexCoords.y, TexCoords.x)).rgb;
+    //gNormal = normalize(Normal);
+	gNormal = texture(normalMap, TexCoords).rgb;
     //Transform normal vector to range [-1,1] from [0,1]
     gNormal = normalize(gNormal * 2.0 - 1.0);   
 	gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;

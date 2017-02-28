@@ -18,6 +18,8 @@ struct Material
 	glm::vec3 diffuseColour;
 	glm::vec3 specularColour;
 	GLuint diffuseTexture;
+	GLuint specularTexture;
+	GLuint normalMapTexture;
 	std::string textureMapAmbientFile;
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
@@ -34,21 +36,27 @@ struct Vertex
 {
 	glm::vec3 pos;
 	glm::vec2 texPos;
-	glm::vec4 colour;
 	glm::vec3 normal;
+};
+struct Mesh
+{
+	std::vector<Vertex> vertices;
 	Material material;
 };
 //Turns on console feedback for reading of model files
 static bool modelDebug = false;
 //Turns on console feedback for reading of material files
-static bool matDebug = true;
+static bool matDebug = false;
 class Model
 {
 private:
-	std::vector<std::vector<Vertex>> faces;
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
+	std::vector<Mesh> meshes;
+	void setupMesh();
+	void loadTextures(int meshNr);
 public:
+	//std::vector<std::vector<Vertex>> faces;
 	GLuint VAO; //Vertex Array Object
 	GLuint VBO; //Vertex Buffer Object
 	Material getMaterial(int index);
@@ -59,7 +67,6 @@ public:
 	void rotate();
 	void read(std::string filename);
 	void draw(Shader shader);
-	void setupMesh();
 	Model(std::string filename);
 	Model(std::string filename, glm::mat4 modelMat);
 	Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation);

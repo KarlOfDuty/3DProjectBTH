@@ -140,11 +140,20 @@ void CreateGBuffer()
 void createModels()
 {
 	//Create the models and store them in the vector of all models
+
+	/*allModels.push_back(Model("models/nanosuit/nanosuit.obj", {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		0.0, -0.7, 0.0, 1.0 }));
+	*/
+
 	allModels.push_back(Model("models/cube/cube.obj", {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0 }));
+		-1.0, 0.0, 0.0, 1.0 }));
+
 	allModels.push_back(Model("models/cube/cube.obj", {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
@@ -157,58 +166,6 @@ void createModels()
 	{
 		allModels[i].setRotationMatrix(rotation);
 	}
-
-	int width, height;
-	unsigned char* image;
-
-	//Diffuse Texture loading
-	glGenTextures(1, &diffuseTexture);
-	glBindTexture(GL_TEXTURE_2D, diffuseTexture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
-										   // Set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// Set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// Load image, create texture and generate mipmaps
-	image = SOIL_load_image(allModels.at(0).getMaterial(0).textureMapDiffuseFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
-	
-	//Specular Texture loading
-	glGenTextures(1, &specularTexture);
-	glBindTexture(GL_TEXTURE_2D, specularTexture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
-												  // Set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// Set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// Load image, create texture and generate mipmaps
-	image = SOIL_load_image(allModels.at(0).getMaterial(0).textureMapSpecularFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
-
-	//Normal map loading
-	glGenTextures(1, &normalMap);
-	glBindTexture(GL_TEXTURE_2D, normalMap);
-	// Set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// Set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// Load image, create texture and generate mipmaps
-	image = SOIL_load_image(allModels.at(0).getMaterial(0).normalMapFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
 	//Some lights with random values
 	std::srand(13);
 	for (int i = 0; i < NR_LIGHTS; i++)
@@ -237,7 +194,8 @@ void update(sf::Window &window)
 {
 	//Controls update timings
 	deltaTime = deltaClock.restart();
-	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window.hasFocus());
+	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
+	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -260,16 +218,6 @@ void render()
 
 	//Geometry pass
 	shaderGeometryPass.use();
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
-	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "diffuseTexture"), 0);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, specularTexture);
-	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "specularTexture"), 1);
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, normalMap);
-	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "normalMap"), 2);
-
 	GLint viewID = glGetUniformLocation(shaderGeometryPass.program, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
 	GLint projectionID = glGetUniformLocation(shaderGeometryPass.program, "projection");
