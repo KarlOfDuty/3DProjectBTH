@@ -26,6 +26,10 @@ int Material::findMaterial(std::vector<Material> materials)
 	}
 	return index;
 }
+Material Model::getMaterial(int index)
+{
+	return this->meshes.at(index).material;
+}
 //Getters
 glm::mat4 Model::getModelMatrix() const
 {
@@ -218,8 +222,10 @@ void Model::read(std::string filename)
 			//Material library
 			line >> str;
 			if (modelDebug)std::cout << std::endl << "Material Library (mtllib): " << str << std::endl;
-			str = filename.substr(0, filename.find_last_of("\\/") + 1) + str;
-			std::ifstream mtlFile(str);
+			std::string filePath = filename.substr(0, filename.find_last_of("\\/") + 1);
+			std::ifstream mtlFile(filePath + str);
+			//Index of material currently being added
+			int materialBeingAdded = -1;
 			while (std::getline(mtlFile, str))
 			{
 				//Takes the first word of the line and compares it to variable names
@@ -230,108 +236,119 @@ void Model::read(std::string filename)
 				{
 					//Check if the material already exists to avoid duplicates
 					mtlWord >> str;
-					if (Material::findMaterial(str, materials) == -1)
+					int foundMaterial = Material::findMaterial(str, materials);
+					if (foundMaterial == -1)
 					{
 						//Create new material and enter material name
-						Material newMaterial;
-						newMaterial.name = str;
 						if (matDebug)std::cout << "Material name: " << str << std::endl;
-						materials.push_back(newMaterial);
+						materialBeingAdded = materials.size();
+						materials.push_back(Material());
+						materials.at(materialBeingAdded).name = str;
+					}
+					else
+					{
+						//Material is already added and will be skipped
+						materialBeingAdded = -1;
 					}
 				}
-				else if (str == "Ka")
+				else if (str == "Ka" && materialBeingAdded != -1)
 				{
 					if (matDebug)std::cout << "Ambient colour: ";
 					float data = 0.0;
 					//R
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).ambientColour.x = data;
+					materials.at(materialBeingAdded).ambientColour.x = data;
 					//G
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).ambientColour.y = data;
+					materials.at(materialBeingAdded).ambientColour.y = data;
 					//B
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).ambientColour.z = data;
+					materials.at(materialBeingAdded).ambientColour.z = data;
 					if (matDebug)std::cout << std::endl;
 				}
-				else if (str == "Kd")
+				else if (str == "Kd" && materialBeingAdded != -1)
 				{
 					if (matDebug)std::cout << "Diffuse colour: ";
 					float data = 0.0;
 					//R
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).diffuseColour.x = data;
+					materials.at(materialBeingAdded).diffuseColour.x = data;
 					//G
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).diffuseColour.y = data;
+					materials.at(materialBeingAdded).diffuseColour.y = data;
 					//B
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).diffuseColour.z = data;
+					materials.at(materialBeingAdded).diffuseColour.z = data;
 					if (matDebug)std::cout << std::endl;
 				}
-				else if (str == "Ks")
+				else if (str == "Ks" && materialBeingAdded != -1)
 				{
 					if (matDebug)std::cout << "Specular colour: ";
 					float data = 0.0;
 					//R
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).specularColour.x = data;
+					materials.at(materialBeingAdded).specularColour.x = data;
 					//G
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).specularColour.y = data;
+					materials.at(materialBeingAdded).specularColour.y = data;
 					//B
 					mtlWord >> data;
 					if (matDebug)std::cout << data << " ";
-					materials.at(materials.size() - 1).specularColour.z = data;
+					materials.at(materialBeingAdded).specularColour.z = data;
 					if (matDebug)std::cout << std::endl;
 				}
-				else if (str == "Tr")
+				else if (str == "Tr" && materialBeingAdded != -1)
 				{
 					//Transpareny
 					float data = 0.0;
 					mtlWord >> data;
 					if (matDebug)std::cout << "Transparency: " << data << std::endl;
-					materials.at(materials.size() - 1).transparency = data;
+					materials.at(materialBeingAdded).transparency = data;
 				}
-				else if (str == "illum")
+				else if (str == "illum" && materialBeingAdded != -1)
 				{
 					//Illumination mode
 					int data = 0;
 					mtlWord >> data;
 					if (matDebug)std::cout << "Illumination mode: " << data << std::endl;
-					materials.at(materials.size() - 1).illuminationMode = data;
+					materials.at(materialBeingAdded).illuminationMode = data;
 				}
-				else if (str == "map_Ka")
+				else if (str == "map_Ka" && materialBeingAdded != -1)
 				{
 					//Name of the file containing the ambient texture map
 					mtlWord >> str;
-					str = filename.substr(0, filename.find_last_of("\\/") + 1) + str;
-					if (matDebug)std::cout << "Ambient texture map: " << str << std::endl;
-					materials.at(materials.size() - 1).textureMapAmbientFile = str;
+					if (matDebug)std::cout << "Ambient texture map: " << filePath + str << std::endl;
+					materials.at(materialBeingAdded).textureMapAmbientFile = filePath + str;
 				}
-				else if (str == "map_Kd")
+				else if (str == "map_Kd" && materialBeingAdded != -1)
 				{
 					//Name of the file containing the diffuse texture map
 					mtlWord >> str;
-					str = filename.substr(0, filename.find_last_of("\\/") + 1) + str;
-					if (matDebug)std::cout << "Diffuse texture map: " << str << std::endl;
-					materials.at(materials.size() - 1).textureMapDiffuseFile = str;
+					if (matDebug)std::cout << "Diffuse texture map: " << filePath + str << std::endl;
+					materials.at(materialBeingAdded).textureMapDiffuseFile = filePath + str;
+					materials.at(materialBeingAdded).hasTextures = true;
 				}
-				else if (str == "map_Ks")
+				else if (str == "map_Ks" && materialBeingAdded != -1)
 				{
 					//Name of the file containing the specular texture map
 					mtlWord >> str;
-					str = filename.substr(0, filename.find_last_of("\\/") + 1) + str;
-					if (matDebug)std::cout << "Specular texture map: " << str << std::endl;
-					materials.at(materials.size() - 1).textureMapSpecularFile = str;
+					if (matDebug)std::cout << "Specular texture map: " << filePath + str << std::endl;
+					materials.at(materialBeingAdded).textureMapSpecularFile = filePath + str;
+				}
+				else if ((str == "map_bump" || str == "bump" || str == "norm") && materialBeingAdded != -1)
+				{
+					//Name of the file containing the normal map
+					mtlWord >> str;
+					if (matDebug)std::cout << "Normal/Bump map: " << filePath + str << std::endl;
+					materials.at(materialBeingAdded).normalMapFile = filePath + str;
 				}
 			}
 			if (matDebug)std::cout << std::endl;
@@ -375,13 +392,16 @@ void Model::draw(Shader shader)
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
 		glUniform1i(glGetUniformLocation(shader.program, "specularTexture"), 1);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.normalMapTexture);
+		glUniform1i(glGetUniformLocation(shader.program, "normalMap"), 2);
 		
 		glDrawArrays(GL_TRIANGLES, 0, this->meshes[i].vertices.size()*3);
 	}
 
 	glBindVertexArray(0);
 }
-
+//Sets the model up to be drawn TODO: Namechange?
 void Model::setupMesh()
 {
 	glGenVertexArrays(1, &VAO);
@@ -398,9 +418,6 @@ void Model::setupMesh()
 		{
 			vertices.push_back(meshes.at(i).vertices.at(j));
 		}
-		std::cout << "Name = " << meshes.at(i).material.name << std::endl;
-		std::cout << "Diffuse = " << meshes.at(i).material.textureMapDiffuseFile << std::endl;
-		std::cout << "Specular = " << meshes.at(i).material.textureMapSpecularFile << std::endl;
 		loadTextures(i);
 	}
 
@@ -441,6 +458,18 @@ void Model::loadTextures(int meshNr)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	image = SOIL_load_image(meshes.at(meshNr).material.textureMapSpecularFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//Normal map
+	glGenTextures(1, &meshes.at(meshNr).material.normalMapTexture);
+	glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.normalMapTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	image = SOIL_load_image(meshes.at(meshNr).material.normalMapFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	SOIL_free_image_data(image);

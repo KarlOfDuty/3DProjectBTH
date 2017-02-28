@@ -1,9 +1,9 @@
 #ifndef MODEL_H
 #define MODEL_H
 #include <vector>
-#include<fstream>
-#include<sstream>
-#include<iostream>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 #include <GL\glew.h>
 #include <GL\GL.h>
 #include <glm\glm.hpp>
@@ -19,11 +19,15 @@ struct Material
 	glm::vec3 specularColour;
 	GLuint diffuseTexture;
 	GLuint specularTexture;
+	GLuint normalMapTexture;
 	std::string textureMapAmbientFile;
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
+	std::string normalMapFile;
 	float transparency;
 	int illuminationMode;
+	bool hasTextures = false;
+	//Searching Functions
 	static int findMaterial(std::string name, std::vector<Material> materials);
 	int findMaterial(std::vector<Material> materials);
 };
@@ -55,6 +59,7 @@ public:
 	//std::vector<std::vector<Vertex>> faces;
 	GLuint VAO; //Vertex Array Object
 	GLuint VBO; //Vertex Buffer Object
+	Material getMaterial(int index);
 	glm::mat4 getModelMatrix() const;
 	glm::mat4 getRotationMatrix() const;
 	void setModelMatrix(glm::mat4 modelMat);
