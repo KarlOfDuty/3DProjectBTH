@@ -32,12 +32,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="VertexShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="FragmentShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="gBufferGeometryFragment.glsl">
       <Filter>Source Files\gBuffer</Filter>
     </None>
@@ -49,6 +43,12 @@
     </None>
     <None Include="gBufferLightningVertex.glsl">
       <Filter>Source Files\gBuffer</Filter>
+    </None>
+    <None Include="shadowFragment.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="shadowVertex.glsl">
+      <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

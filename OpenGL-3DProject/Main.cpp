@@ -262,15 +262,15 @@ void render()
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 		glClear(GL_DEPTH_BUFFER_BIT);
-		for (int i = 0; i < allModels.size(); i++)
+		for (int j = 0; j < allModels.size(); j++)
 		{
-			glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
-			allModels.at(i).draw(depthShader);
+			glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[j].getModelMatrix()[0][0]);
+			allModels.at(j).draw(depthShader);
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	// Reset viewport
+	//Reset viewport
 	glViewport(0, 0, windowWidth, windowHeight);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
