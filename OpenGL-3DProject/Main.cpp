@@ -42,6 +42,15 @@ GLuint normalMap;
 const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
+//Stuff for ShadowMap
+const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+GLuint depthMapFBO;
+GLuint depthMap;
+
+glm::mat4 lightProjection;
+glm::mat4 lightView;
+glm::mat4 lightSpaceMatrix;
+GLfloat near_plane = 1.0f, far_plane = 7.5f;
 
 //Timing control for controls and camera
 sf::Clock deltaClock;
@@ -90,11 +99,8 @@ void createShadowMap()
 	depthShader = Shader("shadowVertex.glsl", "shadowFragment.glsl");
 
 	// Configure depth map FBO
-	const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-	GLuint depthMapFBO;
 	glGenFramebuffers(1, &depthMapFBO);
 	// - Create depth texture
-	GLuint depthMap;
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 
@@ -242,6 +248,31 @@ void update(sf::Window &window)
 
 void render()
 {
+
+	//Depth Pass
+	for (GLuint i = 0; i < lightPositions.size(); i++)
+	{
+		lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+		lightView = glm::lookAt(lightPositions.at(i), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+		lightSpaceMatrix = lightProjection * lightView;
+		//Render scene from light's point of view
+		depthShader.use();
+		glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		for (int i = 0; i < allModels.size(); i++)
+		{
+			glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
+			allModels.at(i).draw(depthShader);
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	// Reset viewport
+	glViewport(0, 0, windowWidth, windowHeight);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
