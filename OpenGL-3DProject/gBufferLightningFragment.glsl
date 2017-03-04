@@ -1,10 +1,12 @@
 #version 440
 out vec4 FragColor;
 in vec2 TexCoords;
+in vec4 FragPosLightSpace;
 
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
+uniform sampler2D shadowMap; //depthMap
 
 struct Light {
     vec3 Position;
@@ -17,6 +19,23 @@ struct Light {
 const int NR_LIGHTS = 32;
 uniform Light lights[NR_LIGHTS];
 uniform vec3 viewPos;
+
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+	//Perform perspective divide
+	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	//Transform to [0,1] range
+	projCoords = projCoords * 0.5 + 0.5;
+	//Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+	float closestDepth = texture(shadowMap, projCoords.xy).r;
+	//Get depth of current fragment from light's perspective
+	float currentDepth = projCoords.z;
+	//Check wheter current frag pos is in shadow
+	float bias = 0.005;
+	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+	return shadow;
+}
 
 void main()
 {             
@@ -41,8 +60,9 @@ void main()
         float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
         diffuse *= attenuation;
         specular *= attenuation;
-        lighting += diffuse + specular;
+		float shadow = ShadowCalculation(FragPosLightSpace);
+        lighting = (lighting + (1.0 - shadow) * diffuse + specular);
 	}
-	FragColor = vec4(lighting, 1.0);
+	FragColor = vec4(lighting, 1.0f);
 }
 

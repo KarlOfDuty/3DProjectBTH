@@ -298,6 +298,9 @@ void render()
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+
 
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{
@@ -312,6 +315,7 @@ void render()
 	}
 
 	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderLightningPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
 	RenderQuad();
 }
