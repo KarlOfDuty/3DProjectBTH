@@ -13,13 +13,17 @@
 //A material specifying how shading, coloring and texturing works
 struct Material
 {
+	//Material name
 	std::string name;
+	//Colours
 	glm::vec3 ambientColour;
 	glm::vec3 diffuseColour;
 	glm::vec3 specularColour;
+	//Textures
 	GLuint diffuseTexture;
 	GLuint specularTexture;
 	GLuint normalMapTexture;
+	//File names for textures
 	std::string textureMapAmbientFile;
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
@@ -53,7 +57,7 @@ private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
 	std::vector<Mesh> meshes;
-	void setupMesh();
+	void setupModel();
 	void loadTextures(int meshNr);
 public:
 	//std::vector<std::vector<Vertex>> faces;
@@ -70,7 +74,10 @@ public:
 	Model(std::string filename);
 	Model(std::string filename, glm::mat4 modelMat);
 	Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation);
+	Model(Model &otherModel);
+	Model(Model &otherModel, glm::mat4 modelMat);
 	Model();
+
 	~Model();
 };
 #endif
