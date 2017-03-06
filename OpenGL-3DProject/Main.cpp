@@ -20,7 +20,6 @@ const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 const int windowWidth = 800;
 const int windowHeight = 600;
 bool debug = false;
-float stuff = 4345435.0;
 //Camera
 Camera playerCamera;
 //gBuffer
@@ -140,42 +139,28 @@ void CreateGBuffer()
 
 void loadModels()
 {
-	modelLibrary.push_back(Model("models/cube/cube.obj", {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		-1.0, 0.0, 0.0, 1.0 }));
+	//Reads the models from file once
+	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	modelLibrary.push_back(Model("models/cube/cube.obj", {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		1.0, 1.0, 0.0, 1.0 }));
+	modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+
+	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
 
 void createModels()
 {
-	//Create the models and store them in the vector of all models
-
-	/*allModels.push_back(Model("models/nanosuit/nanosuit.obj", {
-		0.2, 0.0, 0.0, 0.0,
-		0.0, 0.2, 0.0, 0.0,
-		0.0, 0.0, 0.2, 0.0,
-		0.0, -0.7, 0.0, 1.0 }));
-	*/
-
-	allModels.push_back(Model("models/cube/cube.obj", {
+	//Create the models and store them in the vector of all models to be rendered
+	
+	allModels.push_back(Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		-1.0, 0.0, 0.0, 1.0 }));
-
-	allModels.push_back(Model("models/cube/cube.obj", {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
+	allModels.push_back(Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
 		1.0, 1.0, 0.0, 1.0 }));
-
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
@@ -196,14 +181,12 @@ void createModels()
 		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
-
-
 }
 
 void setUpTweakBar()
 {
 	debugInterface = TwNewBar("Debug Interface");
-	TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
+	//TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
 }
 
 void update(sf::Window &window)
@@ -295,6 +278,7 @@ int main()
 	//Create gBuffer
 	CreateGBuffer();
 	//Create models
+	loadModels();
 	createModels();
 	//Main loop
 	bool running = true;
