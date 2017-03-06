@@ -3,7 +3,7 @@ const double PI = 3.14159265358979323846;
 Cannon::Cannon()
 {
 	this->allCannonBalls = std::vector<CannonBall>();
-	this->gravity = -9.82;
+	this->gravity = 9.82;
 }
 Cannon::~Cannon()
 {
@@ -13,20 +13,27 @@ void Cannon::update(float dt)
 {
 	for (int i = 0; i < allCannonBalls.size(); i++)
 	{
-		//std::cout << allCannonBalls[i].speedVector.y << std::endl;
+		float test = -0.29*(1.293*PI*pow(allCannonBalls[i].radius, 2) / 2);
+		float test2 = test / allCannonBalls[i].mass;
+
+		//Update speed for the ball
 		allCannonBalls[i].speedVector.z = allCannonBalls[i].speedVector.z - allCannonBalls[i].accelVector.z*dt;
 		allCannonBalls[i].speedVector.y = allCannonBalls[i].speedVector.y + allCannonBalls[i].accelVector.y*dt;
-		
+		//Update the total speed from both directions
 		allCannonBalls[i].velocity = sqrt(pow(allCannonBalls[i].speedVector.z, 2) + pow(allCannonBalls[i].speedVector.y, 2));
-
+		//Update the angle
 		allCannonBalls[i].angle = atan(allCannonBalls[i].speedVector.y / allCannonBalls[i].speedVector.z);
-
-		allCannonBalls[i].accelVector.z = -0.00158*pow(allCannonBalls[i].velocity, 2)*cos(allCannonBalls[i].angle);
-		allCannonBalls[i].accelVector.y = -0.00158*pow(allCannonBalls[i].velocity, 2)*sin(allCannonBalls[i].angle) + gravity;
-
+		//Update the acceleration for the ball
+		allCannonBalls[i].accelVector.z = -test2*pow(allCannonBalls[i].velocity, 2)*cos(allCannonBalls[i].angle);
+		allCannonBalls[i].accelVector.y = -test2*pow(allCannonBalls[i].velocity, 2)*sin(allCannonBalls[i].angle) - gravity;
+		//std::cout << allCannonBalls[i].accelVector.y << std::endl;
+		//allCannonBalls[i].accelVector.z = -0.00158*pow(allCannonBalls[i].velocity, 2)*cos(allCannonBalls[i].angle);
+		//allCannonBalls[i].accelVector.y = -0.00158*pow(allCannonBalls[i].velocity, 2)*sin(allCannonBalls[i].angle) - gravity;
+		//Translate to new position
 		allCannonBalls[i].ballModel.setModelMatrix(
 			glm::translate(allCannonBalls[i].ballModel.getModelMatrix(), allCannonBalls[i].speedVector*dt)
 		);
+		//allCannonBalls[i].ballModel.rotate();
 	}
 }
 void Cannon::draw(Shader shader)
@@ -43,29 +50,28 @@ void Cannon::shoot(glm::vec3 originPos)
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0
+		0.0, 0.01, 0.0, 1.0
 	);
 	CannonBall newBall;
 	newBall.ballModel = Model("models/sphere/sphere.obj", modelMat);
-	
+
 	newBall.velocity = 10;
-	std::cout << "velocity = " << newBall.velocity << std::endl;
+	
 	newBall.angle = 30 * PI / 180;
-	std::cout << "angle = " << newBall.angle << std::endl;
-	newBall.speedVector.x = 0;
-	std::cout << "SPEEDVECTOR X = " << newBall.speedVector.x << std::endl;
+
 	newBall.speedVector.y = 10 * -sin(newBall.angle*180/PI);
-	std::cout << "sin : " << -sin(newBall.angle * 180 / PI) << std::endl;
-	std::cout << "SPEEDVECTOR Y = " << newBall.speedVector.y << std::endl;
 	newBall.speedVector.z = -20 * cos(newBall.angle * 180 / PI);
-	std::cout << "SPEEDVECTOR Z = " << newBall.speedVector.z << std::endl;
+	
 	newBall.accelVector.x = 0;
-	newBall.accelVector.y = gravity;
+	newBall.accelVector.y = -gravity;
 	newBall.accelVector.z = 0;
 	
-	newBall.mass = 1;
-	
-	newBall.radius = 100;
+	newBall.density = 7870;
+	newBall.radius = 0.5;
+	newBall.mass = 4.0f/3.0f * PI * pow(newBall.radius,3)*newBall.density;
+
+	newBall.spin = 60;
+	newBall.omega = newBall.spin/9.5493;
 	
 	allCannonBalls.push_back(newBall);
 }

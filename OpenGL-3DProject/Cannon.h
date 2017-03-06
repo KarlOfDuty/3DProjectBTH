@@ -7,12 +7,18 @@ class Cannon
 	struct CannonBall
 	{
 		Model ballModel;
+		
 		glm::vec3 speedVector;
 		glm::vec3 accelVector;
 		float velocity;
 		float angle;
+		
 		float radius;
+		float density;
 		float mass;
+
+		float spin;
+		float omega;
 	};
 private:
 
