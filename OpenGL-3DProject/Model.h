@@ -28,9 +28,9 @@ struct Material
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
 	std::string normalMapFile;
+	//Read but not implemented
 	float transparency;
 	int illuminationMode;
-	bool hasTextures = false;
 	//Searching Functions
 	static int findMaterial(std::string name, std::vector<Material> materials);
 	int findMaterial(std::vector<Material> materials);
@@ -57,10 +57,10 @@ private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
 	std::vector<Mesh> meshes;
+	bool isTextured;
 	void setupModel();
 	void loadTextures(int meshNr);
 public:
-	//std::vector<std::vector<Vertex>> faces;
 	GLuint VAO; //Vertex Array Object
 	GLuint VBO; //Vertex Buffer Object
 	Material getMaterial(int index);

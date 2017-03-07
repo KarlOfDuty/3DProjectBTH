@@ -56,8 +56,6 @@ void Model::rotate()
 //Reads a .obj file and creates a Model object from the data
 void Model::read(std::string filename)
 {
-	//Removes any old properties
-	//faces = std::vector<std::vector<Vertex>>();
 	//Temporary containers
 	std::ifstream file(filename);
 	std::string str = "";
@@ -327,6 +325,7 @@ void Model::read(std::string filename)
 					mtlWord >> str;
 					if (matDebug)std::cout << "Ambient texture map: " << filePath + str << std::endl;
 					materials.at(materialBeingAdded).textureMapAmbientFile = filePath + str;
+					this->isTextured = true;
 				}
 				else if (str == "map_Kd" && materialBeingAdded != -1)
 				{
@@ -334,7 +333,7 @@ void Model::read(std::string filename)
 					mtlWord >> str;
 					if (matDebug)std::cout << "Diffuse texture map: " << filePath + str << std::endl;
 					materials.at(materialBeingAdded).textureMapDiffuseFile = filePath + str;
-					materials.at(materialBeingAdded).hasTextures = true;
+					this->isTextured = true;
 				}
 				else if (str == "map_Ks" && materialBeingAdded != -1)
 				{
@@ -342,6 +341,7 @@ void Model::read(std::string filename)
 					mtlWord >> str;
 					if (matDebug)std::cout << "Specular texture map: " << filePath + str << std::endl;
 					materials.at(materialBeingAdded).textureMapSpecularFile = filePath + str;
+					this->isTextured = true;
 				}
 				else if ((str == "map_bump" || str == "bump" || str == "norm") && materialBeingAdded != -1)
 				{
@@ -349,6 +349,7 @@ void Model::read(std::string filename)
 					mtlWord >> str;
 					if (matDebug)std::cout << "Normal/Bump map: " << filePath + str << std::endl;
 					materials.at(materialBeingAdded).normalMapFile = filePath + str;
+					this->isTextured = true;
 				}
 			}
 			if (matDebug)std::cout << std::endl;
@@ -385,19 +386,32 @@ void Model::draw(Shader shader)
 	glBindVertexArray(this->VAO);
 	for (int i = 0; i < this->meshes.size(); i++)
 	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
-		glUniform1i(glGetUniformLocation(shader.program, "diffuseTexture"), 0);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
-		glUniform1i(glGetUniformLocation(shader.program, "specularTexture"), 1);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.normalMapTexture);
-		glUniform1i(glGetUniformLocation(shader.program, "normalMap"), 2);
+		if (this->isTextured)
+		{
+			//Ambient Texture
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
+			glUniform1i(glGetUniformLocation(shader.program, "ambientTexture"), 0);
+			//Diffuse Texture
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
+			glUniform1i(glGetUniformLocation(shader.program, "diffuseTexture"), 1);
+			//Specular Texture
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
+			glUniform1i(glGetUniformLocation(shader.program, "specularTexture"), 2);
+			//Normal Map
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.normalMapTexture);
+			glUniform1i(glGetUniformLocation(shader.program, "normalMap"), 3);
 		
-		glDrawArrays(GL_TRIANGLES, 0, this->meshes[i].vertices.size()*3);
-	}
+			glDrawArrays(GL_TRIANGLES, 0, this->meshes[i].vertices.size()*3);
+		}
+		else
+		{
 
+		}
+	}
 	glBindVertexArray(0);
 }
 //Sets the model up to be drawn
@@ -405,10 +419,8 @@ void Model::setupModel()
 {
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
-
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
 	std::vector<Vertex> vertices = std::vector<Vertex>();
 	for (int i = 0; i < meshes.size(); i++)
 	{
@@ -419,7 +431,10 @@ void Model::setupModel()
 		}
 		loadTextures(i);
 	}
+	if (isTextured)
+	{
 
+	}
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
 	//Position
 	glEnableVertexAttribArray(0);
@@ -430,6 +445,9 @@ void Model::setupModel()
 	//Normal
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
+	//Texture bool
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(4, 1, GL_BOOL, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 8));
 
 	glBindVertexArray(0);
 }

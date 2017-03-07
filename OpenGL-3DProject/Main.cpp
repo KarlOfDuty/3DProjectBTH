@@ -1,3 +1,4 @@
+//TODO: Ambient texture and colour support
 #include <GL\glew.h>
 #include <GL\GL.h>
 #include <glm\glm.hpp>
@@ -28,7 +29,7 @@ GLuint gBuffer;
 Shader shaderGeometryPass;
 Shader shaderLightningPass;
 //gBuffer Textures
-GLuint gPosition, gNormal, gAlbedoSpec;
+GLuint gPosition, gNormal, gAlbedoSpec, gAmbient;
 //Quad VAO and VBO
 GLuint quadVAO = 0;
 GLuint quadVBO;
@@ -94,6 +95,7 @@ void CreateGBuffer()
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gPosition"), 0);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gNormal"), 1);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAlbedoSpec"), 2);
+	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAmbient"), 3);
 
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -122,9 +124,16 @@ void CreateGBuffer()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
+	glGenTextures(1, &gAmbient);
+	glBindTexture(GL_TEXTURE_2D, gAmbient);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 800, 600, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gAmbient, 0);
+
 	// - Tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	GLuint attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	GLuint rboDepth;
 	glGenRenderbuffers(1, &rboDepth);
@@ -142,7 +151,7 @@ void loadModels()
 	//Reads the models from file once
 	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
@@ -237,6 +246,8 @@ void render()
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, gAmbient);
 
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{

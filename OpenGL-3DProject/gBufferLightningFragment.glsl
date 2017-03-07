@@ -5,6 +5,7 @@ in vec2 TexCoords;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
+uniform sampler2D gAmbient;
 
 struct Light {
     vec3 Position;
@@ -21,27 +22,28 @@ uniform vec3 viewPos;
 void main()
 {             
     // Retrieve data from G-buffer
-    vec3 FragPos = texture(gPosition, TexCoords).rgb;
-	vec3 Normal = texture(gNormal, TexCoords).rgb;
-    vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
-	float Specular = texture(gAlbedoSpec, TexCoords).a;
-
-	vec3 lighting = Diffuse * 0.1;
-	vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 fragPos = texture(gPosition, TexCoords).rgb;
+	vec3 normal = texture(gNormal, TexCoords).rgb;
+    vec3 diffuse = texture(gAlbedoSpec, TexCoords).rgb;
+	float specular = texture(gAlbedoSpec, TexCoords).a;
+	vec3 ambient = texture(gAmbient, TexCoords).rgb;
+	//Multiplies the diffuse 
+	vec3 lighting = vec3(diffuse.x * ambient.x, diffuse.y * ambient.y, diffuse.z * ambient.z);
+	vec3 viewDir = normalize(viewPos - fragPos);
 	for(int i = 0; i < NR_LIGHTS; ++i)
 	{
-		vec3 lightDir = normalize(lights[i].Position - FragPos);
-        vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lights[i].Color;
-        // Specular
-        vec3 halfwayDir = normalize(lightDir + viewDir);  
-        float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
-        vec3 specular = lights[i].Color * spec * Specular;
-        // Attenuation
-        float distance = length(lights[i].Position - FragPos);
+		vec3 lightDir = normalize(lights[i].Position - fragPos);
+        vec3 thisDiffuse = max(dot(normal, lightDir), 0.0) * diffuse * lights[i].Color;
+        //Specular
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
+        vec3 thisSpecular = lights[i].Color * spec * specular;
+        //Attenuation
+        float distance = length(lights[i].Position - fragPos);
         float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
-        diffuse *= attenuation;
-        specular *= attenuation;
-        lighting += diffuse + specular;
+        thisDiffuse *= attenuation;
+        thisSpecular *= attenuation;
+        lighting += thisDiffuse + thisSpecular;
 	}
 	FragColor = vec4(lighting, 1.0);
 }
