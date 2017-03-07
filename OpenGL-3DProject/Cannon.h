@@ -7,7 +7,7 @@ class Cannon
 	struct CannonBall
 	{
 		Model ballModel;
-		
+		glm::vec3 initialVelocity;
 		glm::vec3 speedVector;
 		glm::vec3 accelVector;
 		float velocity;
@@ -19,12 +19,19 @@ class Cannon
 
 		float spin;
 		float omega;
+		
+		float time;
+		int loading;
 	};
 private:
 
 public:
 	std::vector<CannonBall> allCannonBalls;
+
 	float gravity;
+	float wind;
+	int tests;
+
 	Cannon();
 	~Cannon();
 	void update(float dt);
