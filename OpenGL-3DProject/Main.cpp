@@ -43,7 +43,7 @@ const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 //Stuff for ShadowMap
-const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+const GLuint SHADOW_WIDTH = 6400, SHADOW_HEIGHT = 6400;
 GLuint depthMapFBO;
 GLuint depthMap;
 
@@ -194,10 +194,15 @@ void createModels()
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		1.0, 1.0, 0.0, 1.0 }));
+	allModels.push_back(Model("models/cube/cube.obj", {
+		5.0, 0.0, 0.0, 0.0,
+		0.0, 5.0, 0.0, 0.0,
+		0.0, 0.0, 5.0, 0.0,
+		0.0, 0.0, -5.0, 1.0 }));
 
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	for (int i = 0; i < allModels.size(); i++)
+	for (int i = 0; i < allModels.size()-1; i++)
 	{
 		allModels[i].setRotationMatrix(rotation);
 	}
@@ -205,14 +210,23 @@ void createModels()
 	std::srand(13);
 	for (int i = 0; i < NR_LIGHTS; i++)
 	{
-		GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-		GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
-		GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		//GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
+		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+
+		GLfloat xPos = 0;
+		GLfloat yPos = 0;
+		GLfloat zPos = 5;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color
-		GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		
+		//GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		//GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		//GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		
+		GLfloat rColor = 1; // Between 0.5 and 1.0
+		GLfloat gColor = 1; // Between 0.5 and 1.0
+		GLfloat bColor = 1; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
 
@@ -250,25 +264,24 @@ void render()
 {
 
 	//Depth Pass
+	//Render scene from light's point of view
+	depthShader.use();
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{
 		lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 		lightView = glm::lookAt(lightPositions.at(i), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 		lightSpaceMatrix = lightProjection * lightView;
-		//Render scene from light's point of view
-		depthShader.use();
 		glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-
-		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-		glClear(GL_DEPTH_BUFFER_BIT);
 		for (int j = 0; j < allModels.size(); j++)
 		{
 			glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[j].getModelMatrix()[0][0]);
 			allModels.at(j).draw(depthShader);
 		}
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	//Reset viewport
 	glViewport(0, 0, windowWidth, windowHeight);
