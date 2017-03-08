@@ -129,6 +129,7 @@ void CreateGBuffer()
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gPosition"), 0);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gNormal"), 1);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAlbedoSpec"), 2);
+	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "depthMap"), 3);
 
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -214,9 +215,9 @@ void createModels()
 		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
 		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
 
-		GLfloat xPos = 0;
+		GLfloat xPos = -1;
 		GLfloat yPos = 0;
-		GLfloat zPos = 5;
+		GLfloat zPos = 2;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color
 		
@@ -224,9 +225,9 @@ void createModels()
 		//GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
 		//GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
 		
-		GLfloat rColor = 1; // Between 0.5 and 1.0
-		GLfloat gColor = 1; // Between 0.5 and 1.0
-		GLfloat bColor = 1; // Between 0.5 and 1.0
+		GLfloat rColor = 0.6; // Between 0.5 and 1.0
+		GLfloat gColor = 0.6; // Between 0.5 and 1.0
+		GLfloat bColor = 0.6; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
 
@@ -263,7 +264,7 @@ void update(sf::Window &window)
 void render()
 {
 
-	//Depth Pass
+	//DEPTH PASS
 	//Render scene from light's point of view
 	depthShader.use();
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -289,7 +290,7 @@ void render()
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//Geometry pass
+	//GEOMETRY PASS
 	shaderGeometryPass.use();
 	GLint viewID = glGetUniformLocation(shaderGeometryPass.program, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
@@ -300,10 +301,11 @@ void render()
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
 		allModels.at(i).draw(shaderGeometryPass);
 	}
+	//glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//Lighting pass
+	//LIGHTING PASS
 	shaderLightningPass.use();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -313,7 +315,6 @@ void render()
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
-
 
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{
@@ -328,7 +329,6 @@ void render()
 	}
 
 	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
-	glUniformMatrix4fv(glGetUniformLocation(shaderLightningPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
 	RenderQuad();
 }

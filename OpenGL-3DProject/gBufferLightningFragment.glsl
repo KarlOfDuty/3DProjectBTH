@@ -32,7 +32,12 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 	float currentDepth = projCoords.z;
 	//Check wheter current frag pos is in shadow
 	float bias = 0.005;
-	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+	float shadow = 1.0;
+	if(currentDepth - bias > closestDepth)
+	{
+		shadow = 0.0;
+	}
+
 
 	return shadow;
 }
@@ -42,16 +47,16 @@ void main()
     // Retrieve data from G-buffer
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
 	vec3 Normal = texture(gNormal, TexCoords).rgb;
-    vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
+    vec3 color = texture(gAlbedoSpec, TexCoords).rgb;
 	float Specular = texture(gAlbedoSpec, TexCoords).a;
 
 	float shadow = ShadowCalculation(FragPosLightSpace);
-	vec3 lighting = Diffuse * 0.1;
+	vec3 lighting = vec3(0.1 + (1.0-shadow),0.1 + (1.0-shadow),0.1 + (1.0-shadow));
 	vec3 viewDir = normalize(viewPos - FragPos);
 	for(int i = 0; i < NR_LIGHTS; ++i)
 	{
 		vec3 lightDir = normalize(lights[i].Position - FragPos);
-        vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lights[i].Color;
+        vec3 diffuse = max(dot(Normal, lightDir), 0.0) * color * lights[i].Color;
         // Specular
         vec3 halfwayDir = normalize(lightDir + viewDir);  
         float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);
@@ -63,8 +68,9 @@ void main()
         specular *= attenuation;
         lighting += diffuse + specular;
 	}
-	//FragColor = vec4(lighting, 1.0f);
+	lighting * color;
+	FragColor = vec4(lighting, 1.0f);
 	float depthValue = texture(depthMap,TexCoords).r;
-	FragColor = vec4(vec3(depthValue),1.0);
+	//FragColor = vec4(vec3(depthValue),1.0);
 }
 
