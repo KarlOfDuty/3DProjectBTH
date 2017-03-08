@@ -10,27 +10,27 @@ class Cannon
 		glm::vec3 initialVelocity;
 		glm::vec3 speedVector;
 		glm::vec3 accelVector;
-		float velocity;
-		float angle;
+		double velocity;
+		double angle;
 		
-		float radius;
-		float density;
-		float mass;
+		double radius;
+		double density;
+		double mass;
 
-		float spin;
+		double spin;
 		float omega;
 		
-		float time;
+		double time;
 		int loading;
+
 	};
 private:
 
 public:
 	std::vector<CannonBall> allCannonBalls;
-
+	int tests;
 	float gravity;
 	float wind;
-	int tests;
 
 	Cannon();
 	~Cannon();

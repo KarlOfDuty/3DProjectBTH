@@ -176,14 +176,20 @@ void createModels()
 	std::srand(13);
 	for (int i = 0; i < NR_LIGHTS; i++)
 	{
-		GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-		GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
-		GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		//GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
+		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		GLfloat xPos = 0;
+		GLfloat yPos = 0;
+		GLfloat zPos = i;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color
-		GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		//GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		//GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		//GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		GLfloat rColor = 1; // Between 0.5 and 1.0
+		GLfloat gColor = 0; // Between 0.5 and 1.0
+		GLfloat bColor = 0; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
 }
