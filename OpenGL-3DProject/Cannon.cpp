@@ -6,6 +6,7 @@ Cannon::Cannon()
 	this->allCannonBalls = std::vector<CannonBall>();
 	this->gravity = 9.82;
 	this->tests = 0;
+	this->wind = 0.1;
 }
 Cannon::~Cannon()
 {
@@ -22,6 +23,8 @@ void Cannon::update(float dt)
 				double drag = -0.29*(1.293*PI*pow(0.010, 2) / 2);
 				double totalDrag = drag / allCannonBalls[i].mass;
 
+				float windAccel = gravity + wind / allCannonBalls[i].mass;
+
 				//double windDrag = 1.293*0.47*pow(allCannonBalls[i].velocity, 2) * (PI*pow(allCannonBalls[i].radius,2));
 
 				double magnusEffect = (2 * pow(PI, 2)*1.293*allCannonBalls[i].velocity*pow(allCannonBalls[i].radius, 4)*allCannonBalls[i].omega) / (2 * allCannonBalls[i].radius);
@@ -35,6 +38,7 @@ void Cannon::update(float dt)
 				std::cout << magnusEffect2.y << std::endl;
 
 				//Update speed for the ball
+				allCannonBalls[i].speedVector.x = allCannonBalls[i].speedVector.x + (allCannonBalls[i].accelVector.x) * 0.01f;
 				allCannonBalls[i].speedVector.z = allCannonBalls[i].speedVector.z - (allCannonBalls[i].accelVector.z) * 0.01f;
 				allCannonBalls[i].speedVector.y = allCannonBalls[i].speedVector.y + (allCannonBalls[i].accelVector.y) * 0.01f;
 
@@ -45,6 +49,7 @@ void Cannon::update(float dt)
 				allCannonBalls[i].angle = atan(allCannonBalls[i].speedVector.y / allCannonBalls[i].speedVector.z);
 
 				//Update the acceleration for the ball
+				allCannonBalls[i].accelVector.x = windAccel;
 				allCannonBalls[i].accelVector.z = totalDrag*pow(allCannonBalls[i].velocity, 2)*cos(allCannonBalls[i].angle);
 				allCannonBalls[i].accelVector.y = -totalDrag*pow(allCannonBalls[i].velocity, 2)*sin(allCannonBalls[i].angle) - gravity;
 
