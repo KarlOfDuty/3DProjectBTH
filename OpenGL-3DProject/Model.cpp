@@ -422,32 +422,55 @@ void Model::setupModel()
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	std::vector<Vertex> vertices = std::vector<Vertex>();
-	for (int i = 0; i < meshes.size(); i++)
-	{
-		//Iterate through vertices in the face
-		for (int j = 0; j < meshes[i].vertices.size(); j++)
-		{
-			vertices.push_back(meshes.at(i).vertices.at(j));
-		}
-		loadTextures(i);
-	}
 	if (isTextured)
 	{
+		for (int i = 0; i < meshes.size(); i++)
+		{
+			//Iterate through vertices in the face
+			for (int j = 0; j < meshes[i].vertices.size(); j++)
+			{
+				vertices.push_back(meshes.at(i).vertices.at(j));
+			}
+			loadTextures(i);
+		}
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
+		//Position
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
+		//Texture Coordinates
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
+		//Normal
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
 
 	}
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
-	//Position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
-	//Texture Coordinates
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
-	//Normal
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
-	//Texture bool
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(4, 1, GL_BOOL, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 8));
+	else
+	{
+		for (int i = 0; i < meshes.size(); i++)
+		{
+			//Iterate through vertices in the face
+			for (int j = 0; j < meshes[i].vertices.size(); j++)
+			{
+				vertices.push_back(meshes.at(i).vertices.at(j));
+			}
+			loadTextures(i);
+		}
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
+		//Position
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(0));
+		//Texture Coordinates
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
+		//Normal
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
+		//Texture bool
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(4, 1, GL_BOOL, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 8));
+	}
+
 
 	glBindVertexArray(0);
 }

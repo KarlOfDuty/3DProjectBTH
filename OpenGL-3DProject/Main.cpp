@@ -233,6 +233,7 @@ void render()
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
 		allModels.at(i).draw(shaderGeometryPass);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
