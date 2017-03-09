@@ -26,7 +26,7 @@ void main()
     vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
 	float Specular = texture(gAlbedoSpec, TexCoords).a;
 
-	vec3 lighting = Diffuse * 0.3;
+	vec3 lighting = Diffuse * 0.5;
 	vec3 viewDir = normalize(viewPos - FragPos);
 	for(int i = 0; i < NR_LIGHTS; ++i)
 	{

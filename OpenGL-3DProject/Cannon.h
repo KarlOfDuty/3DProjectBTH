@@ -7,22 +7,21 @@ class Cannon
 	struct CannonBall
 	{
 		Model ballModel;
-		glm::vec3 initialVelocity;
+		float initialVelocity;
 		glm::vec3 speedVector;
 		glm::vec3 accelVector;
 		double velocity;
-		double angle;
-		
-		double radius;
-		double density;
-		double mass;
+		//double angle;
+		glm::vec3 direction;
+		double radius; // m
+		double density; // kg/m^3
+		double mass; // kg
 
-		double spin;
-		float omega;
+		//double spin;
+		//float omega;
 		
 		double time;
 		int loading;
-
 	};
 private:
 
@@ -30,8 +29,10 @@ public:
 	std::vector<CannonBall> allCannonBalls;
 	int tests;
 	float gravity;
-	float wind;
-
+	float windVelocity;
+	double airDensity;
+	double dragCoefficientSphere;
+	glm::vec3 windDirection;
 	Cannon();
 	~Cannon();
 	void update(float dt);
