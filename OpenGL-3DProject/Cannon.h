@@ -10,15 +10,13 @@ class Cannon
 		float initialVelocity;
 		glm::vec3 speedVector;
 		glm::vec3 accelVector;
-		double velocity;
+		float velocity;
 		//double angle;
 		glm::vec3 direction;
-		double radius; // m
-		double density; // kg/m^3
-		double mass; // kg
+		float radius; // m
+		float density; // kg/m^3
+		float mass; // kg
 		glm::vec3 rotation; // rad/s
-		//double spin;
-		//float omega;
 		
 		double time;
 		int loading;
@@ -30,8 +28,8 @@ public:
 	int tests;
 	float gravity;
 	float windVelocity;
-	double airDensity;
-	double dragCoefficientSphere;
+	float airDensity;
+	float dragCoefficientSphere;
 	glm::vec3 windDirection;
 	Cannon();
 	~Cannon();
