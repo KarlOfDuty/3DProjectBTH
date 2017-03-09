@@ -11,7 +11,7 @@ Cannon::Cannon()
 	this->tests = 0;
 	this->windDirection = glm::vec3(1,0,0); // Used for direction only, thus should always be normalized
 	this->windDirection = glm::normalize(windDirection);
-	this->windVelocity = 0; // m/s
+	this->windVelocity = 10; // m/s
 	this->airDensity = 1.293; // kg/m^3
 	this->dragCoefficientSphere = 0.29;
 }
@@ -40,9 +40,7 @@ void Cannon::update(float dt)
 				wind.z = -drag * pow((windDirection.z * windVelocity), 2);
 
 				//Update speed for the ball
-				allCannonBalls[i].speedVector.x = allCannonBalls[i].speedVector.x + (allCannonBalls[i].accelVector.x) * dt;
-				allCannonBalls[i].speedVector.z = allCannonBalls[i].speedVector.z + (allCannonBalls[i].accelVector.z) * dt;
-				allCannonBalls[i].speedVector.y = allCannonBalls[i].speedVector.y + (allCannonBalls[i].accelVector.y) * dt;
+				allCannonBalls[i].speedVector = allCannonBalls[i].speedVector + (allCannonBalls[i].accelVector * dt);
 
 				//Update the total speed from both directions
 				allCannonBalls[i].velocity = sqrt(pow(allCannonBalls[i].speedVector.z, 2) + pow(allCannonBalls[i].speedVector.y, 2) + pow(allCannonBalls[i].speedVector.z, 2));
@@ -66,11 +64,11 @@ void Cannon::update(float dt)
 					glm::translate(allCannonBalls[i].ballModel.getModelMatrix(), allCannonBalls[i].speedVector*dt)
 				);
 				//allCannonBalls[i].ballModel.rotate();
-				tests++;
-				if (tests == 100)
-				{
-					std::cout << allCannonBalls[i].ballModel.getModelMatrix()[3][2] << std::endl;
-				}
+				//tests++;
+				//if (tests == 100)
+				//{
+				//	std::cout << allCannonBalls[i].ballModel.getModelMatrix()[3][2] << std::endl;
+				//}
 			}
 			else
 			{
@@ -116,8 +114,9 @@ void Cannon::shoot(glm::vec3 originPos)
 	newBall.accelVector.y = 1;
 	newBall.accelVector.z = -2;
 	
-	newBall.density = 7870; // kg/m^3
-	newBall.radius = 0.1; // m
+	//Density of concrete
+	newBall.density = 2000; // kg/m^3
+	newBall.radius = 0.5; // m
 	double volume = (4 / 3)*PI*pow(newBall.radius, 3); // m^3
 	newBall.mass = volume * newBall.density; // kg
 
