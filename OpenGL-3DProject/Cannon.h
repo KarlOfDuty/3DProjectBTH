@@ -16,7 +16,7 @@ class Cannon
 		double radius; // m
 		double density; // kg/m^3
 		double mass; // kg
-
+		glm::vec3 rotation; // rad/s
 		//double spin;
 		//float omega;
 		

@@ -11,7 +11,7 @@ Cannon::Cannon()
 	this->tests = 0;
 	this->windDirection = glm::vec3(1,0,0); // Used for direction only, thus should always be normalized
 	this->windDirection = glm::normalize(windDirection);
-	this->windVelocity = 10; // m/s
+	this->windVelocity = 0; // m/s
 	this->airDensity = 1.293; // kg/m^3
 	this->dragCoefficientSphere = 0.29;
 }
@@ -38,11 +38,22 @@ void Cannon::update(float dt)
 				wind.x = -drag * pow((windDirection.x * windVelocity), 2);
 				wind.y = -drag * pow((windDirection.y * windVelocity), 2);
 				wind.z = -drag * pow((windDirection.z * windVelocity), 2);
-
 				//Update speed for the ball
 				allCannonBalls[i].speedVector = allCannonBalls[i].speedVector + (allCannonBalls[i].accelVector * dt);
 
-				//Update the total speed from both directions
+				//Calculate rotation for magnus force
+				glm::vec3 angularVelocityX = glm::vec3(1, 0, 0) * allCannonBalls[i].rotation.x;
+				glm::vec3 angularVelocityY = glm::vec3(0, 1, 0) * allCannonBalls[i].rotation.y;
+				glm::vec3 angularVelocityZ = glm::vec3(0, 0, 1) * allCannonBalls[i].rotation.z;
+
+				glm::vec3 magnusXRotation = glm::vec3(pow(PI, 2) * pow(allCannonBalls[i].radius, 3) * airDensity) * (cross(angularVelocityX*dt, allCannonBalls[i].speedVector*dt));
+				glm::vec3 magnusYRotation = glm::vec3(pow(PI, 2) * pow(allCannonBalls[i].radius, 3) * airDensity) * (cross(angularVelocityY*dt, allCannonBalls[i].speedVector*dt));
+				glm::vec3 magnusZRotation = glm::vec3(pow(PI, 2) * pow(allCannonBalls[i].radius, 3) * airDensity) * (cross(angularVelocityZ*dt, allCannonBalls[i].speedVector*dt));
+				//std::cout << "MagnusX: " << magnusXRotation.x << " " << magnusXRotation.y << " " << magnusXRotation.z << std::endl;
+				//std::cout << "MagnusY: " << magnusYRotation.x << " " << magnusYRotation.y << " " << magnusYRotation.z << std::endl;
+				//std::cout << "MagnusZ: " << magnusZRotation.x << " " << magnusZRotation.y << " " << magnusZRotation.z << std::endl;
+
+				//Update the total speed from all directions
 				allCannonBalls[i].velocity = sqrt(pow(allCannonBalls[i].speedVector.z, 2) + pow(allCannonBalls[i].speedVector.y, 2) + pow(allCannonBalls[i].speedVector.z, 2));
 
 				//Update the angle
@@ -50,12 +61,9 @@ void Cannon::update(float dt)
 				allCannonBalls[i].direction = glm::normalize(allCannonBalls[i].direction);
 
 				//Update the acceleration for the ball
-				//allCannonBalls[i].accelVector.x = (wind.x / allCannonBalls[i].mass) + (totalDrag*pow(allCannonBalls[i].velocity, 2)*allCannonBalls[i].direction.x);
-				//allCannonBalls[i].accelVector.y = (wind.y / allCannonBalls[i].mass) + (totalDrag*pow(allCannonBalls[i].velocity, 2)*allCannonBalls[i].direction.y) - gravity;
-				//allCannonBalls[i].accelVector.z = (wind.z / allCannonBalls[i].mass) + (totalDrag*pow(allCannonBalls[i].velocity, 2)*allCannonBalls[i].direction.z);
-
 				//Wind and drag added to all axies accelerations
-				allCannonBalls[i].accelVector = (wind / (float)allCannonBalls[i].mass) + ((float)totalDrag*(float)pow(allCannonBalls[i].velocity, 2)*allCannonBalls[i].direction);
+				//allCannonBalls[i].accelVector = (wind / (float)allCannonBalls[i].mass) + ((float)totalDrag*(float)pow(allCannonBalls[i].velocity, 2)*allCannonBalls[i].direction);
+				allCannonBalls[i].accelVector = (wind / (float)allCannonBalls[i].mass) + magnusXRotation + magnusYRotation + magnusZRotation + ((float)totalDrag*(float)pow(allCannonBalls[i].velocity, 2)*allCannonBalls[i].direction);
 				//Gravitation only on the Y-axis
 				allCannonBalls[i].accelVector.y = -gravity;
 
@@ -63,18 +71,13 @@ void Cannon::update(float dt)
 				allCannonBalls[i].ballModel.setModelMatrix(
 					glm::translate(allCannonBalls[i].ballModel.getModelMatrix(), allCannonBalls[i].speedVector*dt)
 				);
-				//allCannonBalls[i].ballModel.rotate();
-				//tests++;
-				//if (tests == 100)
-				//{
-				//	std::cout << allCannonBalls[i].ballModel.getModelMatrix()[3][2] << std::endl;
-				//}
 			}
 			else
 			{
 				allCannonBalls[i].loading++;
 			}
 		}
+	//	tests++;
 	//}
 }
 void Cannon::draw(Shader shader)
@@ -99,8 +102,7 @@ void Cannon::shoot(glm::vec3 originPos)
 
 	newBall.velocity = 20; // m/s
 	
-	//newBall.angle = 30 * PI / 180; // rad for z-axis
-
+	newBall.rotation = glm::vec3(2,0,0);
 	//Angle which the ball starts from
 	newBall.direction = glm::vec3(0,1,-2);
 	newBall.direction = glm::normalize(newBall.direction);
