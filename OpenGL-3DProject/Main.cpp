@@ -57,7 +57,7 @@ std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
 
-void RenderQuad()
+void renderQuad()
 {
 	if (quadVAO == 0)
 	{
@@ -85,7 +85,7 @@ void RenderQuad()
 
 }
 
-void CreateGBuffer()
+void createGBuffer()
 {
 	shaderGeometryPass = Shader("gBufferGeometryVertex.glsl", "gBufferGeometryFragment.glsl");
 	shaderLightningPass = Shader("gBufferLightningVertex.glsl", "gBufferLightningFragment.glsl");
@@ -124,6 +124,7 @@ void CreateGBuffer()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
+	//Ambient colour buffer
 	glGenTextures(1, &gAmbient);
 	glBindTexture(GL_TEXTURE_2D, gAmbient);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 800, 600, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -164,12 +165,12 @@ void createModels()
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		-1.0, 0.0, 0.0, 1.0 }));
+		0.0, 0.0, 0.0, 1.0 }));
 	allModels.push_back(Model(modelLibrary.at(1), {
-		0.2, 0.0, 0.0, 0.0,
-		0.0, 0.2, 0.0, 0.0,
-		0.0, 0.0, 0.2, 0.0,
-		1.0, 1.0, 0.0, 1.0 }));
+		1.2, 0.0, 0.0, 0.0,
+		0.0, 1.2, 0.0, 0.0,
+		0.0, 0.0, 1.2, 0.0,
+		1.0, 0.0, 0.0, 1.0 }));
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
@@ -233,7 +234,6 @@ void render()
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
 		allModels.at(i).draw(shaderGeometryPass);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -264,7 +264,7 @@ void render()
 
 	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
 
-	RenderQuad();
+	renderQuad();
 }
 
 int main()
@@ -288,7 +288,7 @@ int main()
 	//Enables depth test so vertices are drawn in the correct order
 	glEnable(GL_DEPTH_TEST);
 	//Create gBuffer
-	CreateGBuffer();
+	createGBuffer();
 	//Create models
 	loadModels();
 	createModels();

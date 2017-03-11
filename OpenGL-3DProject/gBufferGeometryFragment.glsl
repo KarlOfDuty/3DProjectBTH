@@ -13,16 +13,23 @@ uniform sampler2D ambientTexture;
 in vec2 TexCoords;
 in vec3 FragPos;
 in vec3 Normal;
+flat in int useNormalMap;
 
 void main()
 {
 	gPosition = FragPos;
-    //gNormal = normalize(Normal);
-	gNormal = texture(normalMap, TexCoords).rgb;
-    //Transform normal vector to range [-1,1] from [0,1]
-    gNormal = normalize(gNormal * 2.0 - 1.0);
+	if(useNormalMap == 1)
+	{
+		gNormal = texture(normalMap, TexCoords).rgb;
+		//Transform normal vector to range [-1,1] from [0,1]
+		gNormal = normalize(gNormal * 2.0 - 1.0);
+	}
+	else
+	{
+		gNormal = normalize(Normal);
+	}
 	gAmbient = texture(ambientTexture,TexCoords).rgb;
-	//gAmbient = vec3(1,1,1);
+	//gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
 	gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
 	gAlbedoSpec.a = texture(specularTexture, TexCoords).r;
 } 

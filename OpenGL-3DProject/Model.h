@@ -20,6 +20,7 @@ struct Material
 	glm::vec3 diffuseColour;
 	glm::vec3 specularColour;
 	//Textures
+	GLuint ambientTexture;
 	GLuint diffuseTexture;
 	GLuint specularTexture;
 	GLuint normalMapTexture;
@@ -41,6 +42,7 @@ struct Vertex
 	glm::vec3 pos;
 	glm::vec2 texPos;
 	glm::vec3 normal;
+	int useNormalMap;
 };
 struct Mesh
 {
@@ -57,7 +59,7 @@ private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
 	std::vector<Mesh> meshes;
-	bool isTextured;
+
 	void setupModel();
 	void loadTextures(int meshNr);
 public:
