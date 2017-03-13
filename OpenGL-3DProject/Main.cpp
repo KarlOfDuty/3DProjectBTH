@@ -47,10 +47,10 @@ sf::Clock deltaClock;
 sf::Time deltaTime;
 //Matrices
 glm::mat4 viewMatrix = glm::lookAt(
-	glm::vec3(0, 0, 2),
+	glm::vec3(0, 100, 0),
 	glm::vec3(0, 0, 0),
 	glm::vec3(0, 1, 0));
-glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 20.0f);
+glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 200.0f);
 //All models in the program
 std::vector<Model> allModels;
 std::vector<Model> modelLibrary;
@@ -159,18 +159,22 @@ void loadModels()
 
 void createModels()
 {
+
 	//Create the models and store them in the vector of all models to be rendered
-	
 	allModels.push_back(Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(Model(modelLibrary.at(1), {
-		1.2, 0.0, 0.0, 0.0,
-		0.0, 1.2, 0.0, 0.0,
-		0.0, 0.0, 1.2, 0.0,
-		1.0, 0.0, 0.0, 1.0 }));
+	std::srand(11);
+	for (int i = 0; i < 100; i++)
+	{
+		allModels.push_back(Model(modelLibrary.at(1), {
+			1.0, 0.0, 0.0, 0.0,
+			0.0, 1.0, 0.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
+			(rand() % 100)-50, (rand() % 10)-5, (rand() % 100)-50, 1.0 }));
+	}
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
