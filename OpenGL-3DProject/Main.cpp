@@ -219,7 +219,7 @@ void update(sf::Window &window)
 	}
 }
 
-void render()
+void render(sf::Window &window)
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -230,8 +230,18 @@ void render()
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
 	GLint projectionID = glGetUniformLocation(shaderGeometryPass.program, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projectionMatrix[0][0]);
+	
+	//Mouseover check
+	int mouseOvered = playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
+
 	for (int i = 0; i < allModels.size(); i++)
 	{
+		int isMouseOver = 0;
+		if (i == mouseOvered)
+		{
+			isMouseOver = 1;
+		}
+		glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), isMouseOver);
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
 		allModels.at(i).draw(shaderGeometryPass);
 	}
@@ -319,7 +329,7 @@ int main()
 			}
 		}
 		update(window);
-		render();
+		render(window);
 		if(debug)TwDraw();
 		//End the current frame (internally swaps the front and back buffers)
 		window.display();
