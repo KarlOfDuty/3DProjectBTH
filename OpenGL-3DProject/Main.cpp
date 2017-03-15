@@ -159,37 +159,16 @@ void loadModels()
 void createModels()
 {
 	//Create the models and store them in the vector of all models to be rendered
-	//allModels.push_back(new Model(modelLibrary.at(0), {
-	//	1.0, 0.0, 0.0, 0.0,
-	//	0.0, 1.0, 0.0, 0.0,
-	//	0.0, 0.0, 1.0, 0.0,
-	//	0.0, 0.0, 0.0, 1.0 }));
+	allModels.push_back(new Model(modelLibrary.at(0), {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0 }));
 	allModels.push_back(new Model(modelLibrary.at(1), {
 		0.1, 0.0, 0.0, 0.0,
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,
 		1.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(new Model(modelLibrary.at(1), {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
-		2.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(new Model(modelLibrary.at(1), {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
-		3.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(new Model(modelLibrary.at(1), {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
-		4.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(new Model(modelLibrary.at(1), {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
-		5.0, 0.0, 0.0, 1.0 }));
-
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
@@ -230,7 +209,7 @@ void sort()
 		{
 			modelPos1 = allModels[i]->getModelMatrix()[3];
 			modelPos2 = allModels[i + 1]->getModelMatrix()[3];
-			//Compare distance to model1 and model2 and swap if out of order.
+			//Compare distance to model1 and distance to model2 and swap if out of order.
 			if (glm::distance(modelPos1, playerCamera.getCameraPos()) > glm::distance(modelPos2, playerCamera.getCameraPos()))
 			{
 				std::swap(allModels[i], allModels[i + 1]);
@@ -272,7 +251,8 @@ void render()
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
 	GLint projectionID = glGetUniformLocation(shaderGeometryPass.program, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projectionMatrix[0][0]);
-	for (int i = 0; i < 1; i++)
+	//Once to test front to back rendering
+	for (int i = 0; i < allModels.size(); i++)
 	{
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
 		allModels.at(i)->draw(shaderGeometryPass);
