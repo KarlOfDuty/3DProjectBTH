@@ -56,8 +56,6 @@ void Model::rotate()
 //Reads a .obj file and creates a Model object from the data
 void Model::read(std::string filename)
 {
-	//Removes any old properties
-	//faces = std::vector<std::vector<Vertex>>();
 	//Temporary containers
 	std::ifstream file(filename);
 	std::string str = "";
@@ -165,6 +163,8 @@ void Model::read(std::string filename)
 					i++;
 				};
 				Vertex aVertex;
+				//This variable is handled in the setup function
+				aVertex.useNormalMap = 0;
 				//Creates a vertex from the data pointed to by the indices
 				if (i == 3)
 				{
@@ -334,7 +334,6 @@ void Model::read(std::string filename)
 					mtlWord >> str;
 					if (matDebug)std::cout << "Diffuse texture map: " << filePath + str << std::endl;
 					materials.at(materialBeingAdded).textureMapDiffuseFile = filePath + str;
-					materials.at(materialBeingAdded).hasTextures = true;
 				}
 				else if (str == "map_Ks" && materialBeingAdded != -1)
 				{
@@ -385,19 +384,25 @@ void Model::draw(Shader shader)
 	glBindVertexArray(this->VAO);
 	for (int i = 0; i < this->meshes.size(); i++)
 	{
+		//Ambient Texture
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
-		glUniform1i(glGetUniformLocation(shader.program, "diffuseTexture"), 0);
+		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.ambientTexture);
+		glUniform1i(glGetUniformLocation(shader.program, "ambientTexture"), 0);
+		//Diffuse Texture
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.diffuseTexture);
-		glUniform1i(glGetUniformLocation(shader.program, "specularTexture"), 1);
+		glUniform1i(glGetUniformLocation(shader.program, "diffuseTexture"), 1);
+		//Specular Texture
 		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.specularTexture);
+		glUniform1i(glGetUniformLocation(shader.program, "specularTexture"), 2);
+		//Normal Map
+		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, meshes.at(i).material.normalMapTexture);
-		glUniform1i(glGetUniformLocation(shader.program, "normalMap"), 2);
+		glUniform1i(glGetUniformLocation(shader.program, "normalMap"), 3);
 		
 		glDrawArrays(GL_TRIANGLES, 0, this->meshes[i].vertices.size()*3);
 	}
-
 	glBindVertexArray(0);
 }
 //Sets the model up to be drawn
@@ -405,21 +410,22 @@ void Model::setupModel()
 {
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
-
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
 	std::vector<Vertex> vertices = std::vector<Vertex>();
 	for (int i = 0; i < meshes.size(); i++)
 	{
 		//Iterate through vertices in the face
 		for (int j = 0; j < meshes[i].vertices.size(); j++)
 		{
+			if (meshes[i].material.normalMapFile != "")
+			{
+				meshes.at(i).vertices[j].useNormalMap = 1;
+			}
 			vertices.push_back(meshes.at(i).vertices.at(j));
 		}
 		loadTextures(i);
 	}
-
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
 	//Position
 	glEnableVertexAttribArray(0);
@@ -430,49 +436,120 @@ void Model::setupModel()
 	//Normal
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
-
+	//UseNormalMap Bool
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(3, 4, GL_INT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 8));
+	//Unbind the vertex array buffer
 	glBindVertexArray(0);
 }
 
 void Model::loadTextures(int meshNr)
 {
-	//Loading diffuse texture for mesh
+	//Loading ambient texture or colour for mesh
+	glGenTextures(1, &meshes.at(meshNr).material.ambientTexture);
+	glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.ambientTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//Check weather to use texture or solid colour
+	if (meshes[meshNr].material.textureMapAmbientFile != "")
+	{
+		int width, height;
+		unsigned char* image;
+		image = SOIL_load_image(meshes.at(meshNr).material.textureMapAmbientFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		SOIL_free_image_data(image);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	else
+	{
+		float colour[3] = {
+			meshes[meshNr].material.ambientColour.r,
+			meshes[meshNr].material.ambientColour.g,
+			meshes[meshNr].material.ambientColour.b
+		};
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, colour);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//Loading diffuse texture or colour for mesh
 	glGenTextures(1, &meshes.at(meshNr).material.diffuseTexture);
 	glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.diffuseTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	int width, height;
-	unsigned char* image = SOIL_load_image(meshes.at(meshNr).material.textureMapDiffuseFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
+	//Check weather to use texture or solid colour
+	if (meshes[meshNr].material.textureMapDiffuseFile != "")
+	{	
+		int width, height;
+		unsigned char* image;
+		image = SOIL_load_image(meshes.at(meshNr).material.textureMapDiffuseFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		SOIL_free_image_data(image);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	else
+	{
+		float colour[3] = { 
+			meshes[meshNr].material.diffuseColour.r,
+			meshes[meshNr].material.diffuseColour.g,
+			meshes[meshNr].material.diffuseColour.b
+		};
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, colour);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
 	glBindTexture(GL_TEXTURE_2D, 0);
-	//Loading specular texture for mesh
+
+	//Loading specular texture or colour for mesh
 	glGenTextures(1, &meshes.at(meshNr).material.specularTexture);
 	glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.specularTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	image = SOIL_load_image(meshes.at(meshNr).material.textureMapSpecularFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
+	//Check weather to use texture or solid colour
+	if (meshes[meshNr].material.textureMapSpecularFile != "")
+	{
+		int width, height;
+		unsigned char* image;
+		image = SOIL_load_image(meshes.at(meshNr).material.textureMapSpecularFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		SOIL_free_image_data(image);
+	}
+	else
+	{
+		float colour[3] = { 
+			meshes[meshNr].material.specularColour.r,
+			meshes[meshNr].material.specularColour.g,
+			meshes[meshNr].material.specularColour.b 
+		};
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, colour);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
 	glBindTexture(GL_TEXTURE_2D, 0);
-	//Normal map
-	glGenTextures(1, &meshes.at(meshNr).material.normalMapTexture);
-	glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.normalMapTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	image = SOIL_load_image(meshes.at(meshNr).material.normalMapFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	//Check weather to use normal map
+	if (meshes[meshNr].material.normalMapFile != "")
+	{
+		glGenTextures(1, &meshes.at(meshNr).material.normalMapTexture);
+		glBindTexture(GL_TEXTURE_2D, meshes.at(meshNr).material.normalMapTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		int width, height;
+		unsigned char* image;
+		image = SOIL_load_image(meshes.at(meshNr).material.normalMapFile.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		SOIL_free_image_data(image);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
 }
 //Constructors
 Model::Model(std::string filename)
@@ -514,7 +591,7 @@ Model::Model(Model &otherModel)
 	this->meshes = otherModel.meshes;
 	setupModel();
 }
-Model::Model(Model & otherModel, glm::mat4 modelMat)
+Model::Model(Model &otherModel, glm::mat4 modelMat)
 {
 	this->modelMatrix =  modelMat;
 	this->rotationMatrix = otherModel.rotationMatrix;

@@ -20,6 +20,7 @@ struct Material
 	glm::vec3 diffuseColour;
 	glm::vec3 specularColour;
 	//Textures
+	GLuint ambientTexture;
 	GLuint diffuseTexture;
 	GLuint specularTexture;
 	GLuint normalMapTexture;
@@ -28,9 +29,9 @@ struct Material
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
 	std::string normalMapFile;
+	//Read but not implemented
 	float transparency;
 	int illuminationMode;
-	bool hasTextures = false;
 	//Searching Functions
 	static int findMaterial(std::string name, std::vector<Material> materials);
 	int findMaterial(std::vector<Material> materials);
@@ -41,6 +42,7 @@ struct Vertex
 	glm::vec3 pos;
 	glm::vec2 texPos;
 	glm::vec3 normal;
+	int useNormalMap;
 };
 struct Mesh
 {
@@ -57,10 +59,10 @@ private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
 	std::vector<Mesh> meshes;
+
 	void setupModel();
 	void loadTextures(int meshNr);
 public:
-	//std::vector<std::vector<Vertex>> faces;
 	GLuint VAO; //Vertex Array Object
 	GLuint VBO; //Vertex Buffer Object
 	Material getMaterial(int index);

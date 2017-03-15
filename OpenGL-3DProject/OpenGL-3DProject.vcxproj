@@ -129,12 +129,10 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="FragmentShader.glsl" />
     <None Include="gBufferGeometryFragment.glsl" />
     <None Include="gBufferGeometryVertex.glsl" />
     <None Include="gBufferLightningFragment.glsl" />
     <None Include="gBufferLightningVertex.glsl" />
-    <None Include="VertexShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />

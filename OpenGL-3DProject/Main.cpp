@@ -1,3 +1,4 @@
+//TODO: Ambient texture and colour support
 #include <GL\glew.h>
 #include <GL\GL.h>
 #include <glm\glm.hpp>
@@ -17,8 +18,8 @@
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
-const int windowWidth = 800;
-const int windowHeight = 600;
+const int windowWidth = 1280;
+const int windowHeight = 720;
 bool debug = false;
 //Camera
 Camera playerCamera;
@@ -28,7 +29,7 @@ GLuint gBuffer;
 Shader shaderGeometryPass;
 Shader shaderLightningPass;
 //gBuffer Textures
-GLuint gPosition, gNormal, gAlbedoSpec;
+GLuint gPosition, gNormal, gAlbedoSpec, gAmbient;
 //Quad VAO and VBO
 GLuint quadVAO = 0;
 GLuint quadVBO;
@@ -56,7 +57,7 @@ std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
 
-void RenderQuad()
+void renderQuad()
 {
 	if (quadVAO == 0)
 	{
@@ -84,7 +85,7 @@ void RenderQuad()
 
 }
 
-void CreateGBuffer()
+void createGBuffer()
 {
 	shaderGeometryPass = Shader("gBufferGeometryVertex.glsl", "gBufferGeometryFragment.glsl");
 	shaderLightningPass = Shader("gBufferLightningVertex.glsl", "gBufferLightningFragment.glsl");
@@ -94,6 +95,7 @@ void CreateGBuffer()
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gPosition"), 0);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gNormal"), 1);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAlbedoSpec"), 2);
+	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAmbient"), 3);
 
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -101,7 +103,7 @@ void CreateGBuffer()
 	// - Position color buffer
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 800, 600, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
@@ -109,7 +111,7 @@ void CreateGBuffer()
 	// - Normal color buffer
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 800, 600, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
@@ -117,19 +119,27 @@ void CreateGBuffer()
 	// - Color + Specular color buffer
 	glGenTextures(1, &gAlbedoSpec);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 800, 600, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, windowWidth, windowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
+	//Ambient colour buffer
+	glGenTextures(1, &gAmbient);
+	glBindTexture(GL_TEXTURE_2D, gAmbient);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, windowWidth, windowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gAmbient, 0);
+
 	// - Tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	GLuint attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	GLuint rboDepth;
 	glGenRenderbuffers(1, &rboDepth);
 	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 	// - Finally check if framebuffer is complete
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -142,7 +152,7 @@ void loadModels()
 	//Reads the models from file once
 	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
@@ -155,12 +165,12 @@ void createModels()
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		-1.0, 0.0, 0.0, 1.0 }));
+		0.0, 0.0, 0.0, 1.0 }));
 	allModels.push_back(Model(modelLibrary.at(1), {
-		0.2, 0.0, 0.0, 0.0,
-		0.0, 0.2, 0.0, 0.0,
-		0.0, 0.0, 0.2, 0.0,
-		1.0, 1.0, 0.0, 1.0 }));
+		1.2, 0.0, 0.0, 0.0,
+		0.0, 1.2, 0.0, 0.0,
+		0.0, 0.0, 1.2, 0.0,
+		1.0, 0.0, 0.0, 1.0 }));
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
@@ -237,6 +247,8 @@ void render()
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, gAmbient);
 
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{
@@ -252,7 +264,7 @@ void render()
 
 	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
 
-	RenderQuad();
+	renderQuad();
 }
 
 int main()
@@ -276,7 +288,7 @@ int main()
 	//Enables depth test so vertices are drawn in the correct order
 	glEnable(GL_DEPTH_TEST);
 	//Create gBuffer
-	CreateGBuffer();
+	createGBuffer();
 	//Create models
 	loadModels();
 	createModels();
