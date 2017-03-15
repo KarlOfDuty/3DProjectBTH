@@ -1,4 +1,3 @@
-//TODO: Ambient texture and colour support
 #include <GL\glew.h>
 #include <GL\GL.h>
 #include <glm\glm.hpp>
