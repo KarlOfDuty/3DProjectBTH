@@ -77,41 +77,70 @@ glm::vec3 Camera::getCameraPos()
 {
 	return this->cameraPos;
 }
-void Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model> &allModels)
+int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model> &allModels)
 {
+	int closestModel = -1;
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
 	{
-		//float x = (2.0f * sf::Mouse::getPosition(window).x) / window.getSize().x - 1.0f;
-		//float y = 1.0f - (2.0f * sf::Mouse::getPosition(window).y / window.getSize().y);
-		float x = (2.0f * (window.getSize().x / 2)) / window.getSize().x - 1.0f;
-		float y = 1.0f - (2.0f * (window.getSize().y / 2) / window.getSize().y);
-		float z = 1.0f;
+		float x, y, z;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
+		{
+			//Get mouse pos
+			x = (2.0f * sf::Mouse::getPosition(window).x / window.getSize().x - 1.0f);
+			y = 1.0f - (2.0f * sf::Mouse::getPosition(window).y / window.getSize().y);
+			z = 1.0f;
+		}
+		else
+		{
+			//Get middle of windows position
+			x = (2.0f * (window.getSize().x / 2)) / window.getSize().x - 1.0f;
+			y = 1.0f - (2.0f * (window.getSize().y / 2) / window.getSize().y);
+			z = 1.0f;
+		}
 		glm::vec3 ray_nds = glm::vec3(x, y, z);
+		//Convert to 
 		glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
+		//Convert to eye space
 		glm::vec4 ray_eye = glm::inverse(projectionMatrix) * ray_clip;
 		ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+		//Convert to world space
 		glm::vec3 ray_wor = glm::vec3((glm::inverse(viewMatrix)*ray_eye));
-		//std::cout << "ray_wor : X = " << ray_wor.x << " : Y = " << ray_wor.y << " : Z " << ray_wor.z << std::endl;
 
+		//Set max and miniumum boxes from positions, max distance from camera to test intersection
 		glm::vec3 aabb_min(-0.5f, -0.5f, -0.5f);
 		glm::vec3 aabb_max(0.5f, 0.5f, 0.5f);
 		float distance = 100;
-		//std::cout << "ORIGIN = " << playerCamera.getCameraPos().x << ", " << playerCamera.getCameraPos().y << ", " << playerCamera.getCameraPos().z << std::endl;
+
 		for (int i = 0; i < allModels.size(); i++)
 		{
 			glm::mat4 ModelMatrix = allModels[i].getModelMatrix();
-			ModelMatrix *= allModels[i].getRotationMatrix();
-			std::cout << "TESTING INTERSECTIONS WITH I = " << i << std::endl;
-			if (testIntersection(cameraPos, ray_wor, aabb_min, aabb_max, ModelMatrix, distance))
+			//ModelMatrix *= allModels[i].getRotationMatrix();
+			glm::vec3 minPos = allModels[i].getMinBounding();
+			glm::vec3 maxPos = allModels[i].getMaxBouding();
+			
+			if (testIntersection(cameraPos, ray_wor, minPos, maxPos, ModelMatrix, distance))
 			{
-				std::cout << "INTERSECTS WITH MOUSE" << std::endl;
-			}
-			else
-			{
-				std::cout << "DOES NOT INTERSECT WITH MOUSE" << std::endl;
+				if (closestModel == -1)
+				{
+					closestModel = i;
+				}
+				else
+				{
+					//Coordinates for the closest model
+					glm::mat4 closestModelMatrix(allModels[closestModel].getModelMatrix());
+					glm::vec3 closestModelPos(closestModelMatrix[3].x, closestModelMatrix[3].y, closestModelMatrix[3].z);
+					//Coordinates for new model
+					glm::vec3 modelPos(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
+					//Check if new model is closer, if true then its the new closest
+					if (glm::distance(cameraPos, closestModelPos) > glm::distance(cameraPos, modelPos))
+					{
+						closestModel = i;
+					}
+				}
 			}
 		}
 	}
+	return closestModel;
 }
 bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance)
 

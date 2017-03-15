@@ -9,6 +9,7 @@ uniform sampler2D diffuseTexture;
 uniform sampler2D specularTexture;
 uniform sampler2D normalMap;
 uniform sampler2D ambientTexture;
+uniform int isMouseOvered;
 
 in vec2 TexCoords;
 in vec3 FragPos;
@@ -28,8 +29,14 @@ void main()
 	{
 		gNormal = normalize(Normal);
 	}
-	gAmbient = texture(ambientTexture,TexCoords).rgb;
-	//gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
-	gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
+	if (isMouseOvered == 1)
+	{
+		gAlbedoSpec.rgb = vec3(1,0,0);
+	}
+	else
+	{
+		gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
+	}
 	gAlbedoSpec.a = texture(specularTexture, TexCoords).r;
+	gAmbient = texture(ambientTexture,TexCoords).rgb;
 } 
