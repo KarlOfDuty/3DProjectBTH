@@ -58,7 +58,7 @@ class Model
 private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
-	std::vector<Mesh> meshes;
+	std::vector<Mesh*> meshes;
 
 	void setupModel();
 	void loadTextures(int meshNr);

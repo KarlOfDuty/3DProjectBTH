@@ -77,7 +77,7 @@ glm::vec3 Camera::getCameraPos()
 {
 	return this->cameraPos;
 }
-void Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model> &allModels)
+void Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels)
 {
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
 	{
@@ -99,8 +99,8 @@ void Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::
 		//std::cout << "ORIGIN = " << playerCamera.getCameraPos().x << ", " << playerCamera.getCameraPos().y << ", " << playerCamera.getCameraPos().z << std::endl;
 		for (int i = 0; i < allModels.size(); i++)
 		{
-			glm::mat4 ModelMatrix = allModels[i].getModelMatrix();
-			ModelMatrix *= allModels[i].getRotationMatrix();
+			glm::mat4 ModelMatrix = allModels[i]->getModelMatrix();
+			ModelMatrix *= allModels[i]->getRotationMatrix();
 			std::cout << "TESTING INTERSECTIONS WITH I = " << i << std::endl;
 			if (testIntersection(cameraPos, ray_wor, aabb_min, aabb_max, ModelMatrix, distance))
 			{

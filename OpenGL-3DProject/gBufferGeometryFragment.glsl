@@ -29,7 +29,6 @@ void main()
 		gNormal = normalize(Normal);
 	}
 	gAmbient = texture(ambientTexture,TexCoords).rgb;
-	//gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
 	gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
 	gAlbedoSpec.a = texture(specularTexture, TexCoords).r;
 } 
