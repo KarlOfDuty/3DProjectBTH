@@ -51,7 +51,7 @@ glm::mat4 viewMatrix = glm::lookAt(
 	glm::vec3(0, 1, 0));
 glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 20.0f);
 //All models in the program
-std::vector<Model> allModels;
+std::vector<Model*> allModels;
 std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
@@ -151,7 +151,7 @@ void loadModels()
 	//Reads the models from file once
 	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+	modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
@@ -159,22 +159,21 @@ void loadModels()
 void createModels()
 {
 	//Create the models and store them in the vector of all models to be rendered
-	
-	allModels.push_back(Model(modelLibrary.at(0), {
+	allModels.push_back(new Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(Model(modelLibrary.at(1), {
-		1.2, 0.0, 0.0, 0.0,
-		0.0, 1.2, 0.0, 0.0,
-		0.0, 0.0, 1.2, 0.0,
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.1, 0.0, 0.0, 0.0,
+		0.0, 0.1, 0.0, 0.0,
+		0.0, 0.0, 0.1, 0.0,
 		1.0, 0.0, 0.0, 1.0 }));
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		allModels[i].setRotationMatrix(rotation);
+		allModels[i]->setRotationMatrix(rotation);
 	}
 	//Some lights with random values
 	std::srand(13);
@@ -197,7 +196,28 @@ void setUpTweakBar()
 	debugInterface = TwNewBar("Debug Interface");
 	//TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
 }
-
+void sort()
+{
+	//Bubble sort
+	glm::vec3 modelPos1;
+	glm::vec3 modelPos2;
+	bool sorted = false;
+	while (!sorted)
+	{
+		sorted = true;
+		for (int i = 0; i < allModels.size() - 1;i++)
+		{
+			modelPos1 = allModels[i]->getModelMatrix()[3];
+			modelPos2 = allModels[i + 1]->getModelMatrix()[3];
+			//Compare distance to model1 and distance to model2 and swap if out of order.
+			if (glm::distance(modelPos1, playerCamera.getCameraPos()) > glm::distance(modelPos2, playerCamera.getCameraPos()))
+			{
+				std::swap(allModels[i], allModels[i + 1]);
+				sorted = false;
+			}
+		}
+	}
+}
 void update(sf::Window &window)
 {
 	//Controls update timings
@@ -215,8 +235,9 @@ void update(sf::Window &window)
 	}
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		allModels[i].rotate();
+		allModels[i]->rotate();
 	}
+	sort();
 }
 
 void render(sf::Window &window)
@@ -230,10 +251,9 @@ void render(sf::Window &window)
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
 	GLint projectionID = glGetUniformLocation(shaderGeometryPass.program, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projectionMatrix[0][0]);
-	
 	//Mouseover check
 	int mouseOvered = playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
-
+	//Once to test front to back rendering
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		int isMouseOver = 0;
@@ -242,8 +262,8 @@ void render(sf::Window &window)
 			isMouseOver = 1;
 		}
 		glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), isMouseOver);
-		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
-		allModels.at(i).draw(shaderGeometryPass);
+		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
+		allModels.at(i)->draw(shaderGeometryPass);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

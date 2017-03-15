@@ -58,7 +58,7 @@ class Model
 private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
-	std::vector<Mesh> meshes;
+	std::vector<Mesh*> meshes;
 
 	glm::vec3 minBounding;
 	glm::vec3 maxBounding;

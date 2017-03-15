@@ -77,7 +77,7 @@ glm::vec3 Camera::getCameraPos()
 {
 	return this->cameraPos;
 }
-int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model> &allModels)
+int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels)
 {
 	int closestModel = -1;
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
@@ -113,10 +113,10 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 
 		for (int i = 0; i < allModels.size(); i++)
 		{
-			glm::mat4 ModelMatrix = allModels[i].getModelMatrix();
+			glm::mat4 ModelMatrix = allModels[i]->getModelMatrix();
 			//ModelMatrix *= allModels[i].getRotationMatrix();
-			glm::vec3 minPos = allModels[i].getMinBounding();
-			glm::vec3 maxPos = allModels[i].getMaxBouding();
+			glm::vec3 minPos = allModels[i]->getMinBounding();
+			glm::vec3 maxPos = allModels[i]->getMaxBouding();
 			
 			if (testIntersection(cameraPos, ray_wor, minPos, maxPos, ModelMatrix, distance))
 			{
@@ -127,7 +127,7 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 				else
 				{
 					//Coordinates for the closest model
-					glm::mat4 closestModelMatrix(allModels[closestModel].getModelMatrix());
+					glm::mat4 closestModelMatrix(allModels[closestModel]->getModelMatrix());
 					glm::vec3 closestModelPos(closestModelMatrix[3].x, closestModelMatrix[3].y, closestModelMatrix[3].z);
 					//Coordinates for new model
 					glm::vec3 modelPos(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
