@@ -36,6 +36,5 @@ public:
 	void update(float dt);
 	void draw(Shader shader);
 	void shoot(glm::vec3 originPos);
-	glm::vec3 getMovementVector(int cannonBallNr);
 };
 #endif

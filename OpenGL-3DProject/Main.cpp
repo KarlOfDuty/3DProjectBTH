@@ -227,13 +227,6 @@ void update(sf::Window &window)
 		aCannon.shoot(playerCamera.getCameraPos());
 	}
 	aCannon.update(deltaTime.asSeconds());
-	if (!aCannon.allCannonBalls.empty())
-	{
-		ballX = aCannon.getMovementVector(0).x;
-		ballY = aCannon.getMovementVector(0).y;
-		ballZ = aCannon.getMovementVector(0).z;
-		speed = aCannon.allCannonBalls[0].velocity;
-	}
 }
 
 void render(sf::Window &window)

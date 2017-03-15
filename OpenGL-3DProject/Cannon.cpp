@@ -105,14 +105,3 @@ void Cannon::shoot(glm::vec3 originPos)
 	newBall.time = 0.0f;
 	allCannonBalls.push_back(newBall);
 }
-glm::vec3 Cannon::getMovementVector(int cannonBallNr)
-{
-	if(cannonBallNr >= 0 && cannonBallNr <= this->allCannonBalls.size() && !this->allCannonBalls.empty())
-	{
-		return this->allCannonBalls[cannonBallNr].speedVector;
-	}
-	else
-	{
-		return glm::vec3(-1, -1, -1);
-	}
-}
