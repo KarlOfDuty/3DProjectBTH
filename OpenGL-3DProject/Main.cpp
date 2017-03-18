@@ -13,6 +13,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "Cannon.h"
 #pragma comment(lib, "opengl32.lib")
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
@@ -55,6 +56,8 @@ std::vector<Model*> allModels;
 std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
+//Cannon
+Cannon aCannon;
 
 void renderQuad()
 {
@@ -151,7 +154,7 @@ void loadModels()
 	//Reads the models from file once
 	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
@@ -233,6 +236,7 @@ void update(sf::Window &window)
 	{
 		window.setMouseCursorVisible(false);
 	}
+	aCannon.update(deltaTime.asSeconds());
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		allModels[i]->rotate();
@@ -254,6 +258,7 @@ void render(sf::Window &window)
 	//Mouseover check
 	int mouseOvered = playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
 	//Once to test front to back rendering
+	aCannon.draw(shaderGeometryPass);
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		int isMouseOver = 0;
@@ -345,6 +350,10 @@ int main()
 				{
 					window.close();
 					running = false;
+				}
+				if (event.key.code == sf::Keyboard::Return)
+				{
+					aCannon.shoot(playerCamera.getCameraPos(), modelLibrary[1]);
 				}
 			}
 		}

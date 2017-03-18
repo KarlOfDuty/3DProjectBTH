@@ -39,4 +39,5 @@ void main()
 	}
 	gAlbedoSpec.a = texture(specularTexture, TexCoords).r;
 	gAmbient = texture(ambientTexture,TexCoords).rgb;
+	gAmbient.rgb = vec3(0.1,0.1,0.1);
 } 
