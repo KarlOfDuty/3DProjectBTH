@@ -35,12 +35,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="VertexShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="FragmentShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="gBufferGeometryFragment.glsl">
       <Filter>Source Files\gBuffer</Filter>
     </None>

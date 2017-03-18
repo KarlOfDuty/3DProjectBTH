@@ -57,10 +57,6 @@ std::vector<Model> allModels;
 Cannon aCannon;
 //AntTweakBar
 TwBar *debugInterface;
-float ballX;
-float ballY;
-float ballZ;
-float speed;
 
 void RenderQuad()
 {
@@ -198,10 +194,6 @@ void setUpTweakBar()
 {
 	debugInterface = TwNewBar("Debug Interface");
 	TwDefine(" 'Debug Interface' refresh=0.1 ");
-	TwAddVarRW(debugInterface, "Velocity X", TW_TYPE_FLOAT, &ballX, "");
-	TwAddVarRW(debugInterface, "Velocity Y", TW_TYPE_FLOAT, &ballY, "");
-	TwAddVarRW(debugInterface, "Velocity Z", TW_TYPE_FLOAT, &ballZ, "");
-	TwAddVarRW(debugInterface, "Velocity", TW_TYPE_FLOAT, &speed, "");
 }
 
 void update(sf::Window &window)
@@ -330,10 +322,6 @@ int main()
 				{
 					window.close();
 					running = false;
-				}
-				if (event.key.code == sf::Keyboard::Return)
-				{
-					//aCannon.shoot(playerCamera.getCameraPos());
 				}
 			}
 			if (event.type == sf::Event::MouseButtonPressed)
