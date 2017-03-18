@@ -13,6 +13,6 @@ void main()
 {
     gl_Position = vec4(vertexPos, 1.0f);
     TexCoords = texCoords;
-	vec3 FragPos = vec3(model * texture(gPosition, texCoords));
+	vec3 FragmentPos = vec3(model * texture(gPosition, texCoords));
 	FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 }
