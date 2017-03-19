@@ -46,11 +46,13 @@ void main()
     // Retrieve data from G-buffer
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
 	vec3 Normal = texture(gNormal, TexCoords).rgb;
+	vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
     vec3 color = texture(gAlbedoSpec, TexCoords).rgb;
 	float Specular = texture(gAlbedoSpec, TexCoords).a;
+	vec3 ambient = 0.15 * color;
 
 	float shadow = ShadowCalculation(FragPosLightSpace);
-	vec3 lighting = vec3(0.1 + (1.0-shadow),0.1 + (1.0-shadow),0.1 + (1.0-shadow));
+	vec3 lighting = ambient;
 	vec3 viewDir = normalize(viewPos - FragPos);
 	for(int i = 0; i < NR_LIGHTS; ++i)
 	{
@@ -65,7 +67,7 @@ void main()
         float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
         diffuse *= attenuation;
         specular *= attenuation;
-        lighting += diffuse + specular;
+        lighting = (ambient + (1.0 - shadow) * (diffuse + specular));
 	}
 	lighting * color;
 	FragColor = vec4(lighting, 1.0f);
