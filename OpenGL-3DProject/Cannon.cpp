@@ -14,10 +14,28 @@ Cannon::Cannon()
 	this->windVelocity = 10; // m/s
 	this->airDensity = 1.293; // kg/m^3
 	this->dragCoefficientSphere = 0.29;
+	this->angle = 42*PI/180;
 }
 Cannon::~Cannon()
 {
 
+}
+void Cannon::loadModel(Model model, Model model2)
+{
+	this->cannonModel = Model(model);
+	this->cannonModel2 = Model(model2);
+	this->cannonModel.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	this->cannonModel2.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	this->cannonModel.rotate();
+	this->cannonModel2.rotate();
+
+	glm::mat4 modelMat2 = glm::mat4(
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		-2, 0, -5, 1.0
+	);
+	allTargets.push_back(new Model("models/cube/cube.obj", modelMat2));
 }
 void Cannon::update(float dt)
 {
@@ -63,37 +81,97 @@ void Cannon::update(float dt)
 			allCannonBalls[i]->ballModel->setModelMatrix(
 				glm::translate(allCannonBalls[i]->ballModel->getModelMatrix(), allCannonBalls[i]->speedVector*dt)
 			);
+			
+			glm::vec3 cannonPos(allCannonBalls[i]->ballModel->getModelMatrix()[3][0], allCannonBalls[i]->ballModel->getModelMatrix()[3][1], allCannonBalls[i]->ballModel->getModelMatrix()[3][2]);
+			glm::vec3 boxPos(allTargets[0]->getModelMatrix()[3][0], allTargets[0]->getModelMatrix()[3][1], allTargets[0]->getModelMatrix()[3][2]);
+			
+			glm::vec3 cannonMin = cannonPos + allCannonBalls[i]->ballModel->getMinBounding();
+			glm::vec3 cannonMax = cannonPos + allCannonBalls[i]->ballModel->getMaxBounding();
+
+			glm::vec3 boxMin = boxPos + allTargets[0]->getMinBounding();
+			glm::vec3 boxMax = boxPos + allTargets[0]->getMaxBounding();
+			if (cannonMax.x > boxMin.x &&
+				cannonMin.x < boxMax.x &&
+				cannonMax.y > boxMin.y &&
+				cannonMin.y < boxMax.y &&
+				cannonMax.z > boxMin.z &&
+				cannonMin.z < boxMax.z)
+			{
+				std::cout << "Träff!" << std::endl;
+				delete allCannonBalls[i];
+				allCannonBalls.erase(allCannonBalls.begin() + i);
+				//delete allTargets[0];
+				//allTargets.erase(allTargets.begin());
+				//srand(time(0));
+				float randomY = (rand() % 5);
+				float randomZ = -(rand() % 10 + 2);
+				glm::mat4 modelMat2 = glm::mat4(
+					1.0, 0.0, 0.0, 0.0,
+					0.0, 1.0, 0.0, 0.0,
+					0.0, 0.0, 1.0, 0.0,
+					-2, randomY, randomZ, 1.0
+				);
+				allTargets[0]->setModelMatrix(modelMat2);
+			}
 		}
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && angle < 90*PI/180)
+	{
+		this->cannonModel.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(-0.55f), glm::vec3(1.0f, 0.0f, 0.0f)));
+		this->cannonModel.rotate();
+		this->angle += 0.01;
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && angle > 0)
+	{
+		this->cannonModel.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(0.55f), glm::vec3(1.0f, 0.0f, 0.0f)));
+		this->cannonModel.rotate();
+		this->angle -= 0.01;
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Home))
+	{
+		std::cout << this->cannonModel.getModelMatrix()[1][1] << std::endl;
+		std::cout << this->angle << std::endl;
 	}
 }
 void Cannon::draw(Shader shader)
 {
+	glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, &cannonModel.getModelMatrix()[0][0]);
+	cannonModel.draw(shader);
+	glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, &cannonModel2.getModelMatrix()[0][0]);
+	cannonModel2.draw(shader);
 	for (int i = 0; i < allCannonBalls.size(); i++)
 	{
 		glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, &allCannonBalls[i]->ballModel->getModelMatrix()[0][0]);
 		allCannonBalls[i]->ballModel->draw(shader);
 	}
+	for (int i = 0; i < allTargets.size(); i++)
+	{
+		glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, &allTargets[i]->getModelMatrix()[0][0]);
+		allTargets[i]->draw(shader);
+	}
 }
 void Cannon::shoot(glm::vec3 originPos, Model ball)
 {
-	originPos = glm::vec3(0, 0, 0);
-	glm::mat4 modelMat = glm::mat4(
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		originPos.x, originPos.y+3, originPos.z, 1.0
-	);
+	originPos = glm::vec3(this->cannonModel.getModelMatrix()[3][0], this->cannonModel.getModelMatrix()[3][1], this->cannonModel.getModelMatrix()[3][2]);
+
 	CannonBall* newBall = new CannonBall();
+	glm::mat4 modelMat = glm::mat4(
+		0.3, 0.0, 0.0, 0.0,
+		0.0, 0.3, 0.0, 0.0,
+		0.0, 0.0, 0.3, 0.0,
+		originPos.x, originPos.y+0.5, originPos.z, 1.0
+	);
 	newBall->ballModel = new Model(ball, modelMat);
 
 	newBall->velocity = 20; // m/s
 	
-	newBall->rotation = glm::vec3(2,0,0);
+	newBall->rotation = glm::vec3(0,0,0);
 
 	//Angle which the ball starts from
-	newBall->direction = glm::vec3(0,1,-2);
+	newBall->direction = glm::vec3(0,sin(this->angle),-cos(this->angle));
 	newBall->direction = glm::normalize(newBall->direction);
-	newBall->initialVelocity = 10; // m/s
+	newBall->initialVelocity = 20; // m/s
 
 	//A vector with the velocity in each direction
 	newBall->speedVector = newBall->direction * newBall->initialVelocity;

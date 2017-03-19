@@ -114,12 +114,13 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 		for (int i = 0; i < allModels.size(); i++)
 		{
 			glm::mat4 ModelMatrix = allModels[i]->getModelMatrix();
-			ModelMatrix[0][0] = 1.0f;
-			ModelMatrix[1][1] = 1.0f;
-			ModelMatrix[2][2] = 1.0f;
-			//ModelMatrix *= allModels[i].getRotationMatrix();
+			//ModelMatrix *= allModels[i]->getRotationMatrix();
+			//ModelMatrix[0][0] = 1.0;
+			//ModelMatrix[1][1] = 1.0;
+			//ModelMatrix[2][2] = 1.0;
+			//ModelMatrix *= allModels[i]->getRotationMatrix();
 			glm::vec3 minPos = allModels[i]->getMinBounding();
-			glm::vec3 maxPos = allModels[i]->getMaxBouding();
+			glm::vec3 maxPos = allModels[i]->getMaxBounding();
 			
 			if (testIntersection(cameraPos, ray_wor, minPos, maxPos, ModelMatrix, distance))
 			{

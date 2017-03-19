@@ -157,6 +157,19 @@ void loadModels()
 	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
+
+	Model cannonModel = Model("models/cannon/editCannon.obj", {
+		0.1, 0.0, 0.0, 0.0,
+		0.0, 0.1, 0.0, 0.0,
+		0.0, 0.0, 0.1, 0.0,
+		-2.0, 0.0, 0.0, 1.0 });
+	Model cannonModel2 = Model("models/cannon/editCannon2.obj", {
+		0.1, 0.0, 0.0, 0.0,
+		0.0, 0.1, 0.0, 0.0,
+		0.0, 0.0, 0.1, 0.0,
+		-2.0, 0.0, 0.0, 1.0 });
+	aCannon.loadModel(cannonModel,cannonModel2);
+
 }
 
 void createModels()
@@ -172,6 +185,13 @@ void createModels()
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,
 		1.0, 0.0, 0.0, 1.0 }));
+	allModels.push_back(new Model(modelLibrary.at(0), {
+		2.0, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 2.0, 0.0,
+		-2.0, -0.1, 0.0, 1.0 }));
+
+
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
@@ -239,7 +259,7 @@ void update(sf::Window &window)
 	aCannon.update(deltaTime.asSeconds());
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		allModels[i]->rotate();
+		//allModels[i]->rotate();
 	}
 	sort();
 }
@@ -258,7 +278,6 @@ void render(sf::Window &window)
 	//Mouseover check
 	int mouseOvered = playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
 	//Once to test front to back rendering
-	aCannon.draw(shaderGeometryPass);
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		int isMouseOver = 0;
@@ -270,6 +289,10 @@ void render(sf::Window &window)
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
 		allModels.at(i)->draw(shaderGeometryPass);
 	}
+	
+	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), 0);
+	aCannon.draw(shaderGeometryPass);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

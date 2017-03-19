@@ -1,6 +1,7 @@
 #ifndef CANNON_H
 #define CANNON_H
 #include "Model.h"
+#include <SFML\Window.hpp>
 #include <glm\glm.hpp>
 class Cannon
 {
@@ -29,6 +30,10 @@ private:
 
 public:
 	std::vector<CannonBall*> allCannonBalls;
+	Model cannonModel;
+	Model cannonModel2;
+	std::vector<Model*> allTargets;
+	float angle;
 	int tests;
 	float gravity;
 	float windVelocity;
@@ -37,6 +42,7 @@ public:
 	glm::vec3 windDirection;
 	Cannon();
 	~Cannon();
+	void loadModel(Model model, Model model2);
 	void update(float dt);
 	void draw(Shader shader);
 	void shoot(glm::vec3 originPos, Model ball);

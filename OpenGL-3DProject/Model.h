@@ -72,7 +72,7 @@ public:
 	glm::mat4 getModelMatrix() const;
 	glm::mat4 getRotationMatrix() const;
 	glm::vec3 getMinBounding() const;
-	glm::vec3 getMaxBouding() const;
+	glm::vec3 getMaxBounding() const;
 	void setModelMatrix(glm::mat4 modelMat);
 	void setRotationMatrix(glm::mat4 rotationMat);
 	void rotate();
