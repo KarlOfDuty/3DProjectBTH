@@ -15,10 +15,13 @@ struct Plane
 	float getDistanceTo(glm::vec3 &point);
 };
 static const int quadTreeLevels = 4;
+static const int mapHeight = 100;
+static const int mapBottom = -100;
 static enum { XMIN, ZMIN, XMAX, ZMAX };
 class Node
 {
 private:
+	glm::vec4 quad;
 	//Child quadrants, north is negative Z
 	Node *northEast;
 	Node *southEast;
@@ -32,13 +35,15 @@ private:
 public:
 	Node();	
 	void buildQuadTree(std::vector<Model*> models, int level, glm::vec4 quad);
+	void cleanTree();
+	std::vector<Model*> getModelsToDraw();
 };
 
 class FrustumCulling
 {
 private:
 	//Planes in the order of the enum below
-	std::vector<Plane> planes;
+	Plane planes[6];
 	//Frustum varibles
 	float nearDistance;
 	float farDistance;
@@ -51,6 +56,7 @@ public:
 	static enum { FAR_P, NEAR_P, RIGHT_P, LEFT_P, TOP_P, BOTTOM_P };
 	void setFrustumShape(float fovAngle, float aspectRatio, float nearDistance, float farDistance);
 	void setFrustumPlanes(glm::vec3 &cameraPos, glm::vec3 &cameraForward, glm::vec3 &cameraUp);
+	bool boxInFrustum(glm::vec4 quad);
 	Node* getRoot();
 	FrustumCulling();
 	~FrustumCulling();

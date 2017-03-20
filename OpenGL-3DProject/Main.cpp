@@ -28,7 +28,6 @@ float fov = 45.0f;
 float nearPlane = 0.1f;
 float farPlane = 200.0f;
 glm::mat4 projectionMatrix = glm::perspective(fov, (float)windowWidth / (float)windowHeight, nearPlane, farPlane);
-
 //gBuffer
 GLuint gBuffer;
 //gBuffer Shaders
@@ -153,7 +152,7 @@ void loadModels()
 	//Reads the models from file once
 	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
@@ -167,14 +166,14 @@ void createModels()
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0 }));
 	std::srand(11);
-	for (int i = 0; i < 100; i++)
-	{
-		allModels.push_back(Model(modelLibrary.at(1), {
-			1.0, 0.0, 0.0, 0.0,
-			0.0, 1.0, 0.0, 0.0,
-			0.0, 0.0, 1.0, 0.0,
-			(rand() % 100)-50, (rand() % 10)-5, (rand() % 100)-50, 1.0 }));
-	}
+	//for (int i = 0; i < 100; i++)
+	//{
+	//	allModels.push_back(new Model(modelLibrary.at(1), {
+	//		1.0, 0.0, 0.0, 0.0,
+	//		0.0, 1.0, 0.0, 0.0,
+	//		0.0, 0.0, 1.0, 0.0,
+	//		(rand() % 100)-50, (rand() % 10)-5, (rand() % 100)-50, 1.0 }));
+	//}
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
@@ -319,7 +318,9 @@ int main()
 	createModels();
 	//Set up the frustum culling object and quadtree
 	frustumObject.setFrustumShape(fov, (float)windowWidth / (float)windowHeight, nearPlane, farPlane);
-	//frustumObject.getRoot()->buildQuadTree(allModels, 0, std::vec4();
+	glm::vec4 mapSize = glm::vec4(-100.0f, -100.0f, 100.0f, 100.0f);
+	frustumObject.getRoot()->buildQuadTree(allModels, 0, mapSize);
+	frustumObject.getRoot()->cleanTree();
 	//Main loop
 	bool running = true;
 	while (running)
