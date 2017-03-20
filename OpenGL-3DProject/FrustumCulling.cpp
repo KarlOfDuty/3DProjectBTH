@@ -1,12 +1,32 @@
 #include "FrustumCulling.h"
+void Node::buildQuadTree(std::vector<Model*> models, int level, glm::vec2 xMinMax, glm::vec2 zMinMax)
+{
+	//Check if leaf
+	if (level < quadTreeLevels)
+	{
+		if ()
+		{
 
+		}
+		northEast = new Node();
+		southEast = new Node();
+		southWest = new Node();
+		northWest = new Node();
+	}
+	else
+	{
+		northEast = nullptr;
+		southEast = nullptr;
+		southWest = nullptr;
+		northWest = nullptr;
+		this->models = models;
+	}
+}
 //Sets up the camera
 void FrustumCulling::setFrustumShape(float fovAngle, float aspectRatio, float nearDistance, float farDistance)
 {
 	this->aspectRatio = aspectRatio;
 	this->fovAngle = fovAngle;
-
-	float tang = (float)tan(fovAngle* PI/180 * 0.5);
 	//Near plane
 	this->nearDistance = nearDistance;
 	this->planes[NEAR].height = nearDistance * tan(fovAngle * PI / 180 * 0.5);
@@ -80,7 +100,7 @@ int FrustumCulling::pointInFrustum(glm::vec3 &point)
 
 int FrustumCulling::sphereInFrustum(glm::vec3 &centerPoint, float radius)
 {
-
+	//Returns true if inside or intersecting, false if outside
 	float distance;
 	for (int i = 0; i < 6; i++) 
 	{
@@ -106,5 +126,5 @@ FrustumCulling::~FrustumCulling()
 float Plane::getDistanceTo(glm::vec3 &point)
 {
 	//|P->A * N|/|N|
-	return glm::abs(glm::dot(this->pointInPlane - point,this->normal))/this->normal.length;;
+	return glm::abs(glm::dot(this->pointInPlane - point,this->normal))/this->normal.length();
 }

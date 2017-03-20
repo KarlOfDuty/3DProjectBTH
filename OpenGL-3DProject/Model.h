@@ -59,12 +59,13 @@ private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
 	std::vector<Mesh> meshes;
-
+	float boundingSphereRadius = 0.5f;
+	GLuint VAO; //Vertex Array Object
+	GLuint VBO; //Vertex Buffer Object
 	void setupModel();
 	void loadTextures(int meshNr);
 public:
-	GLuint VAO; //Vertex Array Object
-	GLuint VBO; //Vertex Buffer Object
+
 	Material getMaterial(int index);
 	glm::mat4 getModelMatrix() const;
 	glm::mat4 getRotationMatrix() const;

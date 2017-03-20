@@ -33,7 +33,6 @@ GLuint gPosition, gNormal, gAlbedoSpec, gAmbient;
 //Quad VAO and VBO
 GLuint quadVAO = 0;
 GLuint quadVBO;
-
 //Temp values for textures and all the lights
 GLuint diffuseTexture;
 GLuint specularTexture;
@@ -41,7 +40,6 @@ GLuint normalMap;
 const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
-
 //Timing control for controls and camera
 sf::Clock deltaClock;
 sf::Time deltaTime;
