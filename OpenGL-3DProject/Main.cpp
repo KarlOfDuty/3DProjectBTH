@@ -256,7 +256,7 @@ void update(sf::Window &window)
 	{
 		window.setMouseCursorVisible(false);
 	}
-	aCannon.update(deltaTime.asSeconds());
+	aCannon.update(deltaTime.asSeconds(), lightPositions);
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		//allModels[i]->rotate();

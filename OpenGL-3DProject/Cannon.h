@@ -27,23 +27,23 @@ class Cannon
 		}
 	};
 private:
-
-public:
-	std::vector<CannonBall*> allCannonBalls;
+	CannonBall* aCannonBall;
 	Model cannonModel;
 	Model cannonModel2;
-	std::vector<Model*> allTargets;
+	Model targetModel;
 	float angle;
-	int tests;
 	float gravity;
 	float windVelocity;
 	float airDensity;
 	float dragCoefficientSphere;
 	glm::vec3 windDirection;
+	int amountOfHits;
+	int triesLeft;
+public:
 	Cannon();
 	~Cannon();
 	void loadModel(Model model, Model model2);
-	void update(float dt);
+	void update(float dt, std::vector<glm::vec3> &lightPositions);
 	void draw(Shader shader);
 	void shoot(glm::vec3 originPos, Model ball);
 };
