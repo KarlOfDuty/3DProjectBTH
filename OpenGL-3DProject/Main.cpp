@@ -43,7 +43,7 @@ const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 //Stuff for ShadowMap
-const GLuint SHADOW_WIDTH = 6400, SHADOW_HEIGHT = 6400;
+const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 GLuint depthMapFBO;
 GLuint depthMap;
 
@@ -202,7 +202,7 @@ void createModels()
 		0.0, 0.0, -5.0, 1.0 }));
 
 	//Make all models rotate at a fixed speed
-	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size()-1; i++)
 	{
 		allModels[i].setRotationMatrix(rotation);
@@ -215,7 +215,7 @@ void createModels()
 		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
 		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
 
-		GLfloat xPos = -1;
+		GLfloat xPos = 0;
 		GLfloat yPos = 0;
 		GLfloat zPos = 2;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
@@ -266,6 +266,7 @@ void render()
 
 	//DEPTH PASS
 	//Render scene from light's point of view
+	glCullFace(GL_FRONT);
 	depthShader.use();
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -283,10 +284,10 @@ void render()
 		}
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glCullFace(GL_BACK);
 
 	//Reset viewport
 	glViewport(0, 0, windowWidth, windowHeight);
-
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -301,7 +302,7 @@ void render()
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
 		allModels.at(i).draw(shaderGeometryPass);
 	}
-	//glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -327,7 +328,7 @@ void render()
 		glUniform1f(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Linear").c_str()), linear);
 		glUniform1f(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Quadratic").c_str()), quadratic);
 	}
-
+	glUniformMatrix4fv(glGetUniformLocation(shaderLightningPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
 
 	RenderQuad();

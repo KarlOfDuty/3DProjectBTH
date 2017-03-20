@@ -7,9 +7,11 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+
 out vec3 FragPos;
 out vec2 TexCoords;
 out vec3 Normal;
+
 
 void main()
 {
@@ -19,4 +21,5 @@ void main()
 	TexCoords = vertexTexture;
 	mat3 normalMatrix = transpose(inverse(mat3(model)));
     Normal = normalMatrix * vertexNormal;
+
 }

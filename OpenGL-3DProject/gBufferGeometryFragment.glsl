@@ -15,10 +15,10 @@ void main()
 {
 	gPosition = FragPos;
 	//Normal map has it's texture coordinates inverted
-    //gNormal = normalize(Normal);
-	gNormal = texture(normalMap, TexCoords).rgb;
+    gNormal = normalize(Normal);
+	//gNormal = texture(normalMap, TexCoords).rgb;
     //Transform normal vector to range [-1,1] from [0,1]
-    gNormal = normalize(gNormal * 2.0 - 1.0);   
+    //gNormal = normalize(gNormal * 2.0 - 1.0);   
 	gAlbedoSpec.rgb = texture(diffuseTexture, TexCoords).rgb;
 	gAlbedoSpec.a = texture(specularTexture, TexCoords).r;
 } 
