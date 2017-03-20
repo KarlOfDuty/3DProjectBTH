@@ -9,11 +9,11 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include <AntTweakBar.h>
 #include <SOIL.h>
 #include "Model.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "FrustumCulling.h"
 #pragma comment(lib, "opengl32.lib")
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
@@ -23,6 +23,13 @@ const int windowHeight = 720;
 bool debug = false;
 //Camera
 Camera playerCamera;
+//Frustum culling object
+FrustumCulling frustumObject = FrustumCulling();
+float fov = 45.0f;
+float nearPlane = 0.1f;
+float farPlane = 200.0f;
+glm::mat4 projectionMatrix = glm::perspective(fov, (float)windowWidth / (float)windowHeight, nearPlane, farPlane);
+
 //gBuffer
 GLuint gBuffer;
 //gBuffer Shaders
@@ -48,12 +55,9 @@ glm::mat4 viewMatrix = glm::lookAt(
 	glm::vec3(0, 100, 0),
 	glm::vec3(0, 0, 0),
 	glm::vec3(0, 1, 0));
-glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 200.0f);
 //All models in the program
 std::vector<Model> allModels;
 std::vector<Model> modelLibrary;
-//AntTweakBar
-TwBar *debugInterface;
 
 void renderQuad()
 {
@@ -157,7 +161,6 @@ void loadModels()
 
 void createModels()
 {
-
 	//Create the models and store them in the vector of all models to be rendered
 	allModels.push_back(Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
@@ -193,12 +196,6 @@ void createModels()
 		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
-}
-
-void setUpTweakBar()
-{
-	debugInterface = TwNewBar("Debug Interface");
-	//TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
 }
 
 void update(sf::Window &window)
@@ -277,10 +274,6 @@ int main()
 	settings.stencilBits = 8;
 	settings.antialiasingLevel = 2;
 	sf::Window window(sf::VideoMode(windowWidth, windowHeight), "OpenGL", sf::Style::Default, settings);
-	//Initialise AntTweakBar
-	TwInit(TW_OPENGL, NULL);
-	TwWindowSize(windowWidth, windowHeight);
-	setUpTweakBar();
 	//V-Sync
 	window.setVerticalSyncEnabled(true);
 	//Disable cursor
@@ -294,6 +287,9 @@ int main()
 	//Create models
 	loadModels();
 	createModels();
+	//Set up the frustum culling object and quadtree
+	frustumObject.setFrustumShape(fov, (float)windowWidth / (float)windowHeight, nearPlane, farPlane);
+	//frustumObject.getRoot()->buildQuadTree(allModels, 0, std::vec4();
 	//Main loop
 	bool running = true;
 	while (running)
@@ -323,7 +319,6 @@ int main()
 		}
 		update(window);
 		render();
-		if(debug)TwDraw();
 		//End the current frame (internally swaps the front and back buffers)
 		window.display();
 	}

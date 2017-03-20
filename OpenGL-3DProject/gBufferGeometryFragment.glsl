@@ -18,6 +18,7 @@ flat in int useNormalMap;
 void main()
 {
 	gPosition = FragPos;
+	//TODO: Tangent space conversion
 	if(useNormalMap == 1)
 	{
 		gNormal = texture(normalMap, TexCoords).rgb;

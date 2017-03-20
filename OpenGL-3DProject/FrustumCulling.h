@@ -14,19 +14,26 @@ struct Plane
 	float width, height;
 	float getDistanceTo(glm::vec3 &point);
 };
+static const int quadTreeLevels = 4;
+static enum { XMIN, ZMIN, XMAX, ZMAX };
 class Node
 {
-	//Child quadrants
+private:
+	//Child quadrants, north is negative Z
 	Node *northEast;
 	Node *southEast;
 	Node *southWest;
 	Node *northWest;
-	bool hasContents;
 	//Only leafs have data
 	std::vector<Model*> models;
-	void buildQuadTree(std::vector<Model*> models, int level, glm::vec2 xMinMax, glm::vec2 zMinMax);
+	//True if it contains data or nodes containing data somewhere down the line
+	bool hasContents;
+	static bool intersectsQuadrant(Model *model, glm::vec4 quad);
+public:
+	Node();	
+	void buildQuadTree(std::vector<Model*> models, int level, glm::vec4 quad);
 };
-static const int quadTreeLevels = 4;
+
 class FrustumCulling
 {
 private:
@@ -38,15 +45,13 @@ private:
 	//Camera variables
 	float aspectRatio;
 	float fovAngle;
-	//
+	//Root node of the quadtree
 	Node *root;
 public:
-	static enum { MIN, MAX };
-	static enum { FAR, NEAR, RIGHT, LEFT, TOP, BOTTOM };
+	static enum { FAR_P, NEAR_P, RIGHT_P, LEFT_P, TOP_P, BOTTOM_P };
 	void setFrustumShape(float fovAngle, float aspectRatio, float nearDistance, float farDistance);
 	void setFrustumPlanes(glm::vec3 &cameraPos, glm::vec3 &cameraForward, glm::vec3 &cameraUp);
-	int pointInFrustum(glm::vec3 &point);
-	int sphereInFrustum(glm::vec3 &centerPoint, float radius);
+	Node* getRoot();
 	FrustumCulling();
 	~FrustumCulling();
 };

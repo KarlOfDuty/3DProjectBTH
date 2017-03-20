@@ -113,6 +113,10 @@ void Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::
 		}
 	}
 }
+void Camera::setupFrustumCulling(FrustumCulling & frustumObject)
+{
+	frustumObject.setFrustumPlanes(cameraPos, cameraFront, cameraUp);
+}
 bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance)
 
 {
