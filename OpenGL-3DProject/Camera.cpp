@@ -106,39 +106,28 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 		//Convert to world space
 		glm::vec3 ray_wor = glm::vec3((glm::inverse(viewMatrix)*ray_eye));
 
-		//Set max and miniumum boxes from positions, max distance from camera to test intersection
-		glm::vec3 aabb_min(-0.5f, -0.5f, -0.5f);
-		glm::vec3 aabb_max(0.5f, 0.5f, 0.5f);
-		float distance = 100;
+		float distance;
+		float clostestDistance = -1;
 
 		for (int i = 0; i < allModels.size(); i++)
 		{
 			glm::mat4 ModelMatrix = allModels[i]->getModelMatrix();
-			ModelMatrix[0][0] = 1.0f;
-			ModelMatrix[1][1] = 1.0f;
-			ModelMatrix[2][2] = 1.0f;
-			//ModelMatrix *= allModels[i].getRotationMatrix();
-			glm::vec3 minPos = allModels[i]->getMinBounding();
-			glm::vec3 maxPos = allModels[i]->getMaxBouding();
+			glm::vec3 pos(ModelMatrix[3]);
+			glm::vec3 scaleVec(ModelMatrix[0][0], ModelMatrix[1][1], ModelMatrix[2][2]);
+			float scaleValue = sqrt(ModelMatrix[0][0] * ModelMatrix[0][0] + ModelMatrix[1][0] * ModelMatrix[1][0] + ModelMatrix[2][0] * ModelMatrix[2][0]);
+			glm::vec3 minPos = allModels[i]->getMinBounding()*scaleValue;
+			glm::vec3 maxPos = allModels[i]->getMaxBouding()*scaleValue;
 			
 			if (testIntersection(cameraPos, ray_wor, minPos, maxPos, ModelMatrix, distance))
 			{
 				if (closestModel == -1)
 				{
 					closestModel = i;
+					clostestDistance = distance;
 				}
-				else
+				else if (distance < clostestDistance)
 				{
-					//Coordinates for the closest model
-					glm::mat4 closestModelMatrix(allModels[closestModel]->getModelMatrix());
-					glm::vec3 closestModelPos(closestModelMatrix[3].x, closestModelMatrix[3].y, closestModelMatrix[3].z);
-					//Coordinates for new model
-					glm::vec3 modelPos(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
-					//Check if new model is closer, if true then its the new closest
-					if (glm::distance(cameraPos, closestModelPos) > glm::distance(cameraPos, modelPos))
-					{
-						closestModel = i;
-					}
+					closestModel = i;
 				}
 			}
 		}
@@ -147,7 +136,7 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 }
 bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance)
 
-{
+{	
 	// Intersection method from Real-Time Rendering and Essential Mathematics for Games
 
 	float tMin = 0.0f;
@@ -255,4 +244,5 @@ bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, gl
 
 	intersection_distance = tMin;
 	return true;
+	
 }
