@@ -58,9 +58,11 @@ class Model
 private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
-	std::vector<Mesh> meshes;
 	GLuint VAO; //Vertex Array Object
 	GLuint VBO; //Vertex Buffer Object
+	std::vector<Mesh*> meshes;
+	glm::vec3 minBounding;
+	glm::vec3 maxBounding;
 	void setupModel();
 	void loadTextures(int meshNr);
 public:
@@ -68,11 +70,14 @@ public:
 	Material getMaterial(int index);
 	glm::mat4 getModelMatrix() const;
 	glm::mat4 getRotationMatrix() const;
+	glm::vec3 getMinBounding() const;
+	glm::vec3 getMaxBouding() const;
 	void setModelMatrix(glm::mat4 modelMat);
 	void setRotationMatrix(glm::mat4 rotationMat);
 	void rotate();
 	void read(std::string filename);
 	void draw(Shader shader);
+	void generateBoundingBox();
 	Model(std::string filename);
 	Model(std::string filename, glm::mat4 modelMat);
 	Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation);
