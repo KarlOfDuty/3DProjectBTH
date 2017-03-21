@@ -431,6 +431,7 @@ void Model::setupModel()
 			if (meshes[i]->material.normalMapFile != "")
 			{
 				meshes[i]->vertices[j].useNormalMap = 1;
+				std::cout << meshes[i]->material.normalMapFile << std::endl;
 			}
 			vertices.push_back(meshes[i]->vertices.at(j));
 		}
@@ -447,8 +448,14 @@ void Model::setupModel()
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
 	//UseNormalMap Bool
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(3, 4, GL_INT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 8));
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 8));
+	//Tangents
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 3, GL_INT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
+	//Bitangents
+	glEnableVertexAttribArray(5);
+	glVertexAttribPointer(5, 3, GL_INT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 12));
 	//Unbind the vertex array buffer
 	glBindVertexArray(0);
 }
@@ -558,8 +565,42 @@ void Model::loadTextures(int i)
 		glGenerateMipmap(GL_TEXTURE_2D);
 		SOIL_free_image_data(image);
 		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+		for (int j = 0; j < meshes[i]->vertices.size(); j+=3)
+		{
+			glm::vec3 edge1 = meshes[i]->vertices[j + 1].pos - meshes[i]->vertices[j].pos;
+			glm::vec3 edge2 = meshes[i]->vertices[j + 2].pos - meshes[i]->vertices[j].pos;
+			glm::vec2 deltaUV1 = meshes[i]->vertices[j + 1].texPos - meshes[i]->vertices[j].texPos;
+			glm::vec2 deltaUV2 = meshes[i]->vertices[j + 2].texPos - meshes[i]->vertices[j].texPos;
+			
+			GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
+			glm::vec3 tangent;
+			glm::vec3 bitangent;
+
+			tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+			tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+			tangent.x = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+			tangent = glm::normalize(tangent);
+
+			bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+			bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+			bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+			bitangent = glm::normalize(bitangent);
+			meshes[i]->vertices[j].tangent = tangent;
+			meshes[i]->vertices[j+1].tangent = tangent;
+			meshes[i]->vertices[j+2].tangent = tangent;
+			meshes[i]->vertices[j].bitangent = tangent;
+			meshes[i]->vertices[j+1].bitangent = tangent;
+			meshes[i]->vertices[j+2].bitangent = tangent;
+
+			//std::cout << "edge1 : " << edge1.x << ", " << edge1.y << ", " << edge1.z << std::endl;
+			//std::cout << "edge2 : " << edge2.x << ", " << edge2.y << ", " << edge2.z << std::endl;
+			//std::cout << "deltaUV1 : " << deltaUV1.x << ", " << deltaUV1.y << std::endl;
+			//std::cout << "deltaUV2 : " << deltaUV2.x << ", " << deltaUV2.y << std::endl;
+			//std::cout << "tangent : " << tangent.x << ", " << tangent.y << ", " << tangent.z << std::endl;
+			//std::cout << "bitangent : " << bitangent.x << ", " << bitangent.y << ", " << bitangent.z << std::endl;
+		}
+	}
 }
 //Generation of the bounding box around the model
 void Model::generateBoundingBox()
@@ -612,7 +653,7 @@ Model::Model(std::string filename)
 	this->modelMatrix = glm::mat4(1.0);
 	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
-	setupModel();
+	//setupModel();
 	generateBoundingBox();
 }
 Model::Model(std::string filename, glm::mat4 modelMat)
@@ -622,7 +663,7 @@ Model::Model(std::string filename, glm::mat4 modelMat)
 	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
 	generateBoundingBox();
-	setupModel();
+	//setupModel();
 }
 Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
 {
@@ -644,12 +685,14 @@ Model::Model()
 //Copy constructor
 Model::Model(Model &otherModel)
 {
+	//Used when sorting, no need to set the model up again
 	this->modelMatrix = otherModel.modelMatrix;
 	this->rotationMatrix = otherModel.rotationMatrix;
 	this->meshes = otherModel.meshes;
 	this->minBounding = otherModel.minBounding;
 	this->maxBounding = otherModel.maxBounding;
-	setupModel();
+	this->VAO = otherModel.VAO;
+	this->VBO = otherModel.VBO;
 }
 Model::Model(Model &otherModel, glm::mat4 modelMat)
 {

@@ -151,7 +151,7 @@ void loadModels()
 	//Reads the models from file once
 	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
@@ -165,9 +165,9 @@ void createModels()
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0 }));
 	allModels.push_back(new Model(modelLibrary.at(1), {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
+		0.5, 0.0, 0.0, 0.0,
+		0.0, 0.5, 0.0, 0.0,
+		0.0, 0.0, 0.5, 0.0,
 		1.0, 0.0, 0.0, 1.0 }));
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -175,18 +175,27 @@ void createModels()
 	{
 		allModels[i]->setRotationMatrix(rotation);
 	}
+	rotation = glm::rotate(glm::mat4(), glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	allModels[0]->setRotationMatrix(rotation);
+	allModels[0]->rotate();
 	//Some lights with random values
 	std::srand(13);
 	for (int i = 0; i < NR_LIGHTS; i++)
 	{
-		GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-		GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
-		GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		//GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
+		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		GLfloat xPos = (i*0.2)-2;
+		GLfloat yPos = 0;
+		GLfloat zPos = 1;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color
-		GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		//GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		//GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		//GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		GLfloat rColor = 0.5; // Between 0.5 and 1.0
+		GLfloat gColor = 0.5; // Between 0.5 and 1.0
+		GLfloat bColor = 0.5; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
 }
@@ -196,6 +205,7 @@ void setUpTweakBar()
 	debugInterface = TwNewBar("Debug Interface");
 	//TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
 }
+
 void sort()
 {
 	//Bubble sort
@@ -218,6 +228,7 @@ void sort()
 		}
 	}
 }
+
 void update(sf::Window &window)
 {
 	//Controls update timings
@@ -235,7 +246,7 @@ void update(sf::Window &window)
 	}
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		allModels[i]->rotate();
+		//allModels[i]->rotate();
 	}
 	sort();
 }
@@ -251,6 +262,11 @@ void render(sf::Window &window)
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
 	GLint projectionID = glGetUniformLocation(shaderGeometryPass.program, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projectionMatrix[0][0]);
+	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
+	for (GLuint i = 0; i < lightPositions.size(); i++)
+	{
+		glUniform3fv(glGetUniformLocation(shaderGeometryPass.program, ("lightPos[" + std::to_string(i) + "]Position").c_str()), 1, &lightPositions[i][0]);
+	}
 	//Mouseover check
 	int mouseOvered = playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
 	//Once to test front to back rendering
