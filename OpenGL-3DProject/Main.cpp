@@ -160,24 +160,24 @@ void createModels()
 {
 	//Create the models and store them in the vector of all models to be rendered
 	allModels.push_back(new Model(modelLibrary.at(0), {
+		0.6, 0.0, 0.0, 0.0,
+		0.0, 0.6, 0.0, 0.0,
+		0.0, 0.0, 0.6, 0.0,
+		0.0, 0.0, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(new Model(modelLibrary.at(1), {
-		0.5, 0.0, 0.0, 0.0,
-		0.0, 0.5, 0.0, 0.0,
-		0.0, 0.0, 0.5, 0.0,
-		1.0, 0.0, 0.0, 1.0 }));
+
+		
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		allModels[i]->setRotationMatrix(rotation);
 	}
-	rotation = glm::rotate(glm::mat4(), glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	allModels[0]->setRotationMatrix(rotation);
-	allModels[0]->rotate();
 	//Some lights with random values
 	std::srand(13);
 	for (int i = 0; i < NR_LIGHTS; i++)
@@ -186,7 +186,7 @@ void createModels()
 		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
 		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
 		GLfloat xPos = (i*0.2)-2;
-		GLfloat yPos = 0;
+		GLfloat yPos = (i%4)-2;
 		GLfloat zPos = 1;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color

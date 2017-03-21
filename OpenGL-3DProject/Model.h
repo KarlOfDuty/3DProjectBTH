@@ -44,7 +44,6 @@ struct Vertex
 	glm::vec3 normal;
 	int useNormalMap;
 	glm::vec3 tangent;
-	glm::vec3 bitangent;
 };
 struct Mesh
 {
