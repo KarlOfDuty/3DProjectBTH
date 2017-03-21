@@ -11,6 +11,7 @@ private:
 	bool firstMouse;
 	int oldMouseX;
 	int oldMouseY;
+	bool cameraHasMoved;
 	float mouseSensitivity;
 	float cameraSpeed;
 	glm::vec3 cameraPos;
@@ -28,5 +29,6 @@ public:
 	glm::vec3 getCameraPos();
 	void setupFrustumCulling(FrustumCulling &frustumObject);
 	int mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels);
+	void frustumCulling(FrustumCulling &fcObject, std::vector<Model*> &models);
 };
 

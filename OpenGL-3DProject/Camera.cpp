@@ -1,9 +1,11 @@
 #include "Camera.h"
 Camera::Camera()
 {
+	//True for first run only, to add default values
 	this->firstMouse = true;
 	this->oldMouseX = RESOLUTION_WIDTH / 2;
 	this->oldMouseY = RESOLUTION_HEIGHT / 2;
+	this->cameraHasMoved = true;
 	this->mouseSensitivity = 0.05f;
 	this->cameraSpeed = 0.05f;
 	this->cameraPos = glm::vec3(0.0f, 50.0f, 0.0f);
@@ -18,27 +20,44 @@ Camera::~Camera()
 {
 
 }
+void Camera::frustumCulling(FrustumCulling &fcObject, std::vector<Model*> &visibleModels)
+{
+	//If the camera has moved, update the visible models
+	if (cameraHasMoved)
+	{
+		fcObject.setFrustumPlanes(cameraPos, cameraFront, cameraUp);
+		visibleModels = fcObject.getRoot()->getModelsToDraw(fcObject);
+	}
+}
+
 glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 {
+	cameraHasMoved = false;
 	if (window.hasFocus() && !sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
+		//Movement
 		cameraSpeed = 5 * deltaTime;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
 			cameraPos += cameraSpeed * cameraFront;
+			cameraHasMoved = true;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
 			cameraPos -= cameraSpeed * cameraFront;
+			cameraHasMoved = true;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
 			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			cameraHasMoved = true;
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
 			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			cameraHasMoved = true;
 		}
+		//Setup
 		if (firstMouse)
 		{
 			sf::Mouse::setPosition(sf::Vector2i(RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2));
@@ -46,14 +65,18 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 			oldMouseY = sf::Mouse::getPosition().y;
 			firstMouse = false;
 		}
+		//Rotate camera
 		if (sf::Mouse::getPosition().x != RESOLUTION_WIDTH / 2)
 		{
 			cameraYaw += (float)(sf::Mouse::getPosition().x - oldMouseX) * mouseSensitivity;
+			cameraHasMoved = true;
 		}
 		if (sf::Mouse::getPosition().y != RESOLUTION_HEIGHT / 2)
 		{
 			cameraPitch += (float)(oldMouseY - sf::Mouse::getPosition().y) * mouseSensitivity;
+			cameraHasMoved = true;
 		}
+		//Make sure the lowest and highest angles the camera can be turned to are -89 and 89 degrees
 		if (cameraPitch > 89.0f)
 		{
 			cameraPitch = 89.0f;
@@ -73,6 +96,7 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 	}
 	return glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 }
+
 glm::vec3 Camera::getCameraPos()
 {
 	return this->cameraPos;
@@ -144,10 +168,6 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 		}
 	}
 	return closestModel;
-}
-void Camera::setupFrustumCulling(FrustumCulling & frustumObject)
-{
-	frustumObject.setFrustumPlanes(cameraPos, cameraFront, cameraUp);
 }
 bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance)
 

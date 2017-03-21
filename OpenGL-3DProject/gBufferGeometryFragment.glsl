@@ -20,7 +20,7 @@ void main()
 {
 	gPosition = FragPos;
 	//TODO: Tangent space conversion
-	if(useNormalMap == 1)
+	if(useNormalMap != 0)
 	{
 		gNormal = texture(normalMap, TexCoords).rgb;
 		//Transform normal vector to range [-1,1] from [0,1]

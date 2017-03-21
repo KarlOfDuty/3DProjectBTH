@@ -21,12 +21,13 @@ const int windowWidth = 1280;
 const int windowHeight = 720;
 bool debug = false;
 //Camera
-Camera playerCamera;
+Camera playerCamera = Camera();
 //Frustum culling object
 FrustumCulling frustumObject = FrustumCulling();
+Camera frustumCullingCamera = Camera();
 float fov = 45.0f;
 float nearPlane = 0.1f;
-float farPlane = 200.0f;
+float farPlane = 5000.0f;
 glm::mat4 projectionMatrix = glm::perspective(fov, (float)windowWidth / (float)windowHeight, nearPlane, farPlane);
 //gBuffer
 GLuint gBuffer;
@@ -56,7 +57,7 @@ glm::mat4 viewMatrix = glm::lookAt(
 //All models in the program
 std::vector<Model*> allModels;
 std::vector<Model> modelLibrary;
-
+std::vector<Model*> visibleModels;
 void renderQuad()
 {
 	if (quadVAO == 0)
@@ -165,15 +166,15 @@ void createModels()
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0 }));
-	std::srand(11);
-	//for (int i = 0; i < 100; i++)
-	//{
-	//	allModels.push_back(new Model(modelLibrary.at(1), {
-	//		1.0, 0.0, 0.0, 0.0,
-	//		0.0, 1.0, 0.0, 0.0,
-	//		0.0, 0.0, 1.0, 0.0,
-	//		(rand() % 100)-50, (rand() % 10)-5, (rand() % 100)-50, 1.0 }));
-	//}
+	std::srand(time(0));
+	for (int i = 0; i < 100; i++)
+	{
+		allModels.push_back(new Model(modelLibrary.at(1), {
+			1.0, 0.0, 0.0, 0.0,
+			0.0, 1.0, 0.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
+			(rand() % 100)-50, (rand() % 10)-5, (rand() % 100)-50, 1.0 }));
+	}
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
@@ -194,7 +195,9 @@ void createModels()
 		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
+	visibleModels = allModels;
 }
+
 void sort()
 {
 	//Bubble sort
@@ -217,11 +220,13 @@ void sort()
 		}
 	}
 }
+
 void update(sf::Window &window)
 {
 	//Controls update timings
 	deltaTime = deltaClock.restart();
 	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
+	playerCamera.frustumCulling(frustumObject, visibleModels);
 	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
@@ -238,7 +243,6 @@ void update(sf::Window &window)
 	}
 	sort();
 }
-
 void render(sf::Window &window)
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -253,7 +257,7 @@ void render(sf::Window &window)
 	//Mouseover check
 	int mouseOvered = playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
 	//Once to test front to back rendering
-	for (int i = 0; i < allModels.size(); i++)
+	for (int i = 0; i < visibleModels.size(); i++)
 	{
 		int isMouseOver = 0;
 		if (i == mouseOvered)
@@ -261,8 +265,8 @@ void render(sf::Window &window)
 			isMouseOver = 1;
 		}
 		glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), isMouseOver);
-		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
-		allModels.at(i)->draw(shaderGeometryPass);
+		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &visibleModels[i]->getModelMatrix()[0][0]);
+		visibleModels.at(i)->draw(shaderGeometryPass);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
