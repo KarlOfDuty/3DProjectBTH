@@ -41,7 +41,7 @@ void Cannon::loadModel(Model model, Model model2)
 		0.6, 0.0, 0.0, 0.0,
 		0.0, 0.6, 0.0, 0.0,
 		0.0, 0.0, 0.2, 0.0,
-		-2, 3, -10, 1.0
+		2, 3, -3, 1.0
 	);
 	targetModel = Model("models/sphere/sphere.obj", modelMat2);
 }
@@ -82,7 +82,7 @@ void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 					0.6, 0.0, 0.0, 0.0,
 					0.0, 0.6, 0.0, 0.0,
 					0.0, 0.0, 0.2, 0.0,
-					-2, randomY, randomZ, 1.0
+					2.0, randomY, randomZ, 1.0
 				);
 				targetModel.setModelMatrix(modelMat2);
 			}
@@ -145,6 +145,7 @@ void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 }
 void Cannon::draw(Shader shader)
 {
+	glUniform1i(glGetUniformLocation(shader.program, "isMouseOvered"), 0);
 	glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, &cannonModel.getModelMatrix()[0][0]);
 	cannonModel.draw(shader);
 	glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, &cannonModel2.getModelMatrix()[0][0]);
@@ -181,7 +182,7 @@ void Cannon::shoot(glm::vec3 originPos, Model ball)
 		newBall->direction = glm::normalize(newBall->direction);
 		newBall->initialVelocity = 20; // m/s
 
-									   //A vector with the velocity in each direction
+		//A vector with the velocity in each direction
 		newBall->speedVector = newBall->direction * newBall->initialVelocity;
 
 		//A vector with the acceleration in each direction

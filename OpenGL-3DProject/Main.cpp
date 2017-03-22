@@ -14,6 +14,7 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Cannon.h"
+#include "Terrain.h"
 #pragma comment(lib, "opengl32.lib")
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
@@ -21,6 +22,10 @@ const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 const int windowWidth = 1280;
 const int windowHeight = 720;
 bool debug = true;
+
+
+//Terrain
+Terrain *terrain;
 //Camera
 Camera playerCamera;
 //gBuffer
@@ -28,6 +33,7 @@ GLuint gBuffer;
 //gBuffer Shaders
 Shader shaderGeometryPass;
 Shader shaderLightningPass;
+Shader depthShader;
 //gBuffer Textures
 GLuint gPosition, gNormal, gAlbedoSpec, gAmbient;
 //Quad VAO and VBO
@@ -41,6 +47,15 @@ GLuint normalMap;
 const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
+//Stuff for ShadowMap
+const GLuint SHADOW_WIDTH = 1024*4, SHADOW_HEIGHT = 1024*4;
+GLuint depthMapFBO;
+GLuint depthMap;
+
+glm::mat4 lightProjection;
+glm::mat4 lightView;
+glm::mat4 lightSpaceMatrix;
+GLfloat near_plane = 1.0f, far_plane = 7.5f;
 
 //Timing control for controls and camera
 sf::Clock deltaClock;
@@ -60,6 +75,11 @@ int amountOfHits;
 int amountOfTriesLeft;
 //Cannon
 Cannon aCannon;
+
+void cleanup() 
+{
+	delete terrain;
+}
 
 void renderQuad()
 {
@@ -89,6 +109,31 @@ void renderQuad()
 
 }
 
+void createShadowMap()
+{
+	depthShader = Shader("shadowVertex.glsl", "shadowFragment.glsl");
+
+	// Configure depth map FBO
+	glGenFramebuffers(1, &depthMapFBO);
+	// - Create depth texture
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+}
+
 void createGBuffer()
 {
 	shaderGeometryPass = Shader("gBufferGeometryVertex.glsl", "gBufferGeometryFragment.glsl");
@@ -100,6 +145,7 @@ void createGBuffer()
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gNormal"), 1);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAlbedoSpec"), 2);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAmbient"), 3);
+	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "depthMap"), 4);
 
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -164,14 +210,13 @@ void loadModels()
 		0.1, 0.0, 0.0, 0.0,
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,
-		-2.0, 0.0, 0.0, 1.0 });
+		2.0, -0.12, 2.0, 1.0 });
 	Model cannonModel2 = Model("models/cannon/editCannon2.obj", {
 		0.1, 0.0, 0.0, 0.0,
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,
-		-2.0, 0.0, 0.0, 1.0 });
+		2.0, -0.12, 2.0, 1.0 });
 	aCannon.loadModel(cannonModel,cannonModel2);
-
 }
 
 void createModels()
@@ -181,37 +226,46 @@ void createModels()
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0 }));
+		0.0, 0.0, 3.0, 1.0 }));
+
 	allModels.push_back(new Model(modelLibrary.at(1), {
 		0.1, 0.0, 0.0, 0.0,
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,
-		1.0, 0.0, 0.0, 1.0 }));
-	allModels.push_back(new Model(modelLibrary.at(0), {
-		2.0, 0.0, 0.0, 0.0,
-		0.0, 0.2, 0.0, 0.0,
-		0.0, 0.0, 2.0, 0.0,
-		-2.0, -0.1, 0.0, 1.0 }));
-
+		1.0, 0.0, 3.0, 1.0 }));
+	terrain = new Terrain(60, 60, 0.1);
+	terrain->loadTerrain("heightmap.bmp", 1.0f);
 
 	//Make all models rotate at a fixed speed
-	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	for (int i = 0; i < allModels.size(); i++)
+	if (!allModels.empty())
 	{
-		allModels[i]->setRotationMatrix(rotation);
+		glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
+		for (int i = 0; i < allModels.size(); i++)
+		{
+			allModels[i]->setRotationMatrix(rotation);
+		}
 	}
 	//Some lights with random values
 	std::srand(13);
 	for (int i = 0; i < NR_LIGHTS; i++)
 	{
-		GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-		GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
-		GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		//GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
+		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+
+		GLfloat xPos = 2;
+		GLfloat yPos = 2;
+		GLfloat zPos = 4;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color
-		GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		
+		GLfloat rColor = ((rand() % 100) / 200.0f) + 0.8; // Between 0.5 and 1.0
+		GLfloat gColor = ((rand() % 100) / 200.0f) + 0.8; // Between 0.5 and 1.0
+		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.8; // Between 0.5 and 1.0
+		
+		//GLfloat rColor = 0.6; // Between 0.5 and 1.0
+		//GLfloat gColor = 0.6; // Between 0.5 and 1.0
+		//GLfloat bColor = 0.6; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
 }
@@ -226,22 +280,25 @@ void setUpTweakBar()
 }
 void sort()
 {
-	//Bubble sort
-	glm::vec3 modelPos1;
-	glm::vec3 modelPos2;
-	bool sorted = false;
-	while (!sorted)
+	if (!allModels.empty())
 	{
-		sorted = true;
-		for (int i = 0; i < allModels.size() - 1;i++)
+		//Bubble sort
+		glm::vec3 modelPos1;
+		glm::vec3 modelPos2;
+		bool sorted = false;
+		while (!sorted)
 		{
-			modelPos1 = allModels[i]->getModelMatrix()[3];
-			modelPos2 = allModels[i + 1]->getModelMatrix()[3];
-			//Compare distance to model1 and distance to model2 and swap if out of order.
-			if (glm::distance(modelPos1, playerCamera.getCameraPos()) > glm::distance(modelPos2, playerCamera.getCameraPos()))
+			sorted = true;
+			for (int i = 0; i < allModels.size() - 1;i++)
 			{
-				std::swap(allModels[i], allModels[i + 1]);
-				sorted = false;
+				modelPos1 = allModels[i]->getModelMatrix()[3];
+				modelPos2 = allModels[i + 1]->getModelMatrix()[3];
+				//Compare distance to model1 and distance to model2 and swap if out of order.
+				if (glm::distance(modelPos1, playerCamera.getCameraPos()) > glm::distance(modelPos2, playerCamera.getCameraPos()))
+				{
+					std::swap(allModels[i], allModels[i + 1]);
+					sorted = false;
+				}
 			}
 		}
 	}
@@ -252,6 +309,7 @@ void update(sf::Window &window)
 	deltaTime = deltaClock.restart();
 	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
 	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
+	playerCamera.cameraFall(terrain->heightAt(playerCamera.getCameraPos().x, playerCamera.getCameraPos().z),terrain->getScale(),deltaTime.asSeconds());
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -273,10 +331,36 @@ void update(sf::Window &window)
 
 void render(sf::Window &window)
 {
+	//DEPTH PASS
+	//Render scene from light's point of view
+	glCullFace(GL_FRONT);
+	depthShader.use();
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	for (GLuint i = 0; i < lightPositions.size(); i++)
+	{
+		lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+		lightView = glm::lookAt(lightPositions.at(i), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+		lightSpaceMatrix = lightProjection * lightView;
+		glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+		for (int j = 0; j < allModels.size(); j++)
+		{
+			glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[j]->getModelMatrix()[0][0]);
+			allModels[j]->draw(depthShader);
+		}
+	}
+	terrain->draw(depthShader);
+	aCannon.draw(depthShader);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glCullFace(GL_BACK);
+
+	//Reset viewport
+	glViewport(0, 0, windowWidth, windowHeight);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//Geometry pass
+	//GEOMETRY PASS
 	shaderGeometryPass.use();
 	GLint viewID = glGetUniformLocation(shaderGeometryPass.program, "view");
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
@@ -296,14 +380,13 @@ void render(sf::Window &window)
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
 		allModels.at(i)->draw(shaderGeometryPass);
 	}
-	
-	glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), 0);
 	aCannon.draw(shaderGeometryPass);
+	terrain->draw(shaderGeometryPass);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//Lighting pass
+	//LIGHTING PASS
 	shaderLightningPass.use();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -313,6 +396,8 @@ void render(sf::Window &window)
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, gAmbient);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
 
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{
@@ -325,8 +410,9 @@ void render(sf::Window &window)
 		glUniform1f(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Linear").c_str()), linear);
 		glUniform1f(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Quadratic").c_str()), quadratic);
 	}
-
+	glUniformMatrix4fv(glGetUniformLocation(shaderLightningPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
+
 
 	renderQuad();
 }
@@ -356,6 +442,8 @@ int main()
 	//Create models
 	loadModels();
 	createModels();
+	//Create DepthMap
+	createShadowMap();
 	//Main loop
 	bool running = true;
 	while (running)

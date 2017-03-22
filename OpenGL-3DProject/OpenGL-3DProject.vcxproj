@@ -128,18 +128,22 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="gBufferGeometryFragment.glsl" />
     <None Include="gBufferGeometryVertex.glsl" />
     <None Include="gBufferLightningFragment.glsl" />
     <None Include="gBufferLightningVertex.glsl" />
+    <None Include="shadowFragment.glsl" />
+    <None Include="shadowVertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Cannon.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Terrain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
