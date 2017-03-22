@@ -13,14 +13,18 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "Terrain.h"
 #pragma comment(lib, "opengl32.lib")
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
-const int windowWidth = 800;
-const int windowHeight = 600;
+const int windowWidth = 1280;
+const int windowHeight = 720;
 bool debug = false;
-float stuff = 4345435.0;
+
+
+//Terrain
+Terrain *terrain;
 //Camera
 Camera playerCamera;
 //gBuffer
@@ -30,7 +34,7 @@ Shader shaderGeometryPass;
 Shader shaderLightningPass;
 Shader depthShader;
 //gBuffer Textures
-GLuint gPosition, gNormal, gAlbedoSpec;
+GLuint gPosition, gNormal, gAlbedoSpec, gAmbient;
 //Quad VAO and VBO
 GLuint quadVAO = 0;
 GLuint quadVBO;
@@ -43,7 +47,7 @@ const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 //Stuff for ShadowMap
-const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+const GLuint SHADOW_WIDTH = 1024*4, SHADOW_HEIGHT = 1024*4;
 GLuint depthMapFBO;
 GLuint depthMap;
 
@@ -62,11 +66,17 @@ glm::mat4 viewMatrix = glm::lookAt(
 	glm::vec3(0, 1, 0));
 glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 20.0f);
 //All models in the program
-std::vector<Model> allModels;
+std::vector<Model*> allModels;
+std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
 
-void RenderQuad()
+void cleanup() 
+{
+	delete terrain;
+}
+
+void renderQuad()
 {
 	if (quadVAO == 0)
 	{
@@ -119,7 +129,7 @@ void createShadowMap()
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 }
 
-void CreateGBuffer()
+void createGBuffer()
 {
 	shaderGeometryPass = Shader("gBufferGeometryVertex.glsl", "gBufferGeometryFragment.glsl");
 	shaderLightningPass = Shader("gBufferLightningVertex.glsl", "gBufferLightningFragment.glsl");
@@ -129,7 +139,8 @@ void CreateGBuffer()
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gPosition"), 0);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gNormal"), 1);
 	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAlbedoSpec"), 2);
-	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "depthMap"), 3);
+	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAmbient"), 3);
+	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "depthMap"), 4);
 
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -137,7 +148,7 @@ void CreateGBuffer()
 	// - Position color buffer
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 800, 600, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
@@ -145,7 +156,7 @@ void CreateGBuffer()
 	// - Normal color buffer
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 800, 600, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
@@ -153,19 +164,27 @@ void CreateGBuffer()
 	// - Color + Specular color buffer
 	glGenTextures(1, &gAlbedoSpec);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 800, 600, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, windowWidth, windowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
+	//Ambient colour buffer
+	glGenTextures(1, &gAmbient);
+	glBindTexture(GL_TEXTURE_2D, gAmbient);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, windowWidth, windowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gAmbient, 0);
+
 	// - Tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	GLuint attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	GLuint rboDepth;
 	glGenRenderbuffers(1, &rboDepth);
 	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 	// - Finally check if framebuffer is complete
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -173,39 +192,39 @@ void CreateGBuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void loadModels()
+{
+	//Reads the models from file once
+	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
+
+	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+
+	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
+}
+
 void createModels()
 {
-	//Create the models and store them in the vector of all models
-
-	/*allModels.push_back(Model("models/nanosuit/nanosuit.obj", {
-		0.2, 0.0, 0.0, 0.0,
-		0.0, 0.2, 0.0, 0.0,
-		0.0, 0.0, 0.2, 0.0,
-		0.0, -0.7, 0.0, 1.0 }));
-	*/
-
-	allModels.push_back(Model("models/cube/cube.obj", {
+	//Create the models and store them in the vector of all models to be rendered
+	
+	allModels.push_back(new Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		-1.0, 0.0, 0.0, 1.0 }));
+		2.0, 0.5, 2.0, 1.0 }));
+	allModels.push_back(new Model(modelLibrary.at(0), {
+		0.5, 0.0, 0.0, 0.0,
+		0.0, 0.5, 0.0, 0.0,
+		0.0, 0.0, 0.5, 0.0,
+		4.0, 0.0, 2.0, 1.0 }));
 
-	allModels.push_back(Model("models/cube/cube.obj", {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		1.0, 1.0, 0.0, 1.0 }));
-	allModels.push_back(Model("models/cube/cube.obj", {
-		5.0, 0.0, 0.0, 0.0,
-		0.0, 5.0, 0.0, 0.0,
-		0.0, 0.0, 5.0, 0.0,
-		0.0, 0.0, -5.0, 1.0 }));
+	terrain = new Terrain(60, 60, 0.1);
+	terrain->loadTerrain("heightmap.bmp", 1.0f);
 
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size()-1; i++)
 	{
-		allModels[i].setRotationMatrix(rotation);
+		allModels[i]->setRotationMatrix(rotation);
 	}
 	//Some lights with random values
 	std::srand(13);
@@ -215,37 +234,57 @@ void createModels()
 		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
 		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
 
-		GLfloat xPos = 0;
-		GLfloat yPos = 0;
-		GLfloat zPos = 2;
+		GLfloat xPos = 1;
+		GLfloat yPos = 1;
+		GLfloat zPos = 3;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color
 		
-		//GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		//GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		//GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+		GLfloat rColor = ((rand() % 100) / 200.0f) + 0.8; // Between 0.5 and 1.0
+		GLfloat gColor = ((rand() % 100) / 200.0f) + 0.8; // Between 0.5 and 1.0
+		GLfloat bColor = ((rand() % 100) / 200.0f) + 0.8; // Between 0.5 and 1.0
 		
-		GLfloat rColor = 0.6; // Between 0.5 and 1.0
-		GLfloat gColor = 0.6; // Between 0.5 and 1.0
-		GLfloat bColor = 0.6; // Between 0.5 and 1.0
+		//GLfloat rColor = 0.6; // Between 0.5 and 1.0
+		//GLfloat gColor = 0.6; // Between 0.5 and 1.0
+		//GLfloat bColor = 0.6; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
-
-
 }
 
 void setUpTweakBar()
 {
 	debugInterface = TwNewBar("Debug Interface");
-	TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
+	//TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
 }
-
+void sort()
+{
+	//Bubble sort
+	glm::vec3 modelPos1;
+	glm::vec3 modelPos2;
+	bool sorted = false;
+	while (!sorted)
+	{
+		sorted = true;
+		for (int i = 0; i < allModels.size() - 1;i++)
+		{
+			modelPos1 = allModels[i]->getModelMatrix()[3];
+			modelPos2 = allModels[i + 1]->getModelMatrix()[3];
+			//Compare distance to model1 and distance to model2 and swap if out of order.
+			if (glm::distance(modelPos1, playerCamera.getCameraPos()) > glm::distance(modelPos2, playerCamera.getCameraPos()))
+			{
+				std::swap(allModels[i], allModels[i + 1]);
+				sorted = false;
+			}
+		}
+	}
+}
 void update(sf::Window &window)
 {
 	//Controls update timings
 	deltaTime = deltaClock.restart();
 	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
 	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
+	playerCamera.cameraFall(terrain->heightAt(playerCamera.getCameraPos().x, playerCamera.getCameraPos().z),terrain->getScale(),deltaTime.asSeconds());
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -257,13 +296,13 @@ void update(sf::Window &window)
 	}
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		allModels[i].rotate();
+		//allModels[i]->rotate();
 	}
+	sort();
 }
 
-void render()
+void render(sf::Window &window)
 {
-
 	//DEPTH PASS
 	//Render scene from light's point of view
 	glCullFace(GL_FRONT);
@@ -279,10 +318,11 @@ void render()
 		glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 		for (int j = 0; j < allModels.size(); j++)
 		{
-			glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[j].getModelMatrix()[0][0]);
-			allModels.at(j).draw(depthShader);
+			glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[j]->getModelMatrix()[0][0]);
+			allModels[j]->draw(depthShader);
 		}
 	}
+	terrain->draw(depthShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glCullFace(GL_BACK);
 
@@ -297,12 +337,22 @@ void render()
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &viewMatrix[0][0]);
 	GLint projectionID = glGetUniformLocation(shaderGeometryPass.program, "projection");
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projectionMatrix[0][0]);
+	//Mouseover check
+	int mouseOvered = playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
+	//Once to test front to back rendering
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i].getModelMatrix()[0][0]);
-		allModels.at(i).draw(shaderGeometryPass);
+		int isMouseOver = 0;
+		if (i == mouseOvered)
+		{
+			isMouseOver = 1;
+		}
+		glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), isMouseOver);
+		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
+		allModels.at(i)->draw(shaderGeometryPass);
 	}
-	
+	terrain->draw(shaderGeometryPass);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -315,6 +365,8 @@ void render()
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, gAmbient);
+	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 
 	for (GLuint i = 0; i < lightPositions.size(); i++)
@@ -331,7 +383,8 @@ void render()
 	glUniformMatrix4fv(glGetUniformLocation(shaderLightningPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
 
-	RenderQuad();
+
+	renderQuad();
 }
 
 int main()
@@ -355,8 +408,9 @@ int main()
 	//Enables depth test so vertices are drawn in the correct order
 	glEnable(GL_DEPTH_TEST);
 	//Create gBuffer
-	CreateGBuffer();
+	createGBuffer();
 	//Create models
+	loadModels();
 	createModels();
 	//Create DepthMap
 	createShadowMap();
@@ -388,7 +442,7 @@ int main()
 			}
 		}
 		update(window);
-		render();
+		render(window);
 		if(debug)TwDraw();
 		//End the current frame (internally swaps the front and back buffers)
 		window.display();

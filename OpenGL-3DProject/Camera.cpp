@@ -22,15 +22,19 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 {
 	if (window.hasFocus() && !sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
-		cameraSpeed = 5 * deltaTime;
+		cameraSpeed = 0.5 * deltaTime;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
-			cameraPos += cameraSpeed * cameraFront;
+			cameraPos.x += (cameraSpeed * cameraFront).x;
+			cameraPos.z += (cameraSpeed * cameraFront).z;
 		}
+
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			cameraPos -= cameraSpeed * cameraFront;
+			cameraPos.x -= (cameraSpeed * cameraFront).x;
+			cameraPos.z -= (cameraSpeed * cameraFront).z;
 		}
+
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
 			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
@@ -77,45 +81,82 @@ glm::vec3 Camera::getCameraPos()
 {
 	return this->cameraPos;
 }
-void Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model> &allModels)
+
+void Camera::cameraFall(float terrainY, float scale, float dt)
 {
+	float cameraOffset = 0.2f;
+	float fallSpeed = 0.8f;
+	if (cameraPos.y-cameraOffset > terrainY*scale)
+	{
+		cameraPos.y = cameraPos.y - (fallSpeed*dt);
+	}
+	else
+	{
+		cameraPos.y = (terrainY*scale)+cameraOffset-fallSpeed*dt;
+	}
+}
+
+
+int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels)
+{
+	int closestModel = -1;
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
 	{
-		//float x = (2.0f * sf::Mouse::getPosition(window).x) / window.getSize().x - 1.0f;
-		//float y = 1.0f - (2.0f * sf::Mouse::getPosition(window).y / window.getSize().y);
-		float x = (2.0f * (window.getSize().x / 2)) / window.getSize().x - 1.0f;
-		float y = 1.0f - (2.0f * (window.getSize().y / 2) / window.getSize().y);
-		float z = 1.0f;
+		float x, y, z;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
+		{
+			//Get mouse pos
+			x = (2.0f * sf::Mouse::getPosition(window).x / window.getSize().x - 1.0f);
+			y = 1.0f - (2.0f * sf::Mouse::getPosition(window).y / window.getSize().y);
+			z = 1.0f;
+		}
+		else
+		{
+			//Get middle of windows position
+			x = (2.0f * (window.getSize().x / 2)) / window.getSize().x - 1.0f;
+			y = 1.0f - (2.0f * (window.getSize().y / 2) / window.getSize().y);
+			z = 1.0f;
+		}
 		glm::vec3 ray_nds = glm::vec3(x, y, z);
+		//Convert to 
 		glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
+		//Convert to eye space
 		glm::vec4 ray_eye = glm::inverse(projectionMatrix) * ray_clip;
 		ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+		//Convert to world space
 		glm::vec3 ray_wor = glm::vec3((glm::inverse(viewMatrix)*ray_eye));
-		//std::cout << "ray_wor : X = " << ray_wor.x << " : Y = " << ray_wor.y << " : Z " << ray_wor.z << std::endl;
 
-		glm::vec3 aabb_min(-0.5f, -0.5f, -0.5f);
-		glm::vec3 aabb_max(0.5f, 0.5f, 0.5f);
-		float distance = 100;
-		//std::cout << "ORIGIN = " << playerCamera.getCameraPos().x << ", " << playerCamera.getCameraPos().y << ", " << playerCamera.getCameraPos().z << std::endl;
+		float distance;
+		float clostestDistance = -1;
+
 		for (int i = 0; i < allModels.size(); i++)
 		{
-			glm::mat4 ModelMatrix = allModels[i].getModelMatrix();
-			ModelMatrix *= allModels[i].getRotationMatrix();
-			std::cout << "TESTING INTERSECTIONS WITH I = " << i << std::endl;
-			if (testIntersection(cameraPos, ray_wor, aabb_min, aabb_max, ModelMatrix, distance))
+			glm::mat4 ModelMatrix = allModels[i]->getModelMatrix();
+			glm::vec3 pos(ModelMatrix[3]);
+			glm::vec3 scaleVec(ModelMatrix[0][0], ModelMatrix[1][1], ModelMatrix[2][2]);
+			float scaleValue = sqrt(ModelMatrix[0][0] * ModelMatrix[0][0] + ModelMatrix[1][0] * ModelMatrix[1][0] + ModelMatrix[2][0] * ModelMatrix[2][0]);
+			glm::vec3 minPos = allModels[i]->getMinBounding()*scaleValue;
+			glm::vec3 maxPos = allModels[i]->getMaxBouding()*scaleValue;
+			
+			if (testIntersection(cameraPos, ray_wor, minPos, maxPos, ModelMatrix, distance))
 			{
-				std::cout << "INTERSECTS WITH MOUSE" << std::endl;
-			}
-			else
-			{
-				std::cout << "DOES NOT INTERSECT WITH MOUSE" << std::endl;
+				if (closestModel == -1)
+				{
+					closestModel = i;
+					clostestDistance = distance;
+				}
+				else if (distance < clostestDistance)
+				{
+					closestModel = i;
+				}
 			}
 		}
 	}
+	return closestModel;
 }
 bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance)
 
-{
+{	
 	// Intersection method from Real-Time Rendering and Essential Mathematics for Games
 
 	float tMin = 0.0f;
@@ -223,4 +264,5 @@ bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, gl
 
 	intersection_distance = tMin;
 	return true;
+	
 }

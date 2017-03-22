@@ -13,20 +13,25 @@
 //A material specifying how shading, coloring and texturing works
 struct Material
 {
+	//Material name
 	std::string name;
+	//Colours
 	glm::vec3 ambientColour;
 	glm::vec3 diffuseColour;
 	glm::vec3 specularColour;
+	//Textures
+	GLuint ambientTexture;
 	GLuint diffuseTexture;
 	GLuint specularTexture;
 	GLuint normalMapTexture;
+	//File names for textures
 	std::string textureMapAmbientFile;
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
 	std::string normalMapFile;
+	//Read but not implemented
 	float transparency;
 	int illuminationMode;
-	bool hasTextures = false;
 	//Searching Functions
 	static int findMaterial(std::string name, std::vector<Material> materials);
 	int findMaterial(std::vector<Material> materials);
@@ -37,6 +42,7 @@ struct Vertex
 	glm::vec3 pos;
 	glm::vec2 texPos;
 	glm::vec3 normal;
+	int useNormalMap;
 };
 struct Mesh
 {
@@ -52,25 +58,34 @@ class Model
 private:
 	glm::mat4 modelMatrix;
 	glm::mat4 rotationMatrix;
-	std::vector<Mesh> meshes;
-	void setupMesh();
+	std::vector<Mesh*> meshes;
+
+	glm::vec3 minBounding;
+	glm::vec3 maxBounding;
+	
+	void setupModel();
 	void loadTextures(int meshNr);
 public:
-	//std::vector<std::vector<Vertex>> faces;
 	GLuint VAO; //Vertex Array Object
 	GLuint VBO; //Vertex Buffer Object
 	Material getMaterial(int index);
 	glm::mat4 getModelMatrix() const;
 	glm::mat4 getRotationMatrix() const;
+	glm::vec3 getMinBounding() const;
+	glm::vec3 getMaxBouding() const;
 	void setModelMatrix(glm::mat4 modelMat);
 	void setRotationMatrix(glm::mat4 rotationMat);
 	void rotate();
 	void read(std::string filename);
 	void draw(Shader shader);
+	void generateBoundingBox();
 	Model(std::string filename);
 	Model(std::string filename, glm::mat4 modelMat);
 	Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation);
+	Model(Model &otherModel);
+	Model(Model &otherModel, glm::mat4 modelMat);
 	Model();
+
 	~Model();
 };
 #endif
