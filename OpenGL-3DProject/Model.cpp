@@ -43,7 +43,7 @@ glm::vec3 Model::getMinBounding() const
 {
 	return this->minBounding;
 }
-glm::vec3 Model::getMaxBouding() const
+glm::vec3 Model::getMaxBounding() const
 {
 	return this->maxBounding;
 }

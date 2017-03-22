@@ -13,6 +13,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "Cannon.h"
 #include "Terrain.h"
 #pragma comment(lib, "opengl32.lib")
 //Initial resolutions
@@ -20,7 +21,7 @@ const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 const int windowWidth = 1280;
 const int windowHeight = 720;
-bool debug = false;
+bool debug = true;
 
 
 //Terrain
@@ -70,6 +71,10 @@ std::vector<Model*> allModels;
 std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
+int amountOfHits;
+int amountOfTriesLeft;
+//Cannon
+Cannon aCannon;
 
 void cleanup() 
 {
@@ -200,31 +205,45 @@ void loadModels()
 	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
+
+	Model cannonModel = Model("models/cannon/editCannon.obj", {
+		0.1, 0.0, 0.0, 0.0,
+		0.0, 0.1, 0.0, 0.0,
+		0.0, 0.0, 0.1, 0.0,
+		2.0, -0.12, 2.0, 1.0 });
+	Model cannonModel2 = Model("models/cannon/editCannon2.obj", {
+		0.1, 0.0, 0.0, 0.0,
+		0.0, 0.1, 0.0, 0.0,
+		0.0, 0.0, 0.1, 0.0,
+		2.0, -0.12, 2.0, 1.0 });
+	aCannon.loadModel(cannonModel,cannonModel2);
 }
 
 void createModels()
 {
 	//Create the models and store them in the vector of all models to be rendered
-	
 	allModels.push_back(new Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		2.0, 0.5, 2.0, 1.0 }));
-	allModels.push_back(new Model(modelLibrary.at(0), {
-		0.5, 0.0, 0.0, 0.0,
-		0.0, 0.5, 0.0, 0.0,
-		0.0, 0.0, 0.5, 0.0,
-		4.0, 0.0, 2.0, 1.0 }));
+		0.0, 0.0, 3.0, 1.0 }));
 
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.1, 0.0, 0.0, 0.0,
+		0.0, 0.1, 0.0, 0.0,
+		0.0, 0.0, 0.1, 0.0,
+		1.0, 0.0, 3.0, 1.0 }));
 	terrain = new Terrain(60, 60, 0.1);
 	terrain->loadTerrain("heightmap.bmp", 1.0f);
 
 	//Make all models rotate at a fixed speed
-	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
-	for (int i = 0; i < allModels.size()-1; i++)
+	if (!allModels.empty())
 	{
-		allModels[i]->setRotationMatrix(rotation);
+		glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
+		for (int i = 0; i < allModels.size(); i++)
+		{
+			allModels[i]->setRotationMatrix(rotation);
+		}
 	}
 	//Some lights with random values
 	std::srand(13);
@@ -234,9 +253,9 @@ void createModels()
 		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
 		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
 
-		GLfloat xPos = 1;
-		GLfloat yPos = 1;
-		GLfloat zPos = 3;
+		GLfloat xPos = 2;
+		GLfloat yPos = 2;
+		GLfloat zPos = 4;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color
 		
@@ -254,26 +273,32 @@ void createModels()
 void setUpTweakBar()
 {
 	debugInterface = TwNewBar("Debug Interface");
-	//TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
+	TwDefine(" 'Debug Interface' size='200 100' "); // resize bar
+	TwDefine(" 'Debug Interface' refresh=0.1 "); // refresh the bar every 0.1 sec
+	TwAddVarRW(debugInterface, "Amount of hits", TW_TYPE_INT16, &amountOfHits, "");
+	TwAddVarRW(debugInterface, "Tries left", TW_TYPE_INT16, &amountOfTriesLeft, "");
 }
 void sort()
 {
-	//Bubble sort
-	glm::vec3 modelPos1;
-	glm::vec3 modelPos2;
-	bool sorted = false;
-	while (!sorted)
+	if (!allModels.empty())
 	{
-		sorted = true;
-		for (int i = 0; i < allModels.size() - 1;i++)
+		//Bubble sort
+		glm::vec3 modelPos1;
+		glm::vec3 modelPos2;
+		bool sorted = false;
+		while (!sorted)
 		{
-			modelPos1 = allModels[i]->getModelMatrix()[3];
-			modelPos2 = allModels[i + 1]->getModelMatrix()[3];
-			//Compare distance to model1 and distance to model2 and swap if out of order.
-			if (glm::distance(modelPos1, playerCamera.getCameraPos()) > glm::distance(modelPos2, playerCamera.getCameraPos()))
+			sorted = true;
+			for (int i = 0; i < allModels.size() - 1;i++)
 			{
-				std::swap(allModels[i], allModels[i + 1]);
-				sorted = false;
+				modelPos1 = allModels[i]->getModelMatrix()[3];
+				modelPos2 = allModels[i + 1]->getModelMatrix()[3];
+				//Compare distance to model1 and distance to model2 and swap if out of order.
+				if (glm::distance(modelPos1, playerCamera.getCameraPos()) > glm::distance(modelPos2, playerCamera.getCameraPos()))
+				{
+					std::swap(allModels[i], allModels[i + 1]);
+					sorted = false;
+				}
 			}
 		}
 	}
@@ -294,11 +319,14 @@ void update(sf::Window &window)
 	{
 		window.setMouseCursorVisible(false);
 	}
+	aCannon.update(deltaTime.asSeconds(), lightPositions);
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		//allModels[i]->rotate();
 	}
 	sort();
+	amountOfHits = aCannon.getAmountOfHits();
+	amountOfTriesLeft = aCannon.getTriesLeft();
 }
 
 void render(sf::Window &window)
@@ -323,6 +351,7 @@ void render(sf::Window &window)
 		}
 	}
 	terrain->draw(depthShader);
+	aCannon.draw(depthShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glCullFace(GL_BACK);
 
@@ -351,6 +380,7 @@ void render(sf::Window &window)
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
 		allModels.at(i)->draw(shaderGeometryPass);
 	}
+	aCannon.draw(shaderGeometryPass);
 	terrain->draw(shaderGeometryPass);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -438,6 +468,10 @@ int main()
 				{
 					window.close();
 					running = false;
+				}
+				if (event.key.code == sf::Keyboard::Return)
+				{
+					aCannon.shoot(playerCamera.getCameraPos(), modelLibrary[1]);
 				}
 			}
 		}
