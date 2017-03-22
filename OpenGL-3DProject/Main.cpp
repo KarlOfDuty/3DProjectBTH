@@ -169,6 +169,7 @@ void loadModels()
 void createModels()
 {
 	//Create the models and store them in the vector of all models to be rendered
+	
 	allModels.push_back(new Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
@@ -178,8 +179,9 @@ void createModels()
 		0.1, 0.0, 0.0, 0.0,
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,
-		1.0, 0.0, 0.0, 1.0 }));
-	terrain = new Terrain(256, 256);
+		2.0, 0.0, 0.0, 1.0 }));
+
+	terrain = new Terrain(60, 60, 0.1);
 	terrain->loadTerrain("heightmap.bmp", 10.0f);
 
 	//Make all models rotate at a fixed speed
@@ -235,9 +237,9 @@ void update(sf::Window &window)
 {
 	//Controls update timings
 	deltaTime = deltaClock.restart();
-	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window, terrain->heightAt(playerCamera.getCameraPos().x, playerCamera.getCameraPos().z));
+	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
 	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
-	playerCamera.cameraFall(terrain->heightAt(playerCamera.getCameraPos().x, playerCamera.getCameraPos().z));
+	playerCamera.cameraFall(terrain->heightAt(playerCamera.getCameraPos().x, playerCamera.getCameraPos().z),terrain->getScale(),deltaTime.asSeconds());
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -249,9 +251,9 @@ void update(sf::Window &window)
 	}
 	for (int i = 0; i < allModels.size(); i++)
 	{
-		//allModels[i]->rotate();
+		allModels[i]->rotate();
 	}
-	//sort();
+	sort();
 }
 
 void render(sf::Window &window)
@@ -280,7 +282,7 @@ void render(sf::Window &window)
 		allModels.at(i)->draw(shaderGeometryPass);
 	}
 
-	terrain->draw();
+	terrain->draw(shaderGeometryPass);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

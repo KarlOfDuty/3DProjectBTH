@@ -18,19 +18,21 @@ Camera::~Camera()
 {
 
 }
-glm::mat4 Camera::Update(float deltaTime, sf::Window &window, float terrainY)
+glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 {
 	if (window.hasFocus() && !sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
 		cameraSpeed = 0.5 * deltaTime;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
-			cameraPos += cameraSpeed * cameraFront;
+			cameraPos.x += (cameraSpeed * cameraFront).x;
+			cameraPos.z += (cameraSpeed * cameraFront).z;
 		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			cameraPos -= cameraSpeed * cameraFront;
+			cameraPos.x -= (cameraSpeed * cameraFront).x;
+			cameraPos.z -= (cameraSpeed * cameraFront).z;
 		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
@@ -80,13 +82,17 @@ glm::vec3 Camera::getCameraPos()
 	return this->cameraPos;
 }
 
-void Camera::cameraFall(float terrainY)
+void Camera::cameraFall(float terrainY, float scale, float dt)
 {
-	std::cout << terrainY - terrainY << std::endl;
-	std::cout << cameraPos.y << std::endl;
-	if (cameraPos.y > terrainY-terrainY)
+	float cameraOffset = 0.2f;
+	float fallSpeed = 0.8f;
+	if (cameraPos.y-cameraOffset > terrainY*scale)
 	{
-		cameraPos.y = cameraPos.y - 0.02f;
+		cameraPos.y = cameraPos.y - (fallSpeed*dt);
+	}
+	else
+	{
+		cameraPos.y = (terrainY*scale)+cameraOffset-fallSpeed*dt;
 	}
 }
 

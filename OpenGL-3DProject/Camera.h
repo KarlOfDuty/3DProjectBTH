@@ -23,9 +23,9 @@ private:
 public:
 	Camera();
 	~Camera();
-	glm::mat4 Update(float deltaTime, sf::Window &window, float terrainY);
+	glm::mat4 Update(float deltaTime, sf::Window &window);
 	glm::vec3 getCameraPos();
-	void cameraFall(float terrainY);
+	void cameraFall(float terrainY,float scale, float dt);
 	int mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels);
 };
 

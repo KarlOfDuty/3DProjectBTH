@@ -1,6 +1,6 @@
 #include "Terrain.h"
 
-Terrain::Terrain(int w2, int l2)
+Terrain::Terrain(int w2, int l2, float scale)
 {
 	w = w2;
 	l = l2;
@@ -18,6 +18,13 @@ Terrain::Terrain(int w2, int l2)
 	}
 
 	computedNormals = false;
+	scaleFactor = scale;
+	modelMatrix = glm::mat4({
+		scaleFactor, 0.0, 0.0, 0.0,
+		0.0, scaleFactor, 0.0, 0.0,
+		0.0, 0.0, scaleFactor, 0.0,
+		0.0, 0.0, 0.0, 1.0 });
+	setupTexture();
 }
 
 Terrain::~Terrain()
@@ -35,6 +42,25 @@ Terrain::~Terrain()
 	delete[] normals;
 }
 
+void Terrain::setupTexture()
+{
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	
+	glGenTextures(1, &colorTexture);
+	glBindTexture(GL_TEXTURE_2D, colorTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	float colour[3] = {0,0.5,0};
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, colour);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 int Terrain::getWidth()
 {
 	return w;
@@ -43,6 +69,11 @@ int Terrain::getWidth()
 int Terrain::getLength()
 {
 	return l;
+}
+
+float Terrain::getScale()
+{
+	return scaleFactor;
 }
 
 void Terrain::setHeight(int x, int z, float y)
@@ -59,6 +90,8 @@ float Terrain::getHeight(int x, int z)
 float Terrain::heightAt(float x, float z)
 {
 	//Make (x, z) lie within the bounds of the terrain
+	x /= scaleFactor;
+	z /= scaleFactor;
 	if (x < 0)
 	{
 		x = 0;
@@ -196,6 +229,7 @@ glm::vec3 Terrain::getNormal(int x, int z)
 	}
 	return normals[z][x];
 }
+
 void Terrain::loadTerrain(std::string fileName, float height)
 {	
 	int imageWidth, imageHeight, channels;
@@ -215,13 +249,17 @@ void Terrain::loadTerrain(std::string fileName, float height)
 	SOIL_free_image_data(image);
 }
 
-void Terrain::draw()
+void Terrain::draw(Shader shader)
 {
-	float scale = 5.0f / std::max(this->getWidth() - 1, this->getLength() - 1);
-	glScalef(scale, scale, scale);
-	glTranslatef(-float(this->getWidth()) / 2,
-		0.0f,
-		-float(this->getLength()) / 2);
+	glBindVertexArray(this->VAO);
+	
+	//Color texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, colorTexture);
+	glUniform1i(glGetUniformLocation(shader.program, "diffuseTexture"), 0);
+	
+	glUniformMatrix4fv(glGetUniformLocation(shader.program, "model"), 1, GL_FALSE, &modelMatrix[0][0]);
+	glUniform1i(glGetUniformLocation(shader.program, "isMouseOvered"), 0);
 	
 	for (int z = 0; z < getLength() - 1; z++)
 	{
@@ -238,4 +276,5 @@ void Terrain::draw()
 		}
 		glEnd();
 	}
+	glBindVertexArray(0);
 }
