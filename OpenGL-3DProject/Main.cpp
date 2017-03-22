@@ -13,6 +13,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "Terrain.h"
 #pragma comment(lib, "opengl32.lib")
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
@@ -20,6 +21,10 @@ const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 const int windowWidth = 1280;
 const int windowHeight = 720;
 bool debug = false;
+
+
+//Terrain
+Terrain *terrain;
 //Camera
 Camera playerCamera;
 //gBuffer
@@ -55,6 +60,11 @@ std::vector<Model*> allModels;
 std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
+
+void cleanup() 
+{
+	delete terrain;
+}
 
 void renderQuad()
 {
@@ -151,7 +161,7 @@ void loadModels()
 	//Reads the models from file once
 	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
+	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
@@ -159,6 +169,7 @@ void loadModels()
 void createModels()
 {
 	//Create the models and store them in the vector of all models to be rendered
+	
 	allModels.push_back(new Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
@@ -168,7 +179,11 @@ void createModels()
 		0.1, 0.0, 0.0, 0.0,
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,
-		1.0, 0.0, 0.0, 1.0 }));
+		2.0, 0.0, 0.0, 1.0 }));
+
+	terrain = new Terrain(60, 60, 0.1);
+	terrain->loadTerrain("heightmap.bmp", 10.0f);
+
 	//Make all models rotate at a fixed speed
 	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
@@ -224,6 +239,7 @@ void update(sf::Window &window)
 	deltaTime = deltaClock.restart();
 	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
 	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
+	playerCamera.cameraFall(terrain->heightAt(playerCamera.getCameraPos().x, playerCamera.getCameraPos().z),terrain->getScale(),deltaTime.asSeconds());
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -265,6 +281,9 @@ void render(sf::Window &window)
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
 		allModels.at(i)->draw(shaderGeometryPass);
 	}
+
+	terrain->draw(shaderGeometryPass);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -292,6 +311,7 @@ void render(sf::Window &window)
 	}
 
 	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
+
 
 	renderQuad();
 }
@@ -321,6 +341,7 @@ int main()
 	//Create models
 	loadModels();
 	createModels();
+
 	//Main loop
 	bool running = true;
 	while (running)

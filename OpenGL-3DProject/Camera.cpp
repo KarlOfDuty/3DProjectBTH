@@ -22,15 +22,19 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 {
 	if (window.hasFocus() && !sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
-		cameraSpeed = 5 * deltaTime;
+		cameraSpeed = 0.5 * deltaTime;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
-			cameraPos += cameraSpeed * cameraFront;
+			cameraPos.x += (cameraSpeed * cameraFront).x;
+			cameraPos.z += (cameraSpeed * cameraFront).z;
 		}
+
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			cameraPos -= cameraSpeed * cameraFront;
+			cameraPos.x -= (cameraSpeed * cameraFront).x;
+			cameraPos.z -= (cameraSpeed * cameraFront).z;
 		}
+
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
 			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
@@ -77,6 +81,22 @@ glm::vec3 Camera::getCameraPos()
 {
 	return this->cameraPos;
 }
+
+void Camera::cameraFall(float terrainY, float scale, float dt)
+{
+	float cameraOffset = 0.2f;
+	float fallSpeed = 0.8f;
+	if (cameraPos.y-cameraOffset > terrainY*scale)
+	{
+		cameraPos.y = cameraPos.y - (fallSpeed*dt);
+	}
+	else
+	{
+		cameraPos.y = (terrainY*scale)+cameraOffset-fallSpeed*dt;
+	}
+}
+
+
 int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels)
 {
 	int closestModel = -1;
