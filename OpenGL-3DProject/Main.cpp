@@ -27,7 +27,7 @@ FrustumCulling frustumObject = FrustumCulling();
 Camera frustumCullingCamera = Camera();
 float fov = 45.0f;
 float nearPlane = 0.1f;
-float farPlane = 5000.0f;
+float farPlane = 200.0f;
 glm::mat4 projectionMatrix = glm::perspective(fov, (float)windowWidth / (float)windowHeight, nearPlane, farPlane);
 //gBuffer
 GLuint gBuffer;
@@ -174,12 +174,6 @@ void createModels()
 			0.0, 1.0, 0.0, 0.0,
 			0.0, 0.0, 1.0, 0.0,
 			(rand() % 100)-50, (rand() % 10)-5, (rand() % 100)-50, 1.0 }));
-	}
-	//Make all models rotate at a fixed speed
-	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	for (int i = 0; i < allModels.size(); i++)
-	{
-		allModels[i]->setRotationMatrix(rotation);
 	}
 	//Some lights with random values
 	std::srand(13);

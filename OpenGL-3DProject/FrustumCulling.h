@@ -53,7 +53,7 @@ private:
 	//Root node of the quadtree
 	Node *root;
 public:
-	static enum { FAR_P, NEAR_P, RIGHT_P, LEFT_P, TOP_P, BOTTOM_P };
+	static enum { RIGHT_P, LEFT_P, FAR_P, NEAR_P, TOP_P, BOTTOM_P };
 	void setFrustumShape(float fovAngle, float aspectRatio, float nearDistance, float farDistance);
 	void setFrustumPlanes(glm::vec3 cameraPos, glm::vec3 cameraForward, glm::vec3 cameraUp);
 	bool boxInFrustum(const glm::vec4 &quad) const;

@@ -2,8 +2,8 @@
 //Distance to a point from the plane
 float Plane::getDistanceTo(const glm::vec3 &point) const
 {
-	//|P->A * N|/|N|
-	return glm::dot(this->pointInPlane - point,this->normal)/this->normal.length();
+	//Q->P * N
+	return glm::dot(point - this->pointInPlane,this->normal);
 }
 //True if a model is inside or intersecting the quadrant
 bool FrustumCulling::Node::intersectsQuadrant(Model *model, glm::vec4 quad)
@@ -12,16 +12,16 @@ bool FrustumCulling::Node::intersectsQuadrant(Model *model, glm::vec4 quad)
 	//Because all models totally have their center in their pivot point
 	glm::vec3 modelCenter = glm::vec3(model->getModelMatrix()[3]);
 	//TODO: Fix nested if statements after testing is done
-	if (quad[XMIN] - radius <= modelCenter.x)
+	if (quad[XMIN] <= modelCenter.x + radius)
 	{
 		//std::cout << "XMIN: TRUE" << std::endl;
-		if (quad[XMAX] + radius >= modelCenter.x)
+		if (quad[XMAX] >= modelCenter.x - radius)
 		{
 			//std::cout << "XMAX: TRUE" << std::endl;
-			if (quad[ZMIN] - radius <= modelCenter.z)
+			if (quad[ZMIN] <= modelCenter.z + radius)
 			{
 				//std::cout << "ZMIN: TRUE" << std::endl;
-				if (quad[ZMAX] + radius >= modelCenter.z)
+				if (quad[ZMAX] >= modelCenter.z - radius)
 				{
 					//std::cout << "ZMAX: TRUE" << std::endl;
 					return true;
@@ -41,7 +41,8 @@ void FrustumCulling::Node::buildQuadTree(std::vector<Model*> models, int level, 
 	{
 		if (intersectsQuadrant(models[i],quad))
 		{
-			//std::cout << "FOUND: TRUE. LEVEL: " << level << ". X bounds: " << quad.x << " " << quad.z << std::endl;
+			//if(level==4)
+			//std::cout << "FOUND: TRUE. LEVEL: " << level << ". X bounds: " << quad.x << " " << quad.z << ". Z bounds: " << quad.y << " " << quad.w << std::endl;
 			foundModels.push_back(models[i]);
 		}
 		else
@@ -87,11 +88,11 @@ void FrustumCulling::Node::buildQuadTree(std::vector<Model*> models, int level, 
 		nextQuad[ZMIN] = quad[ZMIN];
 		nextQuad[ZMAX] = quad[ZMAX] - (quad[ZMAX] - quad[ZMIN]) / 2;
 		//Create the node
-this->northWest = new Node();
-northWest->buildQuadTree(foundModels, level + 1, nextQuad);
+		this->northWest = new Node();
+		northWest->buildQuadTree(foundModels, level + 1, nextQuad);
 
-//Don't delete this node in cleanup
-this->hasContents = true;
+		//Don't delete this node in cleanup
+		this->hasContents = true;
 	}
 	else if (foundModels.empty())
 	{
@@ -265,48 +266,46 @@ void FrustumCulling::setFrustumPlanes(glm::vec3 cameraPos, glm::vec3 cameraForwa
 {
 	///All calculations in world space
 	//Make sure base vectors are normalised
-	cameraForward = glm::normalize(cameraForward)*-1.0f;
+	cameraForward = glm::normalize(cameraForward);
 	cameraUp = glm::normalize(cameraUp);
 	//A vector perpendicular to the up and forward vectors i.e, going straight to the right from the camera's POV
-	glm::vec3 cameraRight = glm::cross(cameraUp,cameraForward);
-	cameraUp = glm::cross(cameraForward,cameraRight);
+	glm::vec3 cameraRight = glm::normalize(glm::cross(cameraForward,cameraUp));
+	//Calculates the real up vector for the camera instead of the world's Y
+	cameraUp = glm::cross(cameraRight,cameraForward);
 	//Calculates the center point and normal of the far plane
-	this->planes[FAR_P].pointInPlane = cameraPos - (cameraForward * farDistance);
+	this->planes[FAR_P].pointInPlane = cameraPos + (cameraForward * farDistance);
 	this->planes[FAR_P].normal = -cameraForward;
 
 	//Calculates the center point and normal of the near plane
-	this->planes[NEAR_P].pointInPlane = cameraPos - (cameraForward * nearDistance);
+	this->planes[NEAR_P].pointInPlane = cameraPos + (cameraForward * nearDistance);
 	this->planes[NEAR_P].normal = cameraForward;
 
 	//Calculate a normal for each of the other planes. 
 	//They all have a point in the camera position, so no calculation needed for it.
-	//The vectors to the sides are from the camera to the side of the near plane
-	glm::vec3 halfWidth = cameraRight * planes[NEAR_P].width / 2.0f;
-	glm::vec3 halfHeight = cameraUp * planes[NEAR_P].height / 2.0f;
+	//The plane vectors are from the camera to the side of the near plane
+	//Multiplied to make up for float errors
+	glm::vec3 farWidth = (cameraRight * planes[FAR_P].width*1.5f);
+	glm::vec3 farHeight = (cameraUp * planes[FAR_P].height*1.5f);
+	glm::vec3 toFarPlane = (cameraForward * farDistance);
 
 	//Right plane
-	//glm::vec3 vectorToRightSide = planes[NEAR_P].pointInPlane + halfWidth - cameraPos;
-	//vectorToRightSide = glm::normalize(vectorToRightSide);
-	//this->planes[RIGHT_P].normal = cross(cameraUp, vectorToRightSide);
-	glm::vec3 notNormal = glm::normalize(planes[NEAR_P].pointInPlane + glm::cross(cameraRight, halfWidth*2.0f) - cameraPos);
-	this->planes[RIGHT_P].normal = glm::cross(cameraUp,notNormal);
-	this->planes[RIGHT_P].pointInPlane = planes[NEAR_P].pointInPlane + glm::cross(cameraRight, halfWidth*2.0f);
+	glm::vec3 planeVector = (farWidth) + toFarPlane;
+	this->planes[RIGHT_P].normal = glm::normalize(glm::cross(cameraUp,planeVector));
+	this->planes[RIGHT_P].pointInPlane = cameraPos;
 
 	//Left plane
-	//glm::vec3 vectorToLeftSide = planes[NEAR_P].pointInPlane - halfWidth - cameraPos;
-	//this->planes[LEFT_P].normal = glm::normalize(cross(cameraUp, vectorToLeftSide));
-	notNormal = glm::normalize(planes[NEAR_P].pointInPlane - glm::cross(cameraRight, halfWidth*2.0f) - cameraPos);
-	this->planes[RIGHT_P].normal = glm::cross(cameraUp,notNormal);
+	planeVector = (-farWidth) + toFarPlane;
+	this->planes[LEFT_P].normal = glm::normalize(glm::cross(planeVector,cameraUp));
 	this->planes[LEFT_P].pointInPlane = cameraPos;
 
 	//Top plane
-	glm::vec3 vectorToTopSide = planes[NEAR_P].pointInPlane + halfHeight - cameraPos;
-	this->planes[TOP_P].normal = glm::normalize(cross(cameraRight, vectorToTopSide));
+	planeVector = (farHeight) + toFarPlane;
+	this->planes[TOP_P].normal = glm::normalize(glm::cross(cameraRight, planeVector));
 	this->planes[TOP_P].pointInPlane = cameraPos;
 
 	//Bottom plane
-	glm::vec3 vectorToBottomSide = planes[NEAR_P].pointInPlane - halfHeight - cameraPos;
-	this->planes[BOTTOM_P].normal = glm::normalize(cross(cameraRight, vectorToBottomSide));
+	planeVector = (-farHeight) + toFarPlane;
+	this->planes[BOTTOM_P].normal = glm::normalize(glm::cross(planeVector,cameraRight));
 	this->planes[BOTTOM_P].pointInPlane = cameraPos;
 }
 //Quad is in 2d, x and z coordinates. Holds two corners diagonal to eachother
@@ -318,8 +317,6 @@ bool FrustumCulling::boxInFrustum(const glm::vec4 &quad) const
 	//Corners of the box
 	std::vector<glm::vec3> points;
 	points.push_back(glm::vec3(quad[XMIN], mapHeight, quad[ZMIN]));
-	//std::cout << points[0].x << " " << points[0].y << " " << points[0].z << " " << std::endl;
-
 	points.push_back(glm::vec3(quad[XMIN], mapBottom, quad[ZMIN]));
 	points.push_back(glm::vec3(quad[XMAX], mapHeight, quad[ZMAX]));
 	points.push_back(glm::vec3(quad[XMAX], mapBottom, quad[ZMAX]));
@@ -343,7 +340,7 @@ bool FrustumCulling::boxInFrustum(const glm::vec4 &quad) const
 			}
 		}
 		//If all corners are outside of this plane, it cannot be inside the frustum
-		//std::cout << "Plane: " << i << " Amount: " << in << std::endl;
+		//if(i == 2)std::cout << "Plane: " << i << " Points inside: " << in << std::endl;
 		if (in == 0)
 		{
 			return false;

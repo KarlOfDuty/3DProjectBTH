@@ -8,7 +8,7 @@ Camera::Camera()
 	this->cameraHasMoved = true;
 	this->mouseSensitivity = 0.05f;
 	this->cameraSpeed = 0.05f;
-	this->cameraPos = glm::vec3(0.0f, 50.0f, 0.0f);
+	this->cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	this->cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	this->cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 	this->cameraYaw = -90.0f;
@@ -27,6 +27,9 @@ void Camera::frustumCulling(FrustumCulling &fcObject, std::vector<Model*> &visib
 	{
 		fcObject.setFrustumPlanes(cameraPos, cameraFront, cameraUp);
 		visibleModels = fcObject.getRoot()->getModelsToDraw(fcObject);
+		//Remove duplicate pointers
+		std::sort(visibleModels.begin(), visibleModels.end());
+		visibleModels.erase(std::unique(visibleModels.begin(), visibleModels.end()), visibleModels.end());
 	}
 }
 
@@ -63,6 +66,7 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 			sf::Mouse::setPosition(sf::Vector2i(RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2));
 			oldMouseX = sf::Mouse::getPosition().x;
 			oldMouseY = sf::Mouse::getPosition().y;
+			//std::cout << "CameraPos(" << cameraPos.x << "," << cameraPos.y << "," << cameraPos.z << "). cameraFront(" << cameraFront.x << "," << cameraFront.y << "," << cameraFront.z << "). cameraUp(" << cameraUp.x << "," << cameraUp.y << "," << cameraUp.z << ")." << std::endl;
 			firstMouse = false;
 		}
 		//Rotate camera
