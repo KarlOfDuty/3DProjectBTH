@@ -42,6 +42,8 @@ private:
 public:
 	Cannon();
 	~Cannon();
+	int getAmountOfHits();
+	int getTriesLeft();
 	void loadModel(Model model, Model model2);
 	void update(float dt, std::vector<glm::vec3> &lightPositions);
 	void draw(Shader shader);

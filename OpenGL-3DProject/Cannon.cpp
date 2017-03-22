@@ -20,6 +20,14 @@ Cannon::~Cannon()
 {
 
 }
+int Cannon::getAmountOfHits()
+{
+	return this->amountOfHits;
+}
+int Cannon::getTriesLeft()
+{
+	return this->triesLeft;
+}
 void Cannon::loadModel(Model model, Model model2)
 {
 	this->cannonModel = Model(model);

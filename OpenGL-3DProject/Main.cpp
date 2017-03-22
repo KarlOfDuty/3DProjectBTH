@@ -20,7 +20,7 @@ const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 const int windowWidth = 1280;
 const int windowHeight = 720;
-bool debug = false;
+bool debug = true;
 //Camera
 Camera playerCamera;
 //gBuffer
@@ -56,6 +56,8 @@ std::vector<Model*> allModels;
 std::vector<Model> modelLibrary;
 //AntTweakBar
 TwBar *debugInterface;
+int amountOfHits;
+int amountOfTriesLeft;
 //Cannon
 Cannon aCannon;
 
@@ -217,7 +219,10 @@ void createModels()
 void setUpTweakBar()
 {
 	debugInterface = TwNewBar("Debug Interface");
-	//TwAddVarRW(debugInterface, "Some stuff", TW_TYPE_FLOAT, &stuff, "");
+	TwDefine(" 'Debug Interface' size='200 100' "); // resize bar
+	TwDefine(" 'Debug Interface' refresh=0.1 "); // refresh the bar every 0.1 sec
+	TwAddVarRW(debugInterface, "Amount of hits", TW_TYPE_INT16, &amountOfHits, "");
+	TwAddVarRW(debugInterface, "Tries left", TW_TYPE_INT16, &amountOfTriesLeft, "");
 }
 void sort()
 {
@@ -262,6 +267,8 @@ void update(sf::Window &window)
 		//allModels[i]->rotate();
 	}
 	sort();
+	amountOfHits = aCannon.getAmountOfHits();
+	amountOfTriesLeft = aCannon.getTriesLeft();
 }
 
 void render(sf::Window &window)
