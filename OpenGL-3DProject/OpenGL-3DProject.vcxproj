@@ -134,6 +134,8 @@
     <None Include="gBufferGeometryVertex.glsl" />
     <None Include="gBufferLightningFragment.glsl" />
     <None Include="gBufferLightningVertex.glsl" />
+    <None Include="shadowFragment.glsl" />
+    <None Include="shadowVertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
