@@ -48,14 +48,14 @@ const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 //Stuff for ShadowMap
-const GLuint SHADOW_WIDTH = 1024*4, SHADOW_HEIGHT = 1024*4;
+const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
 GLuint depthMapFBO;
 GLuint depthMap;
 
 glm::mat4 lightProjection;
 glm::mat4 lightView;
 glm::mat4 lightSpaceMatrix;
-GLfloat near_plane = 1.0f, far_plane = 7.5f;
+GLfloat near_plane = 1.0f, far_plane = 6.0f;
 
 //Timing control for controls and camera
 sf::Clock deltaClock;
