@@ -48,7 +48,7 @@ const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 //Stuff for ShadowMap
-const GLuint SHADOW_WIDTH = 1024*4, SHADOW_HEIGHT = 1024*4;
+const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 GLuint depthMapFBO;
 GLuint depthMap;
 
