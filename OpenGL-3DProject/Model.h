@@ -29,12 +29,8 @@ struct Material
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
 	std::string normalMapFile;
-	//Read but not implemented
-	float transparency;
-	int illuminationMode;
 	//Searching Functions
 	static int findMaterial(std::string name, std::vector<Material> materials);
-	int findMaterial(std::vector<Material> materials);
 };
 //A single vertex (corner) in a face.
 struct Vertex
@@ -66,7 +62,7 @@ private:
 	void setupModel();
 	void loadTextures(int meshNr);
 public:
-	float boundingSphereRadius = 1.0f;
+	float boundingSphereRadius = 1.0f;	//Bounding sphere used for frustum culling
 	Material getMaterial(int index);
 	glm::mat4 getModelMatrix() const;
 	glm::mat4 getRotationMatrix() const;
