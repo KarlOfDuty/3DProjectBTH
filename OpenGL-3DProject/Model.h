@@ -29,12 +29,8 @@ struct Material
 	std::string textureMapDiffuseFile;
 	std::string textureMapSpecularFile;
 	std::string normalMapFile;
-	//Read but not implemented
-	float transparency;
-	int illuminationMode;
 	//Searching Functions
 	static int findMaterial(std::string name, std::vector<Material> materials);
-	int findMaterial(std::vector<Material> materials);
 };
 //A single vertex (corner) in a face.
 struct Vertex

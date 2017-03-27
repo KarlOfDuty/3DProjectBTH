@@ -13,20 +13,11 @@ int Material::findMaterial(std::string name, std::vector<Material> materials)
 	}
 	return index;
 }
-//Returns the index of a material in the vector matching this material's name, -1 if not found
-int Material::findMaterial(std::vector<Material> materials)
-{
-	int index = -1;
-	for (int i = 0; i < materials.size() && index == -1; i++)
-	{
-		if (materials.at(i).name == this->name)
-		{
-			index = i;
-		}
-	}
-	return index;
-}
 //Getters
+Material Model::getMaterial(int index)
+{
+	return this->meshes.at(index)->material;
+}
 glm::mat4 Model::getModelMatrix() const
 {
 	return this->modelMatrix;
@@ -78,6 +69,8 @@ void Model::rotate()
 //Reads a .obj file and creates a Model object from the data
 void Model::read(std::string filename)
 {
+	///For simplicity when reading this, I recommend minimizing the if statements 
+	///comparing strings and opening them one at a time. Also, sorry in advance for reusing the str variable everywhere.
 	//Temporary containers
 	std::ifstream file(filename);
 	std::string str = "";
@@ -95,7 +88,6 @@ void Model::read(std::string filename)
 	Material currentMaterial = Material();
 	std::vector<Vertex> meshVertices = std::vector<Vertex>();
 	Mesh* mesh = new Mesh();
-
 	//Gets a single line of the file at a time
 	while (std::getline(file, str))
 	{
@@ -144,7 +136,7 @@ void Model::read(std::string filename)
 		}
 		else if (str == "vn")
 		{
-			//A normal
+			//A vertex normal
 			glm::vec3 normal;
 			if (modelDebug)std::cout << "Normal (vn): ";
 			//X
@@ -165,7 +157,7 @@ void Model::read(std::string filename)
 		}
 		else if (str == "f")
 		{
-			//Faces
+			//Faces built by vertex coordinates, texture coordinates and vertex normals
 			if (modelDebug)std::cout << "Face (f): ";
 			std::vector<Vertex> aFace = std::vector<Vertex>();
 			//Split the rest of the line into seperate words
@@ -212,17 +204,8 @@ void Model::read(std::string filename)
 		else if (str == "g")
 		{
 			//Groups
+			//Not used, look at "o" instead
 			if (modelDebug)std::cout << "Group name (g): ";
-			while (line >> str)
-			{
-				if (modelDebug)std::cout << str << " ";
-			}
-			if (modelDebug)std::cout << std::endl;
-		}
-		else if (str == "s")
-		{
-			//Smoothing groups
-			if (modelDebug)std::cout << "Smoothing group (s): ";
 			while (line >> str)
 			{
 				if (modelDebug)std::cout << str << " ";
@@ -327,22 +310,6 @@ void Model::read(std::string filename)
 					if (matDebug)std::cout << data << " ";
 					materials.at(materialBeingAdded).specularColour.z = data;
 					if (matDebug)std::cout << std::endl;
-				}
-				else if (str == "Tr" && materialBeingAdded != -1)
-				{
-					//Transpareny
-					float data = 0.0;
-					mtlWord >> data;
-					if (matDebug)std::cout << "Transparency: " << data << std::endl;
-					materials.at(materialBeingAdded).transparency = data;
-				}
-				else if (str == "illum" && materialBeingAdded != -1)
-				{
-					//Illumination mode
-					int data = 0;
-					mtlWord >> data;
-					if (matDebug)std::cout << "Illumination mode: " << data << std::endl;
-					materials.at(materialBeingAdded).illuminationMode = data;
 				}
 				else if (str == "map_Ka" && materialBeingAdded != -1)
 				{
