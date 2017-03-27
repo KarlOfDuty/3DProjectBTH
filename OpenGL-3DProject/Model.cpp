@@ -26,10 +26,6 @@ int Material::findMaterial(std::vector<Material> materials)
 	}
 	return index;
 }
-Material Model::getMaterial(int index)
-{
-	return this->meshes.at(index)->material;
-}
 //Getters
 glm::mat4 Model::getModelMatrix() const
 {
@@ -46,6 +42,24 @@ glm::vec3 Model::getMinBounding() const
 glm::vec3 Model::getMaxBouding() const
 {
 	return this->maxBounding;
+}
+Material Model::getMaterial(int index)
+{
+	return this->meshes.at(index)->material;
+}
+float Model::getBoundingSphereRadius() const
+{
+	//Returns the radius of the bounding sphere around this model by 
+	//taking the distance to the furthest away vertex
+	float radius = 0.0f;
+	for (int i = 0; i < meshes.size(); i++)
+	{
+		for (int j = 0; j < meshes[i]->vertices.size(); j++)
+		{
+			radius = glm::max(radius,(float)meshes[i]->vertices[j].pos.length());
+		}
+	}
+	return radius;
 }
 //Setters
 void Model::setModelMatrix(glm::mat4 modelMat)
@@ -452,7 +466,7 @@ void Model::setupModel()
 	//Unbind the vertex array buffer
 	glBindVertexArray(0);
 }
-
+//If textures are used instead of solid colours, this function loads them
 void Model::loadTextures(int i)
 {
 	//Loading ambient texture or colour for mesh

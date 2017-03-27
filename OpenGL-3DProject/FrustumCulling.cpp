@@ -1,6 +1,6 @@
 #include "FrustumCulling.h"
 //Distance to a point from the plane
-float Plane::getDistanceTo(const glm::vec3 &point) const
+float Plane::getSignedDistanceTo(const glm::vec3 &point) const
 {
 	//Q->P * N
 	return glm::dot(point - this->pointInPlane,this->normal);
@@ -8,7 +8,7 @@ float Plane::getDistanceTo(const glm::vec3 &point) const
 //True if a model is inside or intersecting the quadrant
 bool FrustumCulling::Node::intersectsQuadrant(Model *model, glm::vec4 quad)
 {
-	float radius = model->boundingSphereRadius;
+	float radius = model->getBoundingSphereRadius();
 	//Because all models totally have their center in their pivot point
 	glm::vec3 modelCenter = glm::vec3(model->getModelMatrix()[3]);
 	//TODO: Fix nested if statements after testing is done
@@ -62,7 +62,7 @@ void FrustumCulling::Node::buildQuadTree(std::vector<Model*> models, int level, 
 		nextQuad[ZMAX] = quad[ZMAX] - (quad[ZMAX] - quad[ZMIN]) / 2;
 		//Create the node
 		this->northEast = new Node();
-		northEast->buildQuadTree(foundModels, level+1, nextQuad);
+		northEast->buildQuadTree(foundModels, level + 1, nextQuad);
 
 		//Calculate node's bounds
 		nextQuad[XMIN] = quad[XMIN] + (quad[XMAX] - quad[XMIN]) / 2;
@@ -254,11 +254,11 @@ void FrustumCulling::setFrustumShape(float fovAngle, float aspectRatio, float ne
 	this->fovAngle = fovAngle;
 	//Near plane
 	this->nearDistance = nearDistance;
-	this->planes[NEAR_P].height = nearDistance * tan(fovAngle * PI / 180 * 0.5);
+	this->planes[NEAR_P].height = nearDistance * std::tan(fovAngle * PI / 180);
 	this->planes[NEAR_P].width = planes[NEAR_P].height * aspectRatio;
 	//Far plane
 	this->farDistance = farDistance;
-	this->planes[FAR_P].height = farDistance * tan(fovAngle * PI / 180 * 0.5);
+	this->planes[FAR_P].height = farDistance * std::tan(fovAngle * PI / 180);
 	this->planes[FAR_P].width = planes[FAR_P].height * aspectRatio;
 }
 //Sets the frustum planes used for culling, has to be called after setFrustumShape()
@@ -283,28 +283,28 @@ void FrustumCulling::setFrustumPlanes(glm::vec3 cameraPos, glm::vec3 cameraForwa
 	//Calculate a normal for each of the other planes. 
 	//They all have a point in the camera position, so no calculation needed for it.
 	//The plane vectors are from the camera to the side of the near plane
-	//Multiplied to make up for float errors
-	glm::vec3 farWidth = (cameraRight * planes[FAR_P].width*1.5f);
-	glm::vec3 farHeight = (cameraUp * planes[FAR_P].height*1.5f);
+	//Multiplied to make up for float approximation errors from multiplying and normalizing
+	float farHalfWidth = planes[FAR_P].width / 2.0f;
+	float farHalfHeight = planes[FAR_P].height / 2.0f;
 	glm::vec3 toFarPlane = (cameraForward * farDistance);
 
 	//Right plane
-	glm::vec3 planeVector = (farWidth) + toFarPlane;
+	glm::vec3 planeVector = (cameraRight * farHalfWidth) + toFarPlane;
 	this->planes[RIGHT_P].normal = glm::normalize(glm::cross(cameraUp,planeVector));
 	this->planes[RIGHT_P].pointInPlane = cameraPos;
 
 	//Left plane
-	planeVector = (-farWidth) + toFarPlane;
+	planeVector = (cameraRight * -farHalfWidth) + toFarPlane;
 	this->planes[LEFT_P].normal = glm::normalize(glm::cross(planeVector,cameraUp));
 	this->planes[LEFT_P].pointInPlane = cameraPos;
 
 	//Top plane
-	planeVector = (farHeight) + toFarPlane;
+	planeVector = (cameraUp * farHalfHeight) + toFarPlane;
 	this->planes[TOP_P].normal = glm::normalize(glm::cross(cameraRight, planeVector));
 	this->planes[TOP_P].pointInPlane = cameraPos;
 
 	//Bottom plane
-	planeVector = (-farHeight) + toFarPlane;
+	planeVector = (cameraUp * -farHalfHeight) + toFarPlane;
 	this->planes[BOTTOM_P].normal = glm::normalize(glm::cross(planeVector,cameraRight));
 	this->planes[BOTTOM_P].pointInPlane = cameraPos;
 }
@@ -330,7 +330,7 @@ bool FrustumCulling::boxInFrustum(const glm::vec4 &quad) const
 		for (int j = 0; j < points.size() && (in == 0 || out == 0); j++)
 		{
 			//Check if the corner is inside or outside
-			if (planes[i].getDistanceTo(points[j]) < 0)
+			if (planes[i].getSignedDistanceTo(points[j]) < 0)
 			{
 				out++;
 			}

@@ -27,7 +27,7 @@ FrustumCulling frustumObject = FrustumCulling();
 Camera frustumCullingCamera = Camera();
 float fov = 45.0f;
 float nearPlane = 0.1f;
-float farPlane = 200.0f;
+float farPlane = 1000.0f;
 glm::mat4 projectionMatrix = glm::perspective(fov, (float)windowWidth / (float)windowHeight, nearPlane, farPlane);
 //gBuffer
 GLuint gBuffer;

@@ -66,8 +66,8 @@ private:
 	void setupModel();
 	void loadTextures(int meshNr);
 public:
-	float boundingSphereRadius = 1.0f;
 	Material getMaterial(int index);
+	float getBoundingSphereRadius() const;
 	glm::mat4 getModelMatrix() const;
 	glm::mat4 getRotationMatrix() const;
 	glm::vec3 getMinBounding() const;

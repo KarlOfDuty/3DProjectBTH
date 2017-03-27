@@ -12,13 +12,14 @@ struct Plane
 	//Vectors
 	glm::vec3 normal; //Always points inwards
 	float width, height;
-	float getDistanceTo(const glm::vec3 &point) const;
+	float getSignedDistanceTo(const glm::vec3 &point) const;
 };
+//Number of levels in the quadtree 
 static const int quadTreeLevels = 4;
+//Bounds for quads (as they are axis alligned these values define a quad)
+static enum { XMIN, ZMIN, XMAX, ZMAX };
 static const int mapHeight = 100;
 static const int mapBottom = -100;
-static enum { XMIN, ZMIN, XMAX, ZMAX };
-
 class FrustumCulling
 {
 private:
