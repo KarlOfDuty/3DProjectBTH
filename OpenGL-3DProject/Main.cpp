@@ -48,7 +48,7 @@ const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 //Stuff for ShadowMap
-const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
+const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096; //Shadows resolution - higher for better quality - lower for worse quality
 GLuint depthMapFBO;
 GLuint depthMap;
 
@@ -115,7 +115,7 @@ void createShadowMap()
 
 	// Configure depth map FBO
 	glGenFramebuffers(1, &depthMapFBO);
-	// - Create depth texture
+	// Create depth texture
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 
@@ -127,6 +127,7 @@ void createShadowMap()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	// Since we dont need a color buffer we tell OpenGL we're not going to render any color data
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

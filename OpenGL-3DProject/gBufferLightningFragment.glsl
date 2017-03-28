@@ -23,28 +23,29 @@ uniform mat4 lightSpaceMatrix;
 
 float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDirection)
 {
-	//Perform perspective divide
+	// Perform perspective divide
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-	//Transform to [0,1] range
+	// Transform to [0,1] range
 	projCoords = projCoords * 0.5 + 0.5;
-	//Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+	// Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
 	float closestDepth = texture(depthMap, projCoords.xy).r;
-	//Get depth of current fragment from light's perspective
+	// Get depth of current fragment from light's perspective
 	float currentDepth = projCoords.z;
-	
-	
-	//Check wheter current frag pos is in shadow
 	float shadow = 0.0;
-	//Calculate bias
+	// Calculate bias
 	float bias = max(0.05 * (1.0 - dot(normal, lightDirection)), 0.005);   
-	//PCF 
+	// PCF - Percentage-Closer Filtering - used to offset the texture coordinates
 	vec2 texelSize = 1.0 / textureSize(depthMap, 0);
+
+
+	// Check wheter current frag pos is in shadow
 	/*
 	if(currentDepth - bias > closestDepth)
 	{
 				shadow = 1.0;
 	}
 	*/
+
 	for(int x = -1; x <= 1; x++)
 	{
 		for(int y = -1; y <= 1; y++)
@@ -56,6 +57,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDirection
 			}
 		}
 	}
+	// Sample size - increase to improve shadow quality
 	shadow /= 18.0;
 
 	return shadow;
@@ -85,6 +87,7 @@ void main()
         //Attenuation
         float distance = length(lights[i].Position - fragPos);
         float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
+		// Calculate shadows
 		float shadow = ShadowCalculation(fragPosLightSpace, normal, lightDir);
         thisDiffuse *= attenuation;
         thisSpecular *= attenuation;

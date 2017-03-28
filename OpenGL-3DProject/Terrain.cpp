@@ -18,6 +18,8 @@ Terrain::Terrain(int w2, int l2, float scale)
 	}
 
 	computedNormals = false;
+
+	// scale and positioning for terrain
 	scaleFactor = scale;
 	modelMatrix = glm::mat4({
 		scaleFactor, 0.0, 0.0, 0.0,
@@ -141,6 +143,7 @@ void Terrain::computeNormals()
 		return;
 	}
 
+	//vector for rough normals - before smoothing
 	glm::vec3** normals2 = new glm::vec3*[l];
 	for (int i = 0; i < l; i++) {
 		normals2[i] = new glm::vec3[w];
@@ -241,10 +244,12 @@ void Terrain::loadTerrain(std::string fileName, float height)
 		{
 			unsigned char color =
 				(unsigned char)image[imageWidth* y + x];
+			// Set height - whiter color means higher height, darker color means lower height
 			float h = height * ((color / 255.0f) - 0.5f);
 			setHeight(x, y, h);
 		}
 	}
+	// compute the normals
 	this->computeNormals();
 	SOIL_free_image_data(image);
 }
