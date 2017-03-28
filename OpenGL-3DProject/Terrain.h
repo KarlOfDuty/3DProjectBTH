@@ -16,6 +16,7 @@
 #include <SOIL.h>
 #include "Shader.h"
 
+//represents a terrain, by storing a set of heights and normals at 2D locations
 class Terrain
 {
 private:
@@ -39,7 +40,7 @@ public:
 	void setHeight(int x, int z, float y); //set the height at (x, z) to y
 	float getHeight(int x, int z); //returns the height at (x, z)
 	void computeNormals(); //compute the normals, if they haven't been computed yet
-	glm::vec3 getNormal(int x, int z);
+	glm::vec3 getNormal(int x, int z); //returns the normal at (x, z)
 	void loadTerrain(std::string fileName, float height);
 	void draw(Shader shader);
 };
