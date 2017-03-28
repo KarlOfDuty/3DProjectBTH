@@ -143,7 +143,7 @@ void Terrain::computeNormals()
 		return;
 	}
 
-	//vector for rough normals - before smoothing
+	// vector for rough normals - before smoothing
 	glm::vec3** normals2 = new glm::vec3*[l];
 	for (int i = 0; i < l; i++) {
 		normals2[i] = new glm::vec3[w];
@@ -153,6 +153,7 @@ void Terrain::computeNormals()
 		for (int x = 0; x < w; x++) {
 			glm::vec3 sum(0.0f, 0.0f, 0.0f);
 
+			// computing four edges for each point
 			glm::vec3 out;
 			if (z > 0) {
 				out = glm::vec3(0.0f, hs[z - 1][x] - hs[z][x], -1.0f);
@@ -170,6 +171,7 @@ void Terrain::computeNormals()
 				right = glm::vec3(1.0f, hs[z][x + 1] - hs[z][x], 0.0f);
 			}
 
+			// cross product of a pair of edges to determine the vector perpendicular to a triangle
 			if (x > 0 && z > 0) {
 				sum += glm::normalize(glm::cross(out, left));
 			}
@@ -187,7 +189,8 @@ void Terrain::computeNormals()
 		}
 	}
 
-	//Smooth out the normals
+	// smooth out the normals
+	// each adjacent normal gets a weight of 0.5, normal at the point gets a weight of 1
 	const float FALLOUT_RATIO = 0.5f;
 	for (int z = 0; z < l; z++) {
 		for (int x = 0; x < w; x++) {
@@ -209,6 +212,7 @@ void Terrain::computeNormals()
 
 			float magnitude = glm::sqrt(sum[0] * sum[0] + sum[1] * sum[1] + sum[2] * sum[2]);
 
+			// if the average turns out to be zero vector we just set a random vector since a zero vector can not be normalized
 			if (magnitude == 0) {
 				sum = glm::vec3(0.0f, 1.0f, 0.0f);
 			}
