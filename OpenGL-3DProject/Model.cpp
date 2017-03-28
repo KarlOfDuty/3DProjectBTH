@@ -34,10 +34,6 @@ glm::vec3 Model::getMaxBouding() const
 {
 	return this->maxBounding;
 }
-Material Model::getMaterial(int index)
-{
-	return this->meshes.at(index)->material;
-}
 float Model::getBoundingSphereRadius() const
 {
 	//Returns the radius of the bounding sphere around this model by 

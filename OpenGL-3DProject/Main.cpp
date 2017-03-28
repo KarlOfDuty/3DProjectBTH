@@ -22,9 +22,9 @@ const int windowHeight = 720;
 bool debug = false;
 //Camera
 Camera playerCamera = Camera();
+const bool aboveView = false;
 //Frustum culling object
 FrustumCulling frustumObject = FrustumCulling();
-Camera frustumCullingCamera = Camera();
 float fov = 45.0f;
 float nearPlane = 0.1f;
 float farPlane = 1000.0f;
@@ -62,8 +62,9 @@ void renderQuad()
 {
 	if (quadVAO == 0)
 	{
-		GLfloat quadVertices[] = {
-			// Positions        // Texture Coords
+		GLfloat quadVertices[] = 
+		{
+			//Positions        //Texture Coords
 			-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
 			1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
@@ -160,13 +161,8 @@ void loadModels()
 
 void createModels()
 {
-	//Create the models and store them in the vector of all models to be rendered
-	allModels.push_back(new Model(modelLibrary.at(0), {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0 }));
 	std::srand(time(0));
+	//Loads 100 spheres randomly
 	for (int i = 0; i < 100; i++)
 	{
 		allModels.push_back(new Model(modelLibrary.at(1), {
@@ -191,7 +187,7 @@ void createModels()
 	}
 	visibleModels = allModels;
 }
-
+//Not used in this example as frustum culling changes the order of the models being drawn
 void sort()
 {
 	//Bubble sort
@@ -219,7 +215,18 @@ void update(sf::Window &window)
 {
 	//Controls update timings
 	deltaTime = deltaClock.restart();
-	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
+	if (aboveView)
+	{
+		playerCamera.Update(deltaTime.asSeconds(), window);
+		viewMatrix = glm::lookAt(
+			glm::vec3(0, 100, 0),
+			glm::vec3(1, 1, 1),
+			glm::vec3(0, 1, 0));
+	}
+	else
+	{
+		viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
+	}
 	playerCamera.frustumCulling(frustumObject, visibleModels);
 	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
 
@@ -235,13 +242,12 @@ void update(sf::Window &window)
 	{
 		allModels[i]->rotate();
 	}
-	sort();
+	//sort();
 }
 void render(sf::Window &window)
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	//Geometry pass
 	shaderGeometryPass.use();
 	GLint viewID = glGetUniformLocation(shaderGeometryPass.program, "view");

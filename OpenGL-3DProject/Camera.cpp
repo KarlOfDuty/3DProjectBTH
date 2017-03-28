@@ -75,7 +75,7 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 			cameraYaw += (float)(sf::Mouse::getPosition().x - oldMouseX) * mouseSensitivity;
 			cameraHasMoved = true;
 		}
-		if (sf::Mouse::getPosition().y != RESOLUTION_HEIGHT / 2)
+		if ((sf::Mouse::getPosition().y != RESOLUTION_HEIGHT / 2) && !aboveView)
 		{
 			cameraPitch += (float)(oldMouseY - sf::Mouse::getPosition().y) * mouseSensitivity;
 			cameraHasMoved = true;

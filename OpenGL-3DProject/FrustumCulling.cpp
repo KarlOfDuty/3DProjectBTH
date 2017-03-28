@@ -8,26 +8,14 @@ float Plane::getSignedDistanceTo(const glm::vec3 &point) const
 //True if a model is inside or intersecting the quadrant
 bool FrustumCulling::Node::intersectsQuadrant(Model *model, glm::vec4 quad)
 {
+	//Get the radius for it's bounding sphere
 	float radius = model->getBoundingSphereRadius();
-	//Because all models totally have their center in their pivot point
+	//Get model center point
 	glm::vec3 modelCenter = glm::vec3(model->getModelMatrix()[3]);
-	//TODO: Fix nested if statements after testing is done
-	if (quad[XMIN] <= modelCenter.x + radius)
+	//Check if any part of the sphere is inside of the quad
+	if (quad[XMIN] <= modelCenter.x + radius && quad[XMAX] >= modelCenter.x - radius && quad[ZMIN] <= modelCenter.z + radius && quad[ZMAX] >= modelCenter.z - radius)
 	{
-		//std::cout << "XMIN: TRUE" << std::endl;
-		if (quad[XMAX] >= modelCenter.x - radius)
-		{
-			//std::cout << "XMAX: TRUE" << std::endl;
-			if (quad[ZMIN] <= modelCenter.z + radius)
-			{
-				//std::cout << "ZMIN: TRUE" << std::endl;
-				if (quad[ZMAX] >= modelCenter.z - radius)
-				{
-					//std::cout << "ZMAX: TRUE" << std::endl;
-					return true;
-				}
-			}
-		}
+		return true;
 	}
 	return false;
 }
@@ -35,22 +23,16 @@ bool FrustumCulling::Node::intersectsQuadrant(Model *model, glm::vec4 quad)
 void FrustumCulling::Node::buildQuadTree(std::vector<Model*> models, int level, glm::vec4 quad)
 {
 	this->quad = quad;
-	//Check which models are inside of intersecting this quadrant
+	//Check which models are inside of or intersecting this quadrant
 	std::vector<Model*> foundModels;
 	for (int i = 0; i < models.size(); i++)
 	{
 		if (intersectsQuadrant(models[i],quad))
 		{
-			//if(level==4)
-			//std::cout << "FOUND: TRUE. LEVEL: " << level << ". X bounds: " << quad.x << " " << quad.z << ". Z bounds: " << quad.y << " " << quad.w << std::endl;
 			foundModels.push_back(models[i]);
 		}
-		else
-		{
-			//std::cout << "FOUND: FALSE. LEVEL: " << level << ". X bounds: " << quad.x << " " << quad.z << std::endl;
-		}
 	}
-	//Check if leaf and if it contains any models
+	//Check if the node is a leaf and if it contains any models
 	if (level < quadTreeLevels && !foundModels.empty())
 	{
 		glm::vec4 nextQuad = glm::vec4();
@@ -96,6 +78,7 @@ void FrustumCulling::Node::buildQuadTree(std::vector<Model*> models, int level, 
 	}
 	else if (foundModels.empty())
 	{
+		//This node contains nothing and will be deleted in cleanup
 		this->northEast = nullptr;
 		this->southEast = nullptr;
 		this->southWest = nullptr;
@@ -104,6 +87,7 @@ void FrustumCulling::Node::buildQuadTree(std::vector<Model*> models, int level, 
 	}
 	else
 	{
+		//This node is a leaf
 		this->northEast = nullptr;
 		this->southEast = nullptr;
 		this->southWest = nullptr;
@@ -127,7 +111,6 @@ void FrustumCulling::Node::cleanTree()
 			northEast->cleanTree();
 			delete northEast;
 			northEast = nullptr;
-			//std::cout << "Empty node deleted." << std::endl;
 		}
 	}
 	//Clean south east quadrant
@@ -142,7 +125,6 @@ void FrustumCulling::Node::cleanTree()
 			southEast->cleanTree();
 			delete southEast;
 			southEast = nullptr;
-			//std::cout << "Empty node deleted." << std::endl;
 		}
 	}
 	//Clean south west quadrant
@@ -157,7 +139,6 @@ void FrustumCulling::Node::cleanTree()
 			southWest->cleanTree();
 			delete southWest;
 			southWest = nullptr;
-			//std::cout << "Empty node deleted." << std::endl;
 		}
 	}
 	//Clean north west quadrant
@@ -172,13 +153,13 @@ void FrustumCulling::Node::cleanTree()
 			northWest->cleanTree();
 			delete northWest;
 			northWest = nullptr;
-			//std::cout << "Empty node deleted." << std::endl;
 		}
 	}
 }
-//Gets all models to draw
+//Recursive function which gets all models to draw
 std::vector<Model*> FrustumCulling::Node::getModelsToDraw(const FrustumCulling &fcObject) const
 {
+	//Run this function in all child nodes until a leaf is reached, then return the vector of models back upwards, combining it with the adjacent ones
 	std::vector<Model*> foundModels;
 	if (this->models.empty())
 	{
@@ -192,7 +173,6 @@ std::vector<Model*> FrustumCulling::Node::getModelsToDraw(const FrustumCulling &
 				{
 					foundModels.push_back(tempVector[i]);
 				}
-				//std::cout << "Node: " << foundModels.size() << std::endl;
 			}
 		}
 		if (this->southEast != nullptr)
@@ -205,7 +185,6 @@ std::vector<Model*> FrustumCulling::Node::getModelsToDraw(const FrustumCulling &
 				{
 					foundModels.push_back(tempVector[i]);
 				}
-				//std::cout << "Node: " << foundModels.size() << std::endl;
 			}
 		}
 		if (this->southWest != nullptr)
@@ -218,7 +197,6 @@ std::vector<Model*> FrustumCulling::Node::getModelsToDraw(const FrustumCulling &
 				{
 					foundModels.push_back(tempVector[i]);
 				}
-				//std::cout << "Node: " << foundModels.size() << std::endl;
 			}
 		}
 		if (this->northWest != nullptr)
@@ -231,13 +209,12 @@ std::vector<Model*> FrustumCulling::Node::getModelsToDraw(const FrustumCulling &
 				{
 					foundModels.push_back(tempVector[i]);
 				}
-				//std::cout << "Node: " << foundModels.size() << std::endl;
 			}
 		}
 	}
 	else
 	{
-		//std::cout << "Leaf node: " << models.size() << std::endl;
+		//This is a leaf node
 		foundModels = this->models;
 	}
 	return foundModels;
@@ -247,7 +224,7 @@ FrustumCulling::Node::Node()
 {
 	//Variables set when buildQuadTree() is called
 }
-//Sets up the camera
+//Sets up the projection variables
 void FrustumCulling::setFrustumShape(float fovAngle, float aspectRatio, float nearDistance, float farDistance)
 {
 	this->aspectRatio = aspectRatio;
@@ -282,8 +259,7 @@ void FrustumCulling::setFrustumPlanes(glm::vec3 cameraPos, glm::vec3 cameraForwa
 
 	//Calculate a normal for each of the other planes. 
 	//They all have a point in the camera position, so no calculation needed for it.
-	//The plane vectors are from the camera to the side of the near plane
-	//Multiplied to make up for float approximation errors from multiplying and normalizing
+	//The plane vectors are from the camera position to the side of the far plane specified, toFarPlane is from the cameraPos to the centerof the far plane
 	float farHalfWidth = planes[FAR_P].width / 2.0f;
 	float farHalfHeight = planes[FAR_P].height / 2.0f;
 	glm::vec3 toFarPlane = (cameraForward * farDistance);
@@ -308,7 +284,7 @@ void FrustumCulling::setFrustumPlanes(glm::vec3 cameraPos, glm::vec3 cameraForwa
 	this->planes[BOTTOM_P].normal = glm::normalize(glm::cross(planeVector,cameraRight));
 	this->planes[BOTTOM_P].pointInPlane = cameraPos;
 }
-//Quad is in 2d, x and z coordinates. Holds two corners diagonal to eachother
+//Quads are in 2d and only hold two diagonal corners: x,z min and x,z max
 bool FrustumCulling::boxInFrustum(const glm::vec4 &quad) const 
 {
 	//Check which quadrants can be seen from the frustum
@@ -324,9 +300,11 @@ bool FrustumCulling::boxInFrustum(const glm::vec4 &quad) const
 	points.push_back(glm::vec3(quad[XMIN], mapBottom, quad[ZMAX]));
 	points.push_back(glm::vec3(quad[XMAX], mapHeight, quad[ZMIN]));
 	points.push_back(glm::vec3(quad[XMAX], mapBottom, quad[ZMIN]));
+	//Cycle through planes of the frustum
 	for (int i = 0; i < 6; i++) 
 	{
-		out = 0; in = 0;
+		out = 0;
+		in = 0;
 		for (int j = 0; j < points.size() && (in == 0 || out == 0); j++)
 		{
 			//Check if the corner is inside or outside
@@ -340,7 +318,6 @@ bool FrustumCulling::boxInFrustum(const glm::vec4 &quad) const
 			}
 		}
 		//If all corners are outside of this plane, it cannot be inside the frustum
-		//if(i == 2)std::cout << "Plane: " << i << " Points inside: " << in << std::endl;
 		if (in == 0)
 		{
 			return false;

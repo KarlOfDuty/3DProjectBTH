@@ -5,6 +5,7 @@
 #include "Model.h"
 #include "FrustumCulling.h"
 #include <iostream>
+extern const bool aboveView;
 class Camera
 {
 private:
