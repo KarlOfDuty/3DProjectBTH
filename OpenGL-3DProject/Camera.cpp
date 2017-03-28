@@ -81,7 +81,6 @@ glm::vec3 Camera::getCameraPos()
 {
 	return this->cameraPos;
 }
-
 void Camera::cameraFall(float terrainY, float scale, float dt)
 {
 	float cameraOffset = 0.2f;
@@ -95,8 +94,6 @@ void Camera::cameraFall(float terrainY, float scale, float dt)
 		cameraPos.y = (terrainY*scale)+cameraOffset-fallSpeed*dt;
 	}
 }
-
-
 int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels)
 {
 	int closestModel = -1;
@@ -117,14 +114,14 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 			y = 1.0f - (2.0f * (window.getSize().y / 2) / window.getSize().y);
 			z = 1.0f;
 		}
-		glm::vec3 ray_nds = glm::vec3(x, y, z);
-		//Convert to 
-		glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
+		glm::vec3 rayNDCSpace = glm::vec3(x, y, z);
+		//Convert to clip space
+		glm::vec4 rayClipSpace = glm::vec4(rayNDCSpace.x, rayNDCSpace.y, -1.0, 1.0);
 		//Convert to eye space
-		glm::vec4 ray_eye = glm::inverse(projectionMatrix) * ray_clip;
-		ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+		glm::vec4 rayEyeSpace = glm::inverse(projectionMatrix) * rayClipSpace;
+		rayEyeSpace = glm::vec4(rayEyeSpace.x, rayEyeSpace.y, -1.0, 0.0);
 		//Convert to world space
-		glm::vec3 ray_wor = glm::vec3((glm::inverse(viewMatrix)*ray_eye));
+		glm::vec3 rayWorldSpace = glm::vec3((glm::inverse(viewMatrix)*rayEyeSpace));
 
 		float distance;
 		float clostestDistance = -1;
@@ -137,7 +134,7 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 			glm::vec3 minPos = allModels[i]->getMinBounding()*scaleValue;
 			glm::vec3 maxPos = allModels[i]->getMaxBounding()*scaleValue;
 			
-			if (testIntersection(cameraPos, ray_wor, minPos, maxPos, ModelMatrix, distance))
+			if (testIntersection(cameraPos, rayWorldSpace, minPos, maxPos, ModelMatrix, distance))
 			{
 				if (closestModel == -1)
 				{
@@ -153,34 +150,28 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 	}
 	return closestModel;
 }
-bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 aabb_min, glm::vec3 aabb_max, glm::mat4 ModelMatrix, float& intersection_distance)
-
+bool Camera::testIntersection( glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 obbMin, glm::vec3 obbMax, glm::mat4 modelMatrix, float& intersection_distance)
 {	
-	// Intersection method from Real-Time Rendering and Essential Mathematics for Games
-
 	float tMin = 0.0f;
 	float tMax = 100000.0f;
+	glm::vec3 OBBposition_worldspace(modelMatrix[3]);
+	glm::vec3 delta = OBBposition_worldspace - rayOrigin;
 
-	glm::vec3 OBBposition_worldspace(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
-
-	glm::vec3 delta = OBBposition_worldspace - ray_origin;
-
-	// Test intersection with the 2 planes perpendicular to the OBB's X axis
+	// Test x intersection
 	{
-		glm::vec3 xaxis(ModelMatrix[0].x, ModelMatrix[0].y, ModelMatrix[0].z);
+		glm::vec3 xaxis(modelMatrix[0]);
 		float e = glm::dot(xaxis, delta);
-		float f = glm::dot(ray_direction, xaxis);
+		float f = glm::dot(rayDirection, xaxis);
 
-		if (fabs(f) > 0.001f) { // Standard case
+		if (fabs(f) > 0.001f) {
 
-			float t1 = (e + aabb_min.x) / f; // Intersection with the "left" plane
-			float t2 = (e + aabb_max.x) / f; // Intersection with the "right" plane
-											 // t1 and t2 now contain distances betwen ray origin and ray-plane intersections
+			float t1 = (e + obbMin.x) / f;
+			float t2 = (e + obbMax.x) / f;
 
-											 // We want t1 to represent the nearest intersection,
-											 // so if it's not the case, invert t1 and t2
 			if (t1>t2) {
-				float w = t1; t1 = t2; t2 = w; // swap t1 and t2
+				float w = t1;
+				t1 = t2;
+				t2 = w;
 			}
 
 			// tMax is the nearest "far" intersection (amongst the X,Y and Z planes pairs)
@@ -189,32 +180,27 @@ bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, gl
 			// tMin is the farthest "near" intersection (amongst the X,Y and Z planes pairs)
 			if (t1 > tMin)
 				tMin = t1;
-
-			// And here's the trick :
-			// If "far" is closer than "near", then there is NO intersection.
-			// See the images in the tutorials for the visual explanation.
+			// Check if there is a intersection, if no return false
 			if (tMax < tMin)
 				return false;
 
 		}
-		else { // Rare case : the ray is almost parallel to the planes, so they don't have any "intersection"
-			if (-e + aabb_min.x > 0.0f || -e + aabb_max.x < 0.0f)
+		else { 
+			if (-e + obbMin.x > 0.0f || -e + obbMax.x < 0.0f)
 				return false;
 		}
 	}
 
-
-	// Test intersection with the 2 planes perpendicular to the OBB's Y axis
-	// Exactly the same thing than above.
+	// Test y intersections
 	{
-		glm::vec3 yaxis(ModelMatrix[1].x, ModelMatrix[1].y, ModelMatrix[1].z);
+		glm::vec3 yaxis(modelMatrix[1]);
 		float e = glm::dot(yaxis, delta);
-		float f = glm::dot(ray_direction, yaxis);
+		float f = glm::dot(rayDirection, yaxis);
 
 		if (fabs(f) > 0.001f) {
 
-			float t1 = (e + aabb_min.y) / f;
-			float t2 = (e + aabb_max.y) / f;
+			float t1 = (e + obbMin.y) / f;
+			float t2 = (e + obbMax.y) / f;
 
 			if (t1>t2) { float w = t1; t1 = t2; t2 = w; }
 
@@ -227,23 +213,20 @@ bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, gl
 
 		}
 		else {
-			if (-e + aabb_min.y > 0.0f || -e + aabb_max.y < 0.0f)
+			if (-e + obbMin.y > 0.0f || -e + obbMax.y < 0.0f)
 				return false;
 		}
 	}
-
-
-	// Test intersection with the 2 planes perpendicular to the OBB's Z axis
-	// Exactly the same thing than above.
+	// Test z intersections
 	{
-		glm::vec3 zaxis(ModelMatrix[2].x, ModelMatrix[2].y, ModelMatrix[2].z);
+		glm::vec3 zaxis(modelMatrix[2]);
 		float e = glm::dot(zaxis, delta);
-		float f = glm::dot(ray_direction, zaxis);
+		float f = glm::dot(rayDirection, zaxis);
 
 		if (fabs(f) > 0.001f) {
 
-			float t1 = (e + aabb_min.z) / f;
-			float t2 = (e + aabb_max.z) / f;
+			float t1 = (e + obbMin.z) / f;
+			float t2 = (e + obbMax.z) / f;
 
 			if (t1>t2) { float w = t1; t1 = t2; t2 = w; }
 
@@ -256,7 +239,7 @@ bool Camera::testIntersection( glm::vec3 ray_origin, glm::vec3 ray_direction, gl
 
 		}
 		else {
-			if (-e + aabb_min.z > 0.0f || -e + aabb_max.z < 0.0f)
+			if (-e + obbMin.z > 0.0f || -e + obbMax.z < 0.0f)
 				return false;
 		}
 	}

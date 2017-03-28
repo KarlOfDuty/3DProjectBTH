@@ -11,7 +11,6 @@ uniform sampler2D depthMap;
 struct Light {
     vec3 Position;
     vec3 Color;
-    
     float Linear;
     float Quadratic;
 };
@@ -27,8 +26,6 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDirection
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 	// Transform to [0,1] range
 	projCoords = projCoords * 0.5 + 0.5;
-	// Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-	float closestDepth = texture(depthMap, projCoords.xy).r;
 	// Get depth of current fragment from light's perspective
 	float currentDepth = projCoords.z;
 	float shadow = 0.0;
@@ -37,15 +34,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDirection
 	// PCF - Percentage-Closer Filtering - used to offset the texture coordinates
 	vec2 texelSize = 1.0 / textureSize(depthMap, 0);
 
-
 	// Check wheter current frag pos is in shadow
-	/*
-	if(currentDepth - bias > closestDepth)
-	{
-				shadow = 1.0;
-	}
-	*/
-
 	for(int x = -1; x <= 1; x++)
 	{
 		for(int y = -1; y <= 1; y++)
@@ -85,8 +74,8 @@ void main()
         float spec = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
         vec3 thisSpecular = lights[i].Color * spec * specular;
         //Attenuation
-        float distance = length(lights[i].Position - fragPos);
-        float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
+		float lightDistance = length(lights[i].Position - fragPos);
+        float attenuation = 1.0 / (1.0 + lights[i].Linear * lightDistance + lights[i].Quadratic * lightDistance * lightDistance);
 		// Calculate shadows
 		float shadow = ShadowCalculation(fragPosLightSpace, normal, lightDir);
         thisDiffuse *= attenuation;
