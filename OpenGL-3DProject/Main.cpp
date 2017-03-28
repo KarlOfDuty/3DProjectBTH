@@ -21,8 +21,10 @@ const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 const int windowWidth = 1280;
 const int windowHeight = 720;
+const float fov = 45.0f;
+const float nearPlane = 0.1;
+const float farPlane = 1000;
 bool debug = true;
-
 
 //Terrain
 Terrain *terrain;
@@ -32,7 +34,7 @@ Camera playerCamera;
 GLuint gBuffer;
 //gBuffer Shaders
 Shader shaderGeometryPass;
-Shader shaderLightningPass;
+Shader shaderLightingPass;
 Shader depthShader;
 //gBuffer Textures
 GLuint gPosition, gNormal, gAlbedoSpec, gAmbient;
@@ -40,46 +42,37 @@ GLuint gPosition, gNormal, gAlbedoSpec, gAmbient;
 GLuint quadVAO = 0;
 GLuint quadVBO;
 
-//Temp values for textures and all the lights
-GLuint diffuseTexture;
-GLuint specularTexture;
-GLuint normalMap;
+//Lights
 const GLuint NR_LIGHTS = 32;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
-//Stuff for ShadowMap
-const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096; //Shadows resolution - higher for better quality - lower for worse quality
+
+//Shadow mapping
+const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
 GLuint depthMapFBO;
 GLuint depthMap;
-
+//Shadow mapping matrices
 glm::mat4 lightProjection;
 glm::mat4 lightView;
 glm::mat4 lightSpaceMatrix;
-GLfloat near_plane = 1.0f, far_plane = 6.0f;
+GLfloat lightNearPlane = 1.0f;
+GLfloat lightFarPlane = 6.0f;
 
 //Timing control for controls and camera
 sf::Clock deltaClock;
 sf::Time deltaTime;
 //Matrices
-glm::mat4 viewMatrix = glm::lookAt(
-	glm::vec3(0, 0, 2),
-	glm::vec3(0, 0, 0),
-	glm::vec3(0, 1, 0));
-glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)windowWidth / (float)windowHeight, 0.1f, 20.0f);
+glm::mat4 viewMatrix = glm::mat4(0);
+glm::mat4 projectionMatrix = glm::perspective(fov, (float)windowWidth / (float)windowHeight, nearPlane, farPlane);
 //All models in the program
 std::vector<Model*> allModels;
 std::vector<Model> modelLibrary;
-//AntTweakBar
+//Interface
 TwBar *debugInterface;
 int amountOfHits;
 int amountOfTriesLeft;
 //Cannon
 Cannon aCannon;
-
-void cleanup() 
-{
-	delete terrain;
-}
 
 void renderQuad()
 {
@@ -138,20 +131,20 @@ void createShadowMap()
 void createGBuffer()
 {
 	shaderGeometryPass = Shader("gBufferGeometryVertex.glsl", "gBufferGeometryFragment.glsl");
-	shaderLightningPass = Shader("gBufferLightningVertex.glsl", "gBufferLightningFragment.glsl");
+	shaderLightingPass = Shader("gBufferLightingVertex.glsl", "gBufferLightingFragment.glsl");
 
 	// Set samplers
-	shaderLightningPass.use();
-	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gPosition"), 0);
-	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gNormal"), 1);
-	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAlbedoSpec"), 2);
-	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "gAmbient"), 3);
-	glUniform1i(glGetUniformLocation(shaderLightningPass.program, "depthMap"), 4);
+	shaderLightingPass.use();
+	glUniform1i(glGetUniformLocation(shaderLightingPass.program, "gPosition"), 0);
+	glUniform1i(glGetUniformLocation(shaderLightingPass.program, "gNormal"), 1);
+	glUniform1i(glGetUniformLocation(shaderLightingPass.program, "gAlbedoSpec"), 2);
+	glUniform1i(glGetUniformLocation(shaderLightingPass.program, "gAmbient"), 3);
+	glUniform1i(glGetUniformLocation(shaderLightingPass.program, "depthMap"), 4);
 
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
-	// - Position color buffer
+	//Position color buffer
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
@@ -159,7 +152,7 @@ void createGBuffer()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
 
-	// - Normal color buffer
+	//Normal color buffer
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
@@ -167,7 +160,7 @@ void createGBuffer()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
 
-	// - Color + Specular color buffer
+	//Color + Specular color buffer
 	glGenTextures(1, &gAlbedoSpec);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, windowWidth, windowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -206,18 +199,6 @@ void loadModels()
 	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
 	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
-
-	Model cannonModel = Model("models/cannon/editCannon.obj", {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
-		2.0, -0.12, 2.0, 1.0 });
-	Model cannonModel2 = Model("models/cannon/editCannon2.obj", {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
-		2.0, -0.12, 2.0, 1.0 });
-	aCannon.loadModel(cannonModel,cannonModel2);
 }
 
 void createModels()
@@ -273,14 +254,17 @@ void createModels()
 
 void setUpTweakBar()
 {
+	//Sets up the interface
 	debugInterface = TwNewBar("Debug Interface");
 	TwDefine(" 'Debug Interface' size='200 100' "); // resize bar
 	TwDefine(" 'Debug Interface' refresh=0.1 "); // refresh the bar every 0.1 sec
 	TwAddVarRW(debugInterface, "Amount of hits", TW_TYPE_INT16, &amountOfHits, "");
 	TwAddVarRW(debugInterface, "Tries left", TW_TYPE_INT16, &amountOfTriesLeft, "");
 }
+
 void sort()
 {
+	//Sorts the models by distance to the camera
 	if (!allModels.empty())
 	{
 		//Bubble sort
@@ -304,6 +288,7 @@ void sort()
 		}
 	}
 }
+
 void update(sf::Window &window)
 {
 	//Controls update timings
@@ -341,7 +326,7 @@ void render(sf::Window &window)
 	glClear(GL_DEPTH_BUFFER_BIT);
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{
-		lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+		lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lightNearPlane, lightFarPlane);
 		lightView = glm::lookAt(lightPositions.at(i), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 		lightSpaceMatrix = lightProjection * lightView;
 		glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
@@ -388,7 +373,7 @@ void render(sf::Window &window)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//LIGHTING PASS
-	shaderLightningPass.use();
+	shaderLightingPass.use();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	glActiveTexture(GL_TEXTURE1);
@@ -402,16 +387,16 @@ void render(sf::Window &window)
 	//Send all lights to the shader
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{
-		glUniform3fv(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Position").c_str()), 1, &lightPositions[i][0]);
-		glUniform3fv(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Color").c_str()), 1, &lightColors[i][0]);
+		glUniform3fv(glGetUniformLocation(shaderLightingPass.program, ("lights[" + std::to_string(i) + "].position").c_str()), 1, &lightPositions[i][0]);
+		glUniform3fv(glGetUniformLocation(shaderLightingPass.program, ("lights[" + std::to_string(i) + "].color").c_str()), 1, &lightColors[i][0]);
 		// Linear and quadratic for calculation of the lights radius
 		const GLfloat linear = 0.7;
 		const GLfloat quadratic = 1.8;
-		glUniform1f(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Linear").c_str()), linear);
-		glUniform1f(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Quadratic").c_str()), quadratic);
+		glUniform1f(glGetUniformLocation(shaderLightingPass.program, ("lights[" + std::to_string(i) + "].linear").c_str()), linear);
+		glUniform1f(glGetUniformLocation(shaderLightingPass.program, ("lights[" + std::to_string(i) + "].quadratic").c_str()), quadratic);
 	}
-	glUniformMatrix4fv(glGetUniformLocation(shaderLightningPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-	glUniform3fv(glGetUniformLocation(shaderLightningPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
+	glUniformMatrix4fv(glGetUniformLocation(shaderLightingPass.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+	glUniform3fv(glGetUniformLocation(shaderLightingPass.program, "viewPos"), 1, &playerCamera.getCameraPos()[0]);
 
 
 	renderQuad();
@@ -442,6 +427,8 @@ int main()
 	//Create models
 	loadModels();
 	createModels();
+	//Create cannon
+	aCannon = Cannon(modelLibrary[1]);
 	//Create DepthMap
 	createShadowMap();
 	//Main loop

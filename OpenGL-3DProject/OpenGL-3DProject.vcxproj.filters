@@ -13,7 +13,7 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\gBuffer">
+    <Filter Include="Source Files\shaders">
       <UniqueIdentifier>{9aa3373f-5c16-46dd-bfe4-a8f93b74947e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -31,30 +31,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Cannon.cpp">
-	  <Filter>Source Files</Filter>
-	</ClCompile>  
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="gBufferGeometryFragment.glsl">
-      <Filter>Source Files\gBuffer</Filter>
+      <Filter>Source Files\shaders</Filter>
     </None>
     <None Include="gBufferGeometryVertex.glsl">
-      <Filter>Source Files\gBuffer</Filter>
+      <Filter>Source Files\shaders</Filter>
     </None>
-    <None Include="gBufferLightningFragment.glsl">
-      <Filter>Source Files\gBuffer</Filter>
+    <None Include="gBufferLightingFragment.glsl">
+      <Filter>Source Files\shaders</Filter>
     </None>
-    <None Include="gBufferLightningVertex.glsl">
-      <Filter>Source Files\gBuffer</Filter>
-    </None>
-    <None Include="shadowFragment.glsl">
-      <Filter>Source Files</Filter>
+    <None Include="gBufferLightingVertex.glsl">
+      <Filter>Source Files\shaders</Filter>
     </None>
     <None Include="shadowVertex.glsl">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shadowFragment.glsl">
+      <Filter>Source Files\shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -69,7 +69,7 @@
     </ClInclude>
     <ClInclude Include="Cannon.h">
       <Filter>Header Files</Filter>
-	</ClInclude>
+    </ClInclude>
     <ClInclude Include="Terrain.h">
       <Filter>Header Files</Filter>
     </ClInclude>

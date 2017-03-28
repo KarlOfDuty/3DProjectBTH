@@ -1,6 +1,6 @@
 #version 440
-out vec4 FragColor;
-in vec2 TexCoords;
+out vec4 fragColor;
+in vec2 texCoords;
 
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
@@ -8,15 +8,16 @@ uniform sampler2D gAlbedoSpec;
 uniform sampler2D gAmbient;
 uniform sampler2D depthMap;
 
-struct Light {
-    vec3 Position;
-    vec3 Color;
-    float Linear;
-    float Quadratic;
+struct light 
+{
+    vec3 position;
+    vec3 color;
+    float linear;
+    float quadratic;
 };
 
 const int NR_LIGHTS = 10;
-uniform Light lights[NR_LIGHTS];
+uniform light lights[NR_LIGHTS];
 uniform vec3 viewPos;
 uniform mat4 lightSpaceMatrix;
 
@@ -55,11 +56,11 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDirection
 void main()
 {             
     // Retrieve data from G-buffer	
-    vec3 fragPos = texture(gPosition, TexCoords).rgb;
-	vec3 normal = texture(gNormal, TexCoords).rgb;
-    vec3 diffuse = texture(gAlbedoSpec, TexCoords).rgb;
-	float specular = texture(gAlbedoSpec, TexCoords).a;
-	vec3 ambient = texture(gAmbient, TexCoords).rgb;
+    vec3 fragPos = texture(gPosition, texCoords).rgb;
+	vec3 normal = texture(gNormal, texCoords).rgb;
+    vec3 diffuse = texture(gAlbedoSpec, texCoords).rgb;
+	float specular = texture(gAlbedoSpec, texCoords).a;
+	vec3 ambient = texture(gAmbient, texCoords).rgb;
 	//Multiplies the diffuse 
 	vec3 lighting = vec3(diffuse.x * ambient.x, diffuse.y * ambient.y, diffuse.z * ambient.z);
 	vec3 viewDir = normalize(viewPos - fragPos);
@@ -67,24 +68,24 @@ void main()
 
 	for(int i = 0; i < NR_LIGHTS; ++i)
 	{
-		vec3 lightDir = normalize(lights[i].Position - fragPos);
-        vec3 thisDiffuse = max(dot(normal, lightDir), 0.0) * diffuse * lights[i].Color;
+		vec3 lightDir = normalize(lights[i].position - fragPos);
+        vec3 thisDiffuse = max(dot(normal, lightDir), 0.0) * diffuse * lights[i].color;
         //Specular
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
-        vec3 thisSpecular = lights[i].Color * spec * specular;
+        vec3 thisSpecular = lights[i].color * spec * specular;
         //Attenuation
-		float lightDistance = length(lights[i].Position - fragPos);
-        float attenuation = 1.0 / (1.0 + lights[i].Linear * lightDistance + lights[i].Quadratic * lightDistance * lightDistance);
+		float lightDistance = length(lights[i].position - fragPos);
+        float attenuation = 1.0 / (1.0 + lights[i].linear * lightDistance + lights[i].quadratic * lightDistance * lightDistance);
 		// Calculate shadows
 		float shadow = ShadowCalculation(fragPosLightSpace, normal, lightDir);
         thisDiffuse *= attenuation;
         thisSpecular *= attenuation;
 		lighting += (1.0 - shadow) * (thisDiffuse + thisSpecular);
 	}
-	FragColor = vec4(lighting, 1.0f);
-	float depthValue = texture(depthMap,TexCoords).r;
+	fragColor = vec4(lighting, 1.0f);
+	float depthValue = texture(depthMap,texCoords).r;
 	// Test depthmap
-	//FragColor = vec4(vec3(depthValue),1.0);
+	//fragColor = vec4(vec3(depthValue),1.0);
 }
 

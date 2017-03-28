@@ -13,23 +13,6 @@ int Material::findMaterial(std::string name, std::vector<Material> materials)
 	}
 	return index;
 }
-//Returns the index of a material in the vector matching this material's name, -1 if not found
-int Material::findMaterial(std::vector<Material> materials)
-{
-	int index = -1;
-	for (int i = 0; i < materials.size() && index == -1; i++)
-	{
-		if (materials.at(i).name == this->name)
-		{
-			index = i;
-		}
-	}
-	return index;
-}
-Material Model::getMaterial(int index)
-{
-	return this->meshes.at(index)->material;
-}
 //Getters
 glm::mat4 Model::getModelMatrix() const
 {
@@ -46,6 +29,10 @@ glm::vec3 Model::getMinBounding() const
 glm::vec3 Model::getMaxBounding() const
 {
 	return this->maxBounding;
+}
+Material Model::getMaterial(int index)
+{
+	return this->meshes.at(index)->material;
 }
 //Setters
 void Model::setModelMatrix(glm::mat4 modelMat)
@@ -195,36 +182,24 @@ void Model::read(std::string filename)
 			}
 			if (modelDebug)std::cout << std::endl;
 		}
-		else if (str == "g")
+		else if (str == "g" || str == "o")
 		{
 			//Groups
 			if (modelDebug)std::cout << "Group name (g): ";
 			while (line >> str)
 			{
 				if (modelDebug)std::cout << str << " ";
+				//Finishes the previous mesh if this is not the first one
+				if (!meshVertices.empty())
+				{
+					mesh->vertices = meshVertices;
+					mesh->material = currentMaterial;
+					meshes.push_back(mesh);
+					mesh = new Mesh();
+					meshVertices = std::vector<Vertex>();
+				}
 			}
 			if (modelDebug)std::cout << std::endl;
-		}
-		else if (str == "s")
-		{
-			//Smoothing groups
-			if (modelDebug)std::cout << "Smoothing group (s): ";
-			while (line >> str)
-			{
-				if (modelDebug)std::cout << str << " ";
-			}
-			if (modelDebug)std::cout << std::endl;
-		}
-		else if (str == "o")
-		{
-			if (!meshVertices.empty())
-			{
-				mesh->vertices = meshVertices;
-				mesh->material = currentMaterial;
-				meshes.push_back(mesh);
-				mesh = new Mesh();
-				meshVertices = std::vector<Vertex>();
-			}
 		}
 		else if (str == "mtllib")
 		{
@@ -314,22 +289,6 @@ void Model::read(std::string filename)
 					materials.at(materialBeingAdded).specularColour.z = data;
 					if (matDebug)std::cout << std::endl;
 				}
-				else if (str == "Tr" && materialBeingAdded != -1)
-				{
-					//Transpareny
-					float data = 0.0;
-					mtlWord >> data;
-					if (matDebug)std::cout << "Transparency: " << data << std::endl;
-					materials.at(materialBeingAdded).transparency = data;
-				}
-				else if (str == "illum" && materialBeingAdded != -1)
-				{
-					//Illumination mode
-					int data = 0;
-					mtlWord >> data;
-					if (matDebug)std::cout << "Illumination mode: " << data << std::endl;
-					materials.at(materialBeingAdded).illuminationMode = data;
-				}
 				else if (str == "map_Ka" && materialBeingAdded != -1)
 				{
 					//Name of the file containing the ambient texture map
@@ -378,6 +337,7 @@ void Model::read(std::string filename)
 			if (modelDebug)std::cout << std::endl;
 		}
 	}
+	//Finishes the last mesh
 	if (!meshVertices.empty())
 	{
 		mesh->vertices = meshVertices;
@@ -570,7 +530,7 @@ void Model::generateBoundingBox()
 	{
 		for (int j = 0; j < meshes[i]->vertices.size(); j++)
 		{
-			//Minumum pos check
+			//Minimum pos check
 			if (meshes[i]->vertices[j].pos.x < minPos.x)
 			{
 				minPos.x = meshes[i]->vertices[j].pos.x;
@@ -641,7 +601,7 @@ Model::Model()
 	generateBoundingBox();
 	//this->faces = std::vector<std::vector<Vertex>>();
 }
-//Copy constructor
+//Copy constructors
 Model::Model(Model &otherModel)
 {
 	this->modelMatrix = otherModel.modelMatrix;

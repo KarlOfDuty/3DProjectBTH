@@ -18,31 +18,40 @@ Camera::~Camera()
 {
 
 }
+//Updates the camera
 glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 {
 	if (window.hasFocus() && !sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
+		//Used for movement
+		glm::vec3 flattenedCameraFront = cameraFront;
+		flattenedCameraFront.y = 0;
+		flattenedCameraFront = glm::normalize(flattenedCameraFront);
+
 		cameraSpeed = 0.5 * deltaTime;
+		//Forward
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
-			cameraPos.x += (cameraSpeed * cameraFront).x;
-			cameraPos.z += (cameraSpeed * cameraFront).z;
+			cameraPos.x += (cameraSpeed * flattenedCameraFront).x;
+			cameraPos.z += (cameraSpeed * flattenedCameraFront).z;
 		}
-
+		//Backwards
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			cameraPos.x -= (cameraSpeed * cameraFront).x;
-			cameraPos.z -= (cameraSpeed * cameraFront).z;
+			cameraPos.x -= (cameraSpeed * flattenedCameraFront).x;
+			cameraPos.z -= (cameraSpeed * flattenedCameraFront).z;
 		}
-
+		//Left
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
-			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			cameraPos -= glm::normalize(glm::cross(flattenedCameraFront, cameraUp)) * cameraSpeed;
 		}
+		//Right
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
-			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			cameraPos += glm::normalize(glm::cross(flattenedCameraFront, cameraUp)) * cameraSpeed;
 		}
+		//Executed only once on startup
 		if (firstMouse)
 		{
 			sf::Mouse::setPosition(sf::Vector2i(RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2));
@@ -50,6 +59,7 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 			oldMouseY = sf::Mouse::getPosition().y;
 			firstMouse = false;
 		}
+		//Checks if the mouse has been moved from the center
 		if (sf::Mouse::getPosition().x != RESOLUTION_WIDTH / 2)
 		{
 			cameraYaw += (float)(sf::Mouse::getPosition().x - oldMouseX) * mouseSensitivity;
@@ -58,6 +68,7 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 		{
 			cameraPitch += (float)(oldMouseY - sf::Mouse::getPosition().y) * mouseSensitivity;
 		}
+		//Limits the pitch so the player cant move the camera further than straight up or down
 		if (cameraPitch > 89.0f)
 		{
 			cameraPitch = 89.0f;
@@ -66,21 +77,25 @@ glm::mat4 Camera::Update(float deltaTime, sf::Window &window)
 		{
 			cameraPitch = -89.0f;
 		}
+		//Calculates new camera variables
 		glm::vec3 front;
 		front.x = cos(glm::radians(cameraPitch)) * cos(glm::radians(cameraYaw));
 		front.y = sin(glm::radians(cameraPitch));
 		front.z = cos(glm::radians(cameraPitch)) * sin(glm::radians(cameraYaw));
 		cameraFront = glm::normalize(front);
+		//Resets the mouse position
 		sf::Mouse::setPosition(sf::Vector2i(RESOLUTION_WIDTH / 2, RESOLUTION_HEIGHT / 2));
 		oldMouseX = sf::Mouse::getPosition().x;
 		oldMouseY = sf::Mouse::getPosition().y;
 	}
+	//Returns the view matrix
 	return glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 }
 glm::vec3 Camera::getCameraPos()
 {
 	return this->cameraPos;
 }
+//Calculates the player falling when above the terrain
 void Camera::cameraFall(float terrainY, float scale, float dt)
 {
 	float cameraOffset = 0.2f;
@@ -94,6 +109,7 @@ void Camera::cameraFall(float terrainY, float scale, float dt)
 		cameraPos.y = (terrainY*scale)+cameraOffset-fallSpeed*dt;
 	}
 }
+//Paints the model clicked on red
 int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels)
 {
 	int closestModel = -1;
@@ -150,6 +166,7 @@ int Camera::mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::m
 	}
 	return closestModel;
 }
+//Tests intersection between a ray and an OBB
 bool Camera::testIntersection( glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 obbMin, glm::vec3 obbMax, glm::mat4 modelMatrix, float& intersection_distance)
 {	
 	float tMin = 0.0f;

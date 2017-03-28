@@ -133,8 +133,8 @@
   <ItemGroup>
     <None Include="gBufferGeometryFragment.glsl" />
     <None Include="gBufferGeometryVertex.glsl" />
-    <None Include="gBufferLightningFragment.glsl" />
-    <None Include="gBufferLightningVertex.glsl" />
+    <None Include="gBufferLightingFragment.glsl" />
+    <None Include="gBufferLightingVertex.glsl" />
     <None Include="shadowFragment.glsl" />
     <None Include="shadowVertex.glsl" />
   </ItemGroup>

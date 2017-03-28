@@ -1,18 +1,17 @@
 #include "Shader.h"
-
+//Constructors
 Shader::Shader()
 {
 	this->program = GLuint();
 }
-
 Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
 {
-	// 1. Retrieve the vertex/fragment source code from filePath
+	//Retrieve the vertex/fragment source code from filePath
 	std::string vertexCode;
 	std::string fragmentCode;
 	std::ifstream vShaderFile;
 	std::ifstream fShaderFile;
-	// ensures ifstream objects can throw exceptions:
+	//Ensures ifstream objects can throw exceptions:
 	vShaderFile.exceptions(std::ifstream::badbit);
 	fShaderFile.exceptions(std::ifstream::badbit);
 	try
@@ -37,15 +36,15 @@ Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
 	}
 	const GLchar* vShaderCode = vertexCode.c_str();
 	const GLchar * fShaderCode = fragmentCode.c_str();
-	// 2. Compile shaders
+	//Compile shaders
 	GLuint vertex, fragment;
 	GLint success;
 	GLchar infoLog[512];
-	// Vertex Shader
+	//Vertex Shader
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &vShaderCode, NULL);
 	glCompileShader(vertex);
-	// Print compile errors if any
+	//Print compile errors if any
 	glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
@@ -53,11 +52,11 @@ Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
 		//Breakpoint here
 	}
-	// Fragment Shader
+	//Fragment Shader
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment, 1, &fShaderCode, NULL);
 	glCompileShader(fragment);
-	// Print compile errors if any
+	//Print compile errors if any
 	glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
@@ -65,12 +64,12 @@ Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 		//Breakpoint here
 	}
-	// Shader Program
+	//Shader Program
 	this->program = glCreateProgram();
 	glAttachShader(this->program, vertex);
 	glAttachShader(this->program, fragment);
 	glLinkProgram(this->program);
-	// Print linking errors if any
+	//Print linking errors if any
 	glGetProgramiv(this->program, GL_LINK_STATUS, &success);
 	if (!success)
 	{
@@ -78,11 +77,12 @@ Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
 		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
 		//Breakpoint here
 	}
-	// Delete the shaders as they're linked into our program now and no longer necessery
+	//Delete the shaders as they're linked into our program now and no longer necessery
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
 
 }
+//Use the shader
 void Shader::use()
 {
 	glUseProgram(this->program);

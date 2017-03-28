@@ -1,25 +1,25 @@
 #include "Terrain.h"
-
-Terrain::Terrain(int w2, int l2, float scale)
+//Constructor
+Terrain::Terrain(int w, int l, float scale)
 {
-	w = w2;
-	l = l2;
-
-	hs = new float*[l];
-	for (int i = 0; i < l; i++)
+	width = w;
+	length = l;
+	//Initialize heights array
+	heights = new float*[length];
+	for (int i = 0; i < length; i++)
 	{
-		hs[i] = new float[w];
+		heights[i] = new float[width];
 	}
-
-	normals = new glm::vec3*[l];
-	for (int i = 0; i < l; i++)
+	//Initialize normals arrray
+	normals = new glm::vec3*[length];
+	for (int i = 0; i < length; i++)
 	{
-		normals[i] = new glm::vec3[w];
+		normals[i] = new glm::vec3[width];
 	}
 
 	computedNormals = false;
 
-	// scale and positioning for terrain
+	//Scale and positioning for terrain
 	scaleFactor = scale;
 	modelMatrix = glm::mat4({
 		scaleFactor, 0.0, 0.0, 0.0,
@@ -28,22 +28,22 @@ Terrain::Terrain(int w2, int l2, float scale)
 		0.0, 0.0, 0.0, 1.0 });
 	setupTexture();
 }
-
+//Destructor
 Terrain::~Terrain()
 {
-	for (int i = 0; i < l; i++)
+	for (int i = 0; i < length; i++)
 	{
-		delete[] hs[i];
+		delete[] heights[i];
 	}
-	delete[] hs;
+	delete[] heights;
 
-	for (int i = 0; i < l; i++)
+	for (int i = 0; i < length; i++)
 	{
 		delete[] normals[i];
 	}
 	delete[] normals;
 }
-
+//Sets up the color of the height map
 void Terrain::setupTexture()
 {
 	glGenVertexArrays(1, &VAO);
@@ -62,33 +62,38 @@ void Terrain::setupTexture()
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
-
+//Getters
 int Terrain::getWidth()
 {
-	return w;
+	return width;
 }
-
 int Terrain::getLength()
 {
-	return l;
+	return length;
 }
-
 float Terrain::getScale()
 {
 	return scaleFactor;
 }
-
+glm::vec3 Terrain::getNormal(int x, int z)
+{
+	if (!computedNormals)
+	{
+		computeNormals();
+	}
+	return normals[z][x];
+}
+//Setters
 void Terrain::setHeight(int x, int z, float y)
 {
-	hs[z][x] = y;
+	heights[z][x] = y;
 	computedNormals = false;
 }
-
 float Terrain::getHeight(int x, int z)
 {
-	return hs[z][x];
+	return heights[z][x];
 }
-
+//Returns the height at a specific position
 float Terrain::heightAt(float x, float z)
 {
 	//Make (x, z) lie within the bounds of the terrain
@@ -136,52 +141,56 @@ float Terrain::heightAt(float x, float z)
 	return (1 - fracX) * ((1 - fracZ) * h11 + fracZ * h12) +
 		fracX * ((1 - fracZ) * h21 + fracZ * h22);
 }
-
+//Computes normals
 void Terrain::computeNormals()
 {
-	if (computedNormals) {
+	if (computedNormals) 
+	{
 		return;
 	}
 
-	// vector for rough normals - before smoothing
-	glm::vec3** normals2 = new glm::vec3*[l];
-	for (int i = 0; i < l; i++) {
-		normals2[i] = new glm::vec3[w];
+	//Vector for rough normals - before smoothing
+	glm::vec3** normals2 = new glm::vec3*[length];
+	for (int i = 0; i < length; i++) 
+	{
+		normals2[i] = new glm::vec3[width];
 	}
 
-	for (int z = 0; z < l; z++) {
-		for (int x = 0; x < w; x++) {
+	for (int z = 0; z < length; z++) 
+	{
+		for (int x = 0; x < width; x++) 
+		{
 			glm::vec3 sum(0.0f, 0.0f, 0.0f);
 
-			// computing four edges for each point
+			//Computing four edges for each point
 			glm::vec3 out;
 			if (z > 0) {
-				out = glm::vec3(0.0f, hs[z - 1][x] - hs[z][x], -1.0f);
+				out = glm::vec3(0.0f, heights[z - 1][x] - heights[z][x], -1.0f);
 			}
 			glm::vec3 in;
-			if (z < l - 1) {
-				in = glm::vec3(0.0f, hs[z + 1][x] - hs[z][x], 1.0f);
+			if (z < length - 1) {
+				in = glm::vec3(0.0f, heights[z + 1][x] - heights[z][x], 1.0f);
 			}
 			glm::vec3 left;
 			if (x > 0) {
-				left = glm::vec3(-1.0f, hs[z][x - 1] - hs[z][x], 0.0f);
+				left = glm::vec3(-1.0f, heights[z][x - 1] - heights[z][x], 0.0f);
 			}
 			glm::vec3 right;
-			if (x < w - 1) {
-				right = glm::vec3(1.0f, hs[z][x + 1] - hs[z][x], 0.0f);
+			if (x < width - 1) {
+				right = glm::vec3(1.0f, heights[z][x + 1] - heights[z][x], 0.0f);
 			}
 
-			// cross product of a pair of edges to determine the vector perpendicular to a triangle
+			//Cross product of a pair of edges to determine the vector perpendicular to a triangle
 			if (x > 0 && z > 0) {
 				sum += glm::normalize(glm::cross(out, left));
 			}
-			if (x > 0 && z < l - 1) {
+			if (x > 0 && z < length - 1) {
 				sum += glm::normalize(glm::cross(left, in));
 			}
-			if (x < w - 1 && z < l - 1) {
+			if (x < width - 1 && z < length - 1) {
 				sum += glm::normalize(glm::cross(in, right));
 			}
-			if (x < w - 1 && z > 0) {
+			if (x < width - 1 && z > 0) {
 				sum += glm::normalize(glm::cross(right, out));
 			}
 
@@ -189,30 +198,30 @@ void Terrain::computeNormals()
 		}
 	}
 
-	// smooth out the normals
-	// each adjacent normal gets a weight of 0.5, normal at the point gets a weight of 1
+	//Smooth out the normals
+	//Each adjacent normal gets a weight of 0.5, normal at the point gets a weight of 1
 	const float FALLOUT_RATIO = 0.5f;
-	for (int z = 0; z < l; z++) {
-		for (int x = 0; x < w; x++) {
+	for (int z = 0; z < length; z++) {
+		for (int x = 0; x < width; x++) {
 			glm::vec3 sum = normals2[z][x];
 
 			if (x > 0) {
 				sum += normals2[z][x - 1] * FALLOUT_RATIO;
 			}
-			if (x < w - 1) {
+			if (x < width - 1) {
 				sum += normals2[z][x + 1] * FALLOUT_RATIO;
 			}
 			if (z > 0) {
 				sum += normals2[z - 1][x] * FALLOUT_RATIO;
 			}
-			if (z < l - 1) {
+			if (z < length - 1) {
 				sum += normals2[z + 1][x] * FALLOUT_RATIO;
 			}
 
 
 			float magnitude = glm::sqrt(sum[0] * sum[0] + sum[1] * sum[1] + sum[2] * sum[2]);
 
-			// if the average turns out to be zero vector we just set a random vector since a zero vector can not be normalized
+			//If the average turns out to be zero vector we just set a random vector since a zero vector can not be normalized
 			if (magnitude == 0) {
 				sum = glm::vec3(0.0f, 1.0f, 0.0f);
 			}
@@ -220,23 +229,15 @@ void Terrain::computeNormals()
 		}
 	}
 
-	for (int i = 0; i < l; i++) {
+	for (int i = 0; i < length; i++) 
+	{
 		delete[] normals2[i];
 	}
 	delete[] normals2;
 
 	computedNormals = true;
 }
-
-glm::vec3 Terrain::getNormal(int x, int z)
-{
-	if (!computedNormals)
-	{
-		computeNormals();
-	}
-	return normals[z][x];
-}
-
+//Loads the heightmap texture
 void Terrain::loadTerrain(std::string fileName, float height)
 {	
 	int imageWidth, imageHeight, channels;
@@ -246,8 +247,7 @@ void Terrain::loadTerrain(std::string fileName, float height)
 	{
 		for (int x = 0; x < imageWidth; x++) 
 		{
-			unsigned char color =
-				(unsigned char)image[imageWidth* y + x];
+			unsigned char color = (unsigned char)image[imageWidth* y + x];
 			// Set height - whiter color means higher height, darker color means lower height
 			float h = height * ((color / 255.0f) - 0.5f);
 			setHeight(x, y, h);
@@ -257,7 +257,7 @@ void Terrain::loadTerrain(std::string fileName, float height)
 	this->computeNormals();
 	SOIL_free_image_data(image);
 }
-
+//Draws the terrain
 void Terrain::draw(Shader shader)
 {
 	glBindVertexArray(this->VAO);

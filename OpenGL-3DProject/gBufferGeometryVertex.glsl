@@ -8,20 +8,23 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-
-out vec3 FragPos;
-out vec2 TexCoords;
-out vec3 Normal;
+out vec3 fragPos;
+out vec2 texCoords;
+out vec3 normal;
 out int useNormalMap;
 
 
 void main()
 {
+	//Position converted to world space
 	vec4 worldPos = model * vec4(vertexPos, 1.0f);
-    FragPos = worldPos.xyz;
+    fragPos = worldPos.xyz;
+	//Position converted to clip space
 	gl_Position = projection * view * worldPos;
-	TexCoords = vertexTexture;
+
+	texCoords = vertexTexture;
+	//Calculate normal
 	mat3 normalMatrix = transpose(inverse(mat3(model)));
-    Normal = normalMatrix * vertexNormal;
+    normal = normalMatrix * vertexNormal;
 	useNormalMap = vertexUseNormalMap;
 }

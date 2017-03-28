@@ -1,11 +1,10 @@
 #include "Cannon.h"
-///https://en.wikipedia.org/wiki/Drag_coefficient
-///https://en.wikipedia.org/wiki/Dynamic_pressure
-///https://en.wikipedia.org/wiki/Drag_equation
 const double PI = 3.14159265358979323846;
 bool checkDistance = true;
-Cannon::Cannon()
+//Constructors
+Cannon::Cannon(Model &sphere)
 {
+	//Initialize variables
 	this->gravity = 9.82; // m/s^2
 	this->windDirection = glm::vec3(1,0,0); // Used for direction only, thus should always be normalized
 	this->windDirection = glm::normalize(windDirection);
@@ -15,11 +14,43 @@ Cannon::Cannon()
 	this->angle = 42*PI/180;
 	this->triesLeft = 3;
 	this->amountOfHits = 0;
+	//Load models
+	Model cannonModel = Model("models/cannon/editCannon.obj", {
+		0.1, 0.0, 0.0, 0.0,
+		0.0, 0.1, 0.0, 0.0,
+		0.0, 0.0, 0.1, 0.0,
+		2.0, -0.12, 2.0, 1.0 });
+	Model cannonModel2 = Model("models/cannon/editCannon2.obj", {
+		0.1, 0.0, 0.0, 0.0,
+		0.0, 0.1, 0.0, 0.0,
+		0.0, 0.0, 0.1, 0.0,
+		2.0, -0.12, 2.0, 1.0 });
+	this->cannonModel = Model(cannonModel);
+	this->cannonModel2 = Model(cannonModel2);
+	this->cannonModel.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	this->cannonModel2.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	this->cannonModel.rotate();
+	this->cannonModel2.rotate();
+	//Creates the target sphere
+	glm::mat4 modelMatrix = glm::mat4(
+		0.6, 0.0, 0.0, 0.0,
+		0.0, 0.6, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		2, 3, -3, 1.0
+	);
+	targetModel = Model(sphere, modelMatrix);
+	aCannonBall = nullptr;
 }
+Cannon::Cannon()
+{
+
+}
+//Destructor
 Cannon::~Cannon()
 {
 
 }
+//Getters
 int Cannon::getAmountOfHits()
 {
 	return this->amountOfHits;
@@ -28,27 +59,13 @@ int Cannon::getTriesLeft()
 {
 	return this->triesLeft;
 }
-void Cannon::loadModel(Model model, Model model2)
-{
-	this->cannonModel = Model(model);
-	this->cannonModel2 = Model(model2);
-	this->cannonModel.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	this->cannonModel2.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	this->cannonModel.rotate();
-	this->cannonModel2.rotate();
-
-	glm::mat4 modelMat2 = glm::mat4(
-		0.6, 0.0, 0.0, 0.0,
-		0.0, 0.6, 0.0, 0.0,
-		0.0, 0.0, 0.2, 0.0,
-		2, 3, -3, 1.0
-	);
-	targetModel = Model("models/sphere/sphere.obj", modelMat2);
-}
+//Update funtion
 void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 {
+	//Checks if the cannon ball exists
 	if (aCannonBall != nullptr)
 	{
+		//Deletes the cannon ball when it is too low
 		if (aCannonBall->ballModel->getModelMatrix()[3][1] < -5)
 		{
 			delete aCannonBall;
@@ -74,6 +91,7 @@ void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 				cannonBallMax.z > targetMin.z &&
 				cannonBallMin.z < targetMax.z)
 			{
+				//Deletes the cannonball and awards points when the target is hit, and then moves the target
 				amountOfHits++;
 				delete aCannonBall;
 				aCannonBall = nullptr;
@@ -119,13 +137,11 @@ void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 				//Gravitation only on the Y-axis
 				aCannonBall->accelVector.y = -gravity;
 				//Translate to new position
-				aCannonBall->ballModel->setModelMatrix(
-					glm::translate(aCannonBall->ballModel->getModelMatrix(), aCannonBall->speedVector*dt)
-			);
+				aCannonBall->ballModel->setModelMatrix(glm::translate(aCannonBall->ballModel->getModelMatrix(), aCannonBall->speedVector*dt));
+			}
 		}
 	}
-}
-
+	//Angles the cannon
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && angle < 90*PI/180)
 	{
 		this->cannonModel.setRotationMatrix(glm::rotate(glm::mat4(), glm::radians(-0.55f), glm::vec3(1.0f, 0.0f, 0.0f)));
@@ -138,12 +154,14 @@ void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 		this->cannonModel.rotate();
 		this->angle -= 0.01;
 	}
+	//Puts a light on the cannonball
 	if (aCannonBall != nullptr)
 	{
 		lightPositions[0] = aCannonBall->ballModel->getModelMatrix()[3];
 	}
 	lightPositions[1] = glm::vec3(targetModel.getModelMatrix()[3][0], targetModel.getModelMatrix()[3][1], targetModel.getModelMatrix()[3][2]+1);
 }
+//Draws the models involved
 void Cannon::draw(Shader shader)
 {
 	glUniform1i(glGetUniformLocation(shader.program, "isMouseOvered"), 0);
@@ -159,6 +177,7 @@ void Cannon::draw(Shader shader)
 		aCannonBall->ballModel->draw(shader);
 	}
 }
+//Fires the cannon
 void Cannon::shoot(glm::vec3 originPos, Model ball)
 {
 	if (aCannonBall == nullptr && triesLeft > 0)

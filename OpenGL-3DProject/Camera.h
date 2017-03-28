@@ -3,7 +3,6 @@
 #include <glm\gtc\matrix_transform.hpp>
 #include <SFML\Window.hpp>
 #include "Model.h"
-#include <iostream>
 class Camera
 {
 private:
