@@ -398,13 +398,12 @@ void render(sf::Window &window)
 	glBindTexture(GL_TEXTURE_2D, gAmbient);
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
-
+	//Send all lights to the shader
 	for (GLuint i = 0; i < lightPositions.size(); i++)
 	{
 		glUniform3fv(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Position").c_str()), 1, &lightPositions[i][0]);
 		glUniform3fv(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Color").c_str()), 1, &lightColors[i][0]);
-		// Update attenuation parameters and calculate radius
-		const GLfloat constant = 1.0; // Note that we don't send this to the shader, we assume it is always 1.0 (in our case)
+		// Linear and quadratic for calculation of the lights radius
 		const GLfloat linear = 0.7;
 		const GLfloat quadratic = 1.8;
 		glUniform1f(glGetUniformLocation(shaderLightningPass.program, ("lights[" + std::to_string(i) + "].Linear").c_str()), linear);
