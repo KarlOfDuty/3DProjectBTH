@@ -57,21 +57,21 @@ void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 		}
 		else
 		{
-			glm::vec3 cannonPos(aCannonBall->ballModel->getModelMatrix()[3]);
-			glm::vec3 boxPos(targetModel.getModelMatrix()[3]);
+			glm::vec3 cannonBallPos(aCannonBall->ballModel->getModelMatrix()[3]);
+			glm::vec3 targetPos(targetModel.getModelMatrix()[3]);
 
-			glm::vec3 cannonMin = cannonPos + aCannonBall->ballModel->getMinBounding();
-			glm::vec3 cannonMax = cannonPos + aCannonBall->ballModel->getMaxBounding();
+			glm::vec3 cannonBallMin = cannonBallPos + aCannonBall->ballModel->getMinBounding();
+			glm::vec3 cannonBallMax = cannonBallPos + aCannonBall->ballModel->getMaxBounding();
 
-			glm::vec3 boxMin = boxPos + targetModel.getMinBounding();
-			glm::vec3 boxMax = boxPos + targetModel.getMaxBounding();
+			glm::vec3 targetMin = targetPos + targetModel.getMinBounding();
+			glm::vec3 targetMax = targetPos + targetModel.getMaxBounding();
 
-			if (cannonMax.x > boxMin.x &&
-				cannonMin.x < boxMax.x &&
-				cannonMax.y > boxMin.y &&
-				cannonMin.y < boxMax.y &&
-				cannonMax.z > boxMin.z &&
-				cannonMin.z < boxMax.z)
+			if (cannonBallMax.x > targetMin.x &&
+				cannonBallMin.x < targetMax.x &&
+				cannonBallMax.y > targetMin.y &&
+				cannonBallMin.y < targetMax.y &&
+				cannonBallMax.z > targetMin.z &&
+				cannonBallMin.z < targetMax.z)
 			{
 				amountOfHits++;
 				delete aCannonBall;
