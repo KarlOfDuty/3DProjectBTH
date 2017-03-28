@@ -12,7 +12,6 @@ class Cannon
 		glm::vec3 speedVector;
 		glm::vec3 accelVector;
 		float velocity;
-		//double angle;
 		glm::vec3 direction;
 		float radius; // m
 		float density; // kg/m^3

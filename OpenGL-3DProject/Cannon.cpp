@@ -57,6 +57,7 @@ void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 		}
 		else
 		{
+			//Check intersection between cannonball and target
 			glm::vec3 cannonBallPos(aCannonBall->ballModel->getModelMatrix()[3]);
 			glm::vec3 targetPos(targetModel.getModelMatrix()[3]);
 
@@ -65,7 +66,7 @@ void Cannon::update(float dt, std::vector<glm::vec3> &lightPositions)
 
 			glm::vec3 targetMin = targetPos + targetModel.getMinBounding();
 			glm::vec3 targetMax = targetPos + targetModel.getMaxBounding();
-
+			
 			if (cannonBallMax.x > targetMin.x &&
 				cannonBallMin.x < targetMax.x &&
 				cannonBallMax.y > targetMin.y &&
