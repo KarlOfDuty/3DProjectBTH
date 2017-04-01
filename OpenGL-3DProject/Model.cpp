@@ -428,7 +428,7 @@ void Model::setupModel()
 		//Iterate through vertices in the face
 		for (int j = 0; j < meshes[i]->vertices.size(); j++)
 		{
-			if (meshes[i]->material.normalMapFile != "")
+			if (meshes[i]->material.normalMapFile != "" && normalMapping)
 			{
 				meshes[i]->vertices[j].useNormalMap = 1;
 			}
@@ -470,7 +470,7 @@ void Model::loadTextures(int i)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	//Check weather to use texture or solid colour
-	if (meshes[i]->material.textureMapAmbientFile != "")
+	if (meshes[i]->material.textureMapAmbientFile != "" && !whiteModels)
 	{
 		int width, height;
 		unsigned char* image;
@@ -482,11 +482,7 @@ void Model::loadTextures(int i)
 	}
 	else
 	{
-		float colour[3] = {
-			meshes[i]->material.ambientColour.r,
-			meshes[i]->material.ambientColour.g,
-			meshes[i]->material.ambientColour.b
-		};
+		float colour[3] = {0.5,0.5,0.5};
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, colour);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
@@ -499,7 +495,7 @@ void Model::loadTextures(int i)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	//Check weather to use texture or solid colour
-	if (meshes[i]->material.textureMapDiffuseFile != "")
+	if (meshes[i]->material.textureMapDiffuseFile != "" && !whiteModels)
 	{	
 		int width, height;
 		unsigned char* image;
@@ -511,11 +507,7 @@ void Model::loadTextures(int i)
 	}
 	else
 	{
-		float colour[3] = { 
-			meshes[i]->material.diffuseColour.r,
-			meshes[i]->material.diffuseColour.g,
-			meshes[i]->material.diffuseColour.b
-		};
+		float colour[3] = {1,1,1};
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, colour);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
@@ -529,7 +521,7 @@ void Model::loadTextures(int i)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	//Check weather to use texture or solid colour
-	if (meshes[i]->material.textureMapSpecularFile != "")
+	if (meshes[i]->material.textureMapSpecularFile != "" && !whiteModels)
 	{
 		int width, height;
 		unsigned char* image;
@@ -540,11 +532,7 @@ void Model::loadTextures(int i)
 	}
 	else
 	{
-		float colour[3] = { 
-			meshes[i]->material.specularColour.r,
-			meshes[i]->material.specularColour.g,
-			meshes[i]->material.specularColour.b
-		};
+		float colour[3] = {0.5,0.5,0.5};
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, colour);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}

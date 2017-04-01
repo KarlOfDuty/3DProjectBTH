@@ -10,6 +10,8 @@
 #include <glm\gtc\matrix_transform.hpp>
 #include <SOIL.h>
 #include "Shader.h"
+extern const bool normalMapping;
+extern const bool whiteModels;
 //A material specifying how shading, coloring and texturing works
 struct Material
 {

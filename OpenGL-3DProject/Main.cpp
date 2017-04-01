@@ -14,11 +14,19 @@
 #include "Camera.h"
 #include "Shader.h"
 #pragma comment(lib, "opengl32.lib")
+/////////////////////////////////////////////////////////////////
+//normalMapping switches between normal mapping and per vertex normals
+const bool normalMapping = false;
+const bool whiteModels = false;
+//whiteModels sets diffuse to 1 and sets ambient and specular lights to 0.5 across the whole model
+/////////////////////////////////////////////////////////////////
+
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
 const int windowWidth = 1280;
 const int windowHeight = 720;
+
 bool debug = false;
 //Camera
 Camera playerCamera;
@@ -153,17 +161,17 @@ void loadModels()
 
 	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
-	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
+	//modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
 
 void createModels()
 {
 	//Create the models and store them in the vector of all models to be rendered
-	allModels.push_back(new Model(modelLibrary.at(0), {
-		0.6, 0.0, 0.0, 0.0,
-		0.0, 0.6, 0.0, 0.0,
-		0.0, 0.0, 0.6, 0.0,
-		0.0, 0.0, 0.0, 1.0 }));
+	//allModels.push_back(new Model(modelLibrary.at(0), {
+	//	0.6, 0.0, 0.0, 0.0,
+	//	0.0, 0.6, 0.0, 0.0,
+	//	0.0, 0.0, 0.6, 0.0,
+	//	0.0, 0.0, 0.0, 1.0 }));
 
 	allModels.push_back(new Model(modelLibrary.at(0), {
 		1.0, 0.0, 0.0, 0.0,
@@ -193,9 +201,9 @@ void createModels()
 		//GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
 		//GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
 		//GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
-		GLfloat rColor = 0.5; // Between 0.5 and 1.0
-		GLfloat gColor = 0.5; // Between 0.5 and 1.0
-		GLfloat bColor = 0.5; // Between 0.5 and 1.0
+		GLfloat rColor = 0.3; // Between 0.5 and 1.0
+		GLfloat gColor = 0.3; // Between 0.5 and 1.0
+		GLfloat bColor = 0.3; // Between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
 }
@@ -243,10 +251,6 @@ void update(sf::Window &window)
 	else
 	{
 		window.setMouseCursorVisible(false);
-	}
-	for (int i = 0; i < allModels.size(); i++)
-	{
-		//allModels[i]->rotate();
 	}
 	sort();
 }
