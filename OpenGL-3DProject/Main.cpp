@@ -1,3 +1,7 @@
+//////////////////////////////////////////////////////////////////////
+//Switch modes using the modelDebug and matDebug booleans in model.h
+//This example uses only the cube to not spam the console
+//////////////////////////////////////////////////////////////////////
 #include <GL\glew.h>
 #include <GL\GL.h>
 #include <glm\glm.hpp>
@@ -24,7 +28,7 @@ const int windowHeight = 720;
 const float fov = 45.0f;
 const float nearPlane = 0.1;
 const float farPlane = 1000;
-bool debug = true;
+bool debug = false;
 
 //Terrain
 Terrain *terrain;
@@ -72,7 +76,7 @@ TwBar *debugInterface;
 int amountOfHits;
 int amountOfTriesLeft;
 //Cannon
-Cannon aCannon;
+//Cannon aCannon;
 
 void renderQuad()
 {
@@ -198,7 +202,7 @@ void loadModels()
 
 	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
 
-	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
+	//modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
 }
 
 void createModels()
@@ -210,11 +214,6 @@ void createModels()
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 3.0, 1.0 }));
 
-	allModels.push_back(new Model(modelLibrary.at(1), {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
-		1.0, 0.0, 3.0, 1.0 }));
 	terrain = new Terrain(60, 60, 0.1);
 	terrain->loadTerrain("heightmap.bmp", 1.0f);
 
@@ -305,14 +304,14 @@ void update(sf::Window &window)
 	{
 		window.setMouseCursorVisible(false);
 	}
-	aCannon.update(deltaTime.asSeconds(), lightPositions);
+	//aCannon.update(deltaTime.asSeconds(), lightPositions);
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		//allModels[i]->rotate();
 	}
 	sort();
-	amountOfHits = aCannon.getAmountOfHits();
-	amountOfTriesLeft = aCannon.getTriesLeft();
+	//amountOfHits = aCannon.getAmountOfHits();
+	//amountOfTriesLeft = aCannon.getTriesLeft();
 }
 
 void render(sf::Window &window)
@@ -428,7 +427,7 @@ int main()
 	loadModels();
 	createModels();
 	//Create cannon
-	aCannon = Cannon(modelLibrary[1]);
+	//aCannon = Cannon(modelLibrary[1]);
 	//Create DepthMap
 	createShadowMap();
 	//Main loop
@@ -456,10 +455,10 @@ int main()
 					window.close();
 					running = false;
 				}
-				if (event.key.code == sf::Keyboard::Return)
-				{
-					aCannon.shoot(playerCamera.getCameraPos(), modelLibrary[1]);
-				}
+				//if (event.key.code == sf::Keyboard::Return)
+				//{
+				//	aCannon.shoot(playerCamera.getCameraPos(), modelLibrary[1]);
+				//}
 			}
 		}
 		update(window);

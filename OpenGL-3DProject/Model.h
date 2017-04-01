@@ -46,7 +46,7 @@ struct Mesh
 	Material material;
 };
 //Turns on console feedback for reading of model files
-static bool modelDebug = false;
+static bool modelDebug = true;
 //Turns on console feedback for reading of material files
 static bool matDebug = false;
 class Model
