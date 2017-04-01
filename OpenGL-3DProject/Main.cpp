@@ -1,7 +1,4 @@
-//////////////////////////////////////////////////////////////////////
-//Switch modes using the modelDebug and matDebug booleans in model.h
-//This example uses only the cube to not spam the console
-//////////////////////////////////////////////////////////////////////
+
 #include <GL\glew.h>
 #include <GL\GL.h>
 #include <glm\glm.hpp>
@@ -20,6 +17,11 @@
 #include "Cannon.h"
 #include "Terrain.h"
 #pragma comment(lib, "opengl32.lib")
+//////////////////////////////////////////////////////////////////////
+//Switch modes using the modelDebug and matDebug booleans in model.h
+//This example uses only the cube to not spam the console
+//////////////////////////////////////////////////////////////////////
+
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
