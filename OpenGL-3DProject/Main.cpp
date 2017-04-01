@@ -1,3 +1,4 @@
+
 #include <GL\glew.h>
 #include <GL\GL.h>
 #include <glm\glm.hpp>
@@ -14,6 +15,11 @@
 #include "Shader.h"
 #include "FrustumCulling.h"
 #pragma comment(lib, "opengl32.lib")
+///////////////////////////////////////
+//Toggle for demo, demo camera only moves in 2D, while normal occlusion works in 3D
+const bool aboveView = false;
+///////////////////////////////////////
+
 //Initial resolutions
 const int RESOLUTION_WIDTH = sf::VideoMode::getDesktopMode().width;
 const int RESOLUTION_HEIGHT = sf::VideoMode::getDesktopMode().height;
@@ -22,7 +28,6 @@ const int windowHeight = 720;
 bool debug = false;
 //Camera
 Camera playerCamera = Camera();
-const bool aboveView = false;
 //Frustum culling object
 FrustumCulling frustumObject = FrustumCulling();
 float fov = 45.0f;
