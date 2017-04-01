@@ -73,6 +73,8 @@ int amountOfHits;
 int amountOfTriesLeft;
 //Cannon
 Cannon aCannon;
+//Front-to-back Rendering
+bool FTBRender = false;
 
 void renderQuad()
 {
@@ -311,6 +313,8 @@ void update(sf::Window &window)
 		//allModels[i]->rotate();
 	}
 	sort();
+	//Uncomment to test Front-To-Back Rendering
+	//FTBRender = true;
 	amountOfHits = aCannon.getAmountOfHits();
 	amountOfTriesLeft = aCannon.getTriesLeft();
 }
@@ -330,10 +334,21 @@ void render(sf::Window &window)
 		lightView = glm::lookAt(lightPositions.at(i), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 		lightSpaceMatrix = lightProjection * lightView;
 		glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-		for (int j = 0; j < allModels.size(); j++)
+		if (FTBRender == true)
 		{
-			glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[j]->getModelMatrix()[0][0]);
-			allModels[j]->draw(depthShader);
+			for (int j = 0; j < 1; j++)
+			{
+				glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[j]->getModelMatrix()[0][0]);
+				allModels[j]->draw(depthShader);
+			}
+		}
+		else
+		{
+			for (int j = 0; j < allModels.size(); j++)
+			{
+				glUniformMatrix4fv(glGetUniformLocation(depthShader.program, "model"), 1, GL_FALSE, &allModels[j]->getModelMatrix()[0][0]);
+				allModels[j]->draw(depthShader);
+			}
 		}
 	}
 	terrain->draw(depthShader);
@@ -354,17 +369,33 @@ void render(sf::Window &window)
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projectionMatrix[0][0]);
 	//Mouseover check
 	int mouseOvered = playerCamera.mousePicking(window, projectionMatrix, viewMatrix, allModels);
-	//Once to test front to back rendering
-	for (int i = 0; i < allModels.size(); i++)
+	if (FTBRender == true)
 	{
-		int isMouseOver = 0;
-		if (i == mouseOvered)
+		for (int i = 0; i < 1; i++)
 		{
-			isMouseOver = 1;
+			int isMouseOver = 0;
+			if (i == mouseOvered)
+			{
+				isMouseOver = 1;
+			}
+			glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), isMouseOver);
+			glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
+			allModels.at(i)->draw(shaderGeometryPass);
 		}
-		glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), isMouseOver);
-		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
-		allModels.at(i)->draw(shaderGeometryPass);
+	}
+	else
+	{
+		for (int i = 0; i < allModels.size(); i++)
+		{
+			int isMouseOver = 0;
+			if (i == mouseOvered)
+			{
+				isMouseOver = 1;
+			}
+			glUniform1i(glGetUniformLocation(shaderGeometryPass.program, "isMouseOvered"), isMouseOver);
+			glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
+			allModels.at(i)->draw(shaderGeometryPass);
+		}
 	}
 	aCannon.draw(shaderGeometryPass);
 	terrain->draw(shaderGeometryPass);
