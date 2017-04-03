@@ -24,7 +24,7 @@ const int windowHeight = 720;
 const float fov = 45.0f;
 const float nearPlane = 0.1;
 const float farPlane = 1000;
-bool debug = true;
+bool debug = false;
 
 //Terrain
 Terrain *terrain;
@@ -72,7 +72,7 @@ TwBar *debugInterface;
 int amountOfHits;
 int amountOfTriesLeft;
 //Cannon
-Cannon aCannon;
+//Cannon aCannon;
 
 void renderQuad()
 {
@@ -204,17 +204,103 @@ void loadModels()
 void createModels()
 {
 	//Create the models and store them in the vector of all models to be rendered
-	allModels.push_back(new Model(modelLibrary.at(0), {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 3.0, 1.0 }));
+	
+	for (int i = 0; i < 7; i++)
+	{
+		for (int k = 0; k < 2; k++)
+		{
+			allModels.push_back(new Model(modelLibrary.at(1), {
+				0.2, 0.0, 0.0, 0.0,
+				0.0, 0.2, 0.0, 0.0,
+				0.0, 0.0, 0.2, 0.0,
+				i, k+0.5, 0.0, 1.0 }));
+		}
+	}
+	/*
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		0.0, 0.5, 0.0, 1.0 }));
 
 	allModels.push_back(new Model(modelLibrary.at(1), {
-		0.1, 0.0, 0.0, 0.0,
-		0.0, 0.1, 0.0, 0.0,
-		0.0, 0.0, 0.1, 0.0,
-		1.0, 0.0, 3.0, 1.0 }));
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		0.0, 1.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		1.0, 0.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		1.0, 1.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		2.0, 0.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		2.0, 1.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		3.0, 0.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		3.0, 1.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		4.0, 0.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		4.0, 1.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		5.0, 0.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		5.0, 1.5, 0.0, 1.0 }));
+	
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		6.0, 0.5, 0.0, 1.0 }));
+
+	allModels.push_back(new Model(modelLibrary.at(1), {
+		0.2, 0.0, 0.0, 0.0,
+		0.0, 0.2, 0.0, 0.0,
+		0.0, 0.0, 0.2, 0.0,
+		6.0, 1.5, 0.0, 1.0 }));
+		*/
 	terrain = new Terrain(60, 60, 0.1);
 	terrain->loadTerrain("heightmap.bmp", 1.0f);
 
@@ -295,7 +381,6 @@ void update(sf::Window &window)
 	deltaTime = deltaClock.restart();
 	viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
 	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
-	playerCamera.cameraFall(terrain->heightAt(playerCamera.getCameraPos().x, playerCamera.getCameraPos().z),terrain->getScale(),deltaTime.asSeconds());
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -305,14 +390,11 @@ void update(sf::Window &window)
 	{
 		window.setMouseCursorVisible(false);
 	}
-	aCannon.update(deltaTime.asSeconds(), lightPositions);
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		//allModels[i]->rotate();
 	}
 	sort();
-	amountOfHits = aCannon.getAmountOfHits();
-	amountOfTriesLeft = aCannon.getTriesLeft();
 }
 
 void render(sf::Window &window)
@@ -337,7 +419,6 @@ void render(sf::Window &window)
 		}
 	}
 	terrain->draw(depthShader);
-	aCannon.draw(depthShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glCullFace(GL_BACK);
 
@@ -366,7 +447,6 @@ void render(sf::Window &window)
 		glUniformMatrix4fv(glGetUniformLocation(shaderGeometryPass.program, "model"), 1, GL_FALSE, &allModels[i]->getModelMatrix()[0][0]);
 		allModels.at(i)->draw(shaderGeometryPass);
 	}
-	aCannon.draw(shaderGeometryPass);
 	terrain->draw(shaderGeometryPass);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -428,7 +508,7 @@ int main()
 	loadModels();
 	createModels();
 	//Create cannon
-	aCannon = Cannon(modelLibrary[1]);
+	//aCannon = Cannon(modelLibrary[1]);
 	//Create DepthMap
 	createShadowMap();
 	//Main loop
@@ -458,7 +538,7 @@ int main()
 				}
 				if (event.key.code == sf::Keyboard::Return)
 				{
-					aCannon.shoot(playerCamera.getCameraPos(), modelLibrary[1]);
+					//aCannon.shoot(playerCamera.getCameraPos(), modelLibrary[1]);
 				}
 			}
 		}
