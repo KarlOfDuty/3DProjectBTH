@@ -123,12 +123,14 @@ float Terrain::heightAt(float x, float z)
 	if (leftX == getWidth() - 1) {
 		leftX--;
 	}
+	//Distance from leftX
 	float fracX = x - leftX;
 
 	int outZ = (int)z;
-	if (outZ == getWidth() - 1) {
+	if (outZ == getLength() - 1) {
 		outZ--;
 	}
+	//Distance from outZ
 	float fracZ = z - outZ;
 
 	//Compute the four heights for the grid cell
@@ -149,7 +151,7 @@ void Terrain::computeNormals()
 		return;
 	}
 
-	//Vector for rough normals - before smoothing
+	//Vector for rough normals - before smoothing (approximate normals)
 	glm::vec3** normals2 = new glm::vec3*[length];
 	for (int i = 0; i < length; i++) 
 	{
@@ -199,6 +201,7 @@ void Terrain::computeNormals()
 	}
 
 	//Smooth out the normals
+	//For each normal, we average in a little bit of the surrounding normals.
 	//Each adjacent normal gets a weight of 0.5, normal at the point gets a weight of 1
 	const float FALLOUT_RATIO = 0.5f;
 	for (int z = 0; z < length; z++) {
