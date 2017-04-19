@@ -25,7 +25,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDirection
 {
 	// Transform the light-space fragment position in clip-space to NDC (perspective divide)
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-	// Transform NDC to [0,1] range because depth map is in range [0,1]
+	// Transform NDC to [0,1] range
 	projCoords = projCoords * 0.5 + 0.5;
 	// Get depth of current fragment from light's perspective
 	float currentDepth = projCoords.z;
