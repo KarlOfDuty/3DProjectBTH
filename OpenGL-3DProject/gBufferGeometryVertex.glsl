@@ -11,7 +11,7 @@ uniform mat4 projection;
 out vec3 fragPos;
 out vec2 texCoords;
 out vec3 normal;
-out int useNormalMap;
+out flat int useNormalMap;
 
 
 void main()

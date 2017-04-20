@@ -32,8 +32,9 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDirection
 	float shadow = 0.0;
 	// Calculate bias - Offset the depth of the surface such that fragments are not incorrectly considered below the surface
 	float bias = max(0.05 * (1.0 - dot(normal, lightDirection)), 0.005);   
+
 	// PCF - Percentage-Closer Filtering - used to offset the texture coordinates
-	//Width and height of the given sampler texture at mipmap level 0 divided over 1 - used to offset the texture coordinates
+	//Width and height of the given sampler texture at mipmap level 0 divided over 1
 	vec2 texelSize = 1.0 / textureSize(depthMap, 0);
 
 	// Check wheter current frag pos is in shadow
@@ -62,31 +63,35 @@ void main()
     vec3 diffuse = texture(gAlbedoSpec, texCoords).rgb;
 	float specular = texture(gAlbedoSpec, texCoords).a;
 	vec3 ambient = texture(gAmbient, texCoords).rgb;
-	//Multiplies the diffuse 
-	vec3 lighting = vec3(diffuse.x * ambient.x, diffuse.y * ambient.y, diffuse.z * ambient.z);
+	//Add the ambient colour 
+	vec3 lighting = ambient;
+	//Direction towards the camera
 	vec3 viewDir = normalize(viewPos - fragPos);
 	vec4 fragPosLightSpace = lightSpaceMatrix * vec4(fragPos, 1.0);
 
 	for(int i = 0; i < NR_LIGHTS; ++i)
 	{
+		//Direction towards this light
 		vec3 lightDir = normalize(lights[i].position - fragPos);
+		//Diffuse calculation
         vec3 thisDiffuse = max(dot(normal, lightDir), 0.0) * diffuse * lights[i].color;
-        //Specular
+        //Specular calculation
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
         vec3 thisSpecular = lights[i].color * spec * specular;
-        //Attenuation
+        //Light strength calculation
 		float lightDistance = length(lights[i].position - fragPos);
         float attenuation = 1.0 / (1.0 + lights[i].linear * lightDistance + lights[i].quadratic * lightDistance * lightDistance);
 		// Calculate shadows
 		float shadow = ShadowCalculation(fragPosLightSpace, normal, lightDir);
         thisDiffuse *= attenuation;
         thisSpecular *= attenuation;
+		//Add this light to the fragment's light
 		lighting += (1.0 - shadow) * (thisDiffuse + thisSpecular);
 	}
 	fragColor = vec4(lighting, 1.0f);
-	float depthValue = texture(depthMap,texCoords).r;
 	// Test depthmap
+	//float depthValue = texture(depthMap,texCoords).r;
 	//fragColor = vec4(vec3(depthValue),1.0);
 }
 

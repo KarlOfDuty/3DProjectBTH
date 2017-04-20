@@ -15,12 +15,12 @@ Cannon::Cannon(Model &sphere)
 	this->triesLeft = 3;
 	this->amountOfHits = 0;
 	//Load models
-	Model cannonModel = Model("models/cannon/editCannon.obj", {
+	Model cannonModel = Model("models/cannon/cannon1.obj", {
 		0.1, 0.0, 0.0, 0.0,
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,
 		2.0, -0.12, 2.0, 1.0 });
-	Model cannonModel2 = Model("models/cannon/editCannon2.obj", {
+	Model cannonModel2 = Model("models/cannon/cannon2.obj", {
 		0.1, 0.0, 0.0, 0.0,
 		0.0, 0.1, 0.0, 0.0,
 		0.0, 0.0, 0.1, 0.0,

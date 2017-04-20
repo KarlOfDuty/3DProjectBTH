@@ -609,7 +609,8 @@ Model::Model(Model &otherModel)
 	this->meshes = otherModel.meshes;
 	this->minBounding = otherModel.minBounding;
 	this->maxBounding = otherModel.maxBounding;
-	setupModel();
+	this->VAO = otherModel.VAO;
+	this->VBO = otherModel.VBO;
 }
 Model::Model(Model &otherModel, glm::mat4 modelMat)
 {
@@ -617,7 +618,8 @@ Model::Model(Model &otherModel, glm::mat4 modelMat)
 	this->rotationMatrix = otherModel.rotationMatrix;
 	this->meshes = otherModel.meshes;
 	generateBoundingBox();
-	setupModel();
+	this->VAO = otherModel.VAO;
+	this->VBO = otherModel.VBO;
 }
 //Destructor
 Model::~Model()
