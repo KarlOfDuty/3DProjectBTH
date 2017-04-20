@@ -16,7 +16,7 @@
 #pragma comment(lib, "opengl32.lib")
 /////////////////////////////////////////////////////////////////
 //normalMapping switches between normal mapping and per vertex normals
-const bool normalMapping = false;
+const bool normalMapping = true;
 const bool whiteModels = false;
 //whiteModels sets diffuse to 1 and sets ambient and specular lights to 0.5 across the whole model
 /////////////////////////////////////////////////////////////////
