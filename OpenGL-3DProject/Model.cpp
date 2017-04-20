@@ -452,10 +452,10 @@ void Model::setupModel()
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
 	//UseNormalMap Bool
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 8));
+	glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 8));
 	//Tangents
 	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
+	glVertexAttribPointer(4, 3, GL_INT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 9));
 	//Unbind the vertex array buffer
 	glBindVertexArray(0);
 }

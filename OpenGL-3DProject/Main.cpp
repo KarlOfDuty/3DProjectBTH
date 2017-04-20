@@ -16,9 +16,9 @@
 #pragma comment(lib, "opengl32.lib")
 /////////////////////////////////////////////////////////////////
 //normalMapping switches between normal mapping and per vertex normals
-const bool normalMapping = true;
+const bool normalMapping = false;
 const bool whiteModels = false;
-//whiteModels sets diffuse to 1 across the whole model so only the normal map effect is visible
+//whiteModels sets diffuse to 1 and sets ambient and specular lights to 0.5 across the whole model
 /////////////////////////////////////////////////////////////////
 
 //Initial resolutions
@@ -134,7 +134,7 @@ void createGBuffer()
 	//Ambient colour buffer
 	glGenTextures(1, &gAmbient);
 	glBindTexture(GL_TEXTURE_2D, gAmbient);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, windowWidth, windowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gAmbient, 0);
@@ -181,7 +181,7 @@ void createModels()
 
 		
 	//Make all models rotate at a fixed speed
-	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotation = glm::rotate(glm::mat4(), glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (int i = 0; i < allModels.size(); i++)
 	{
 		allModels[i]->setRotationMatrix(rotation);
@@ -193,9 +193,9 @@ void createModels()
 		//GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
 		//GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
 		//GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-		GLfloat xPos = 0;
-		GLfloat yPos = 0;
-		GLfloat zPos = 2;
+		GLfloat xPos = (i*0.2)-2;
+		GLfloat yPos = (i%4)-2;
+		GLfloat zPos = 1;
 		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
 		// Also calculate random color
 		//GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
@@ -252,8 +252,7 @@ void update(sf::Window &window)
 	{
 		window.setMouseCursorVisible(false);
 	}
-	allModels[0]->rotate();
-	//sort();
+	sort();
 }
 
 void render(sf::Window &window)
