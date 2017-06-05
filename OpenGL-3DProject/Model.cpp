@@ -18,6 +18,10 @@ Material Model::getMaterial(int index)
 {
 	return this->meshes.at(index)->material;
 }
+float Model::getBoundingSphereRadius() const
+{
+	return radius;
+}
 glm::mat4 Model::getModelMatrix() const
 {
 	return this->modelMatrix;
@@ -34,11 +38,11 @@ glm::vec3 Model::getMaxBouding() const
 {
 	return this->maxBounding;
 }
-float Model::getBoundingSphereRadius() const
+void Model::setBoundingSphereRadius()
 {
 	//Returns the radius of the bounding sphere around this model by 
 	//taking the distance to the furthest away vertex
-	float radius = 0.0f;
+	radius = 0.0f;
 	for (int i = 0; i < meshes.size(); i++)
 	{
 		for (int j = 0; j < meshes[i]->vertices.size(); j++)
@@ -46,7 +50,6 @@ float Model::getBoundingSphereRadius() const
 			radius = glm::max(radius,(float)meshes[i]->vertices[j].pos.length());
 		}
 	}
-	return radius;
 }
 //Setters
 void Model::setModelMatrix(glm::mat4 modelMat)
@@ -591,6 +594,7 @@ Model::Model(std::string filename)
 	read(filename);
 	setupModel();
 	generateBoundingBox();
+	setBoundingSphereRadius();
 }
 Model::Model(std::string filename, glm::mat4 modelMat)
 {
@@ -599,6 +603,7 @@ Model::Model(std::string filename, glm::mat4 modelMat)
 	this->rotationMatrix = glm::mat4(1.0);
 	read(filename);
 	generateBoundingBox();
+	setBoundingSphereRadius();
 	setupModel();
 }
 Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
@@ -608,6 +613,7 @@ Model::Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation)
 	this->rotationMatrix = rotation;
 	read(filename);
 	generateBoundingBox();
+	setBoundingSphereRadius();
 	setupModel();
 }
 Model::Model()
@@ -615,8 +621,6 @@ Model::Model()
 	//Initializes the model with no data
 	this->modelMatrix = glm::mat4(1.0);
 	this->rotationMatrix = glm::mat4(1.0);
-	generateBoundingBox();
-	//this->faces = std::vector<std::vector<Vertex>>();
 }
 //Copy constructor
 Model::Model(Model &otherModel)
@@ -626,15 +630,31 @@ Model::Model(Model &otherModel)
 	this->meshes = otherModel.meshes;
 	this->minBounding = otherModel.minBounding;
 	this->maxBounding = otherModel.maxBounding;
-	setupModel();
+	this->radius = otherModel.radius;
+	this->VAO = otherModel.VAO;
+	this->VBO = otherModel.VBO;
 }
 Model::Model(Model &otherModel, glm::mat4 modelMat)
 {
 	this->modelMatrix =  modelMat;
 	this->rotationMatrix = otherModel.rotationMatrix;
 	this->meshes = otherModel.meshes;
-	generateBoundingBox();
-	setupModel();
+	this->minBounding = otherModel.minBounding;
+	this->maxBounding = otherModel.maxBounding;
+	this->radius = otherModel.radius;
+	this->VAO = otherModel.VAO;
+	this->VBO = otherModel.VBO;
+}
+Model::Model(Model & otherModel, glm::mat4 modelMat, glm::mat4 rotation)
+{
+	this->modelMatrix = modelMat;
+	this->rotationMatrix = rotation;
+	this->meshes = otherModel.meshes;
+	this->minBounding = otherModel.minBounding;
+	this->maxBounding = otherModel.maxBounding;
+	this->radius = otherModel.radius;
+	this->VAO = otherModel.VAO;
+	this->VBO = otherModel.VBO;
 }
 //Destructor
 Model::~Model()

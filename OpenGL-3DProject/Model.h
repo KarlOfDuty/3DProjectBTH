@@ -59,6 +59,7 @@ private:
 	std::vector<Mesh*> meshes;
 	glm::vec3 minBounding;
 	glm::vec3 maxBounding;
+	float radius;
 	void setupModel();
 	void loadTextures(int meshNr);
 public:
@@ -68,6 +69,7 @@ public:
 	glm::mat4 getRotationMatrix() const;
 	glm::vec3 getMinBounding() const;
 	glm::vec3 getMaxBouding() const;
+	void setBoundingSphereRadius();
 	void setModelMatrix(glm::mat4 modelMat);
 	void setRotationMatrix(glm::mat4 rotationMat);
 	void rotate();
@@ -79,6 +81,7 @@ public:
 	Model(std::string filename, glm::mat4 modelMat, glm::mat4 rotation);
 	Model(Model &otherModel);
 	Model(Model &otherModel, glm::mat4 modelMat);
+	Model(Model &otherModel, glm::mat4 modelMat, glm::mat4 rotation);
 	Model();
 
 	~Model();

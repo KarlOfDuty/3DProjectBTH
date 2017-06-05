@@ -28,7 +28,7 @@ void main()
 	float specular = texture(gAlbedoSpec, TexCoords).a;
 	vec3 ambient = texture(gAmbient, TexCoords).rgb;
 	//Multiplies the diffuse 
-	vec3 lighting = vec3(diffuse.x * ambient.x, diffuse.y * ambient.y, diffuse.z * ambient.z);
+	vec3 lighting = diffuse * 0.5;
 	vec3 viewDir = normalize(viewPos - fragPos);
 	for(int i = 0; i < NR_LIGHTS; ++i)
 	{

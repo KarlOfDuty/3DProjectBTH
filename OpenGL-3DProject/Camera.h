@@ -28,7 +28,6 @@ public:
 	~Camera();
 	glm::mat4 Update(float deltaTime, sf::Window &window);
 	glm::vec3 getCameraPos();
-	void setupFrustumCulling(FrustumCulling &frustumObject);
 	int mousePicking(sf::Window &window, glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix, std::vector<Model*> &allModels);
 	void frustumCulling(FrustumCulling &fcObject, std::vector<Model*> &models);
 };

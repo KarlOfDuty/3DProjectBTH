@@ -18,6 +18,7 @@
 ///////////////////////////////////////
 //Toggle for demo, demo camera only moves in 2D, while normal occlusion works in 3D
 const bool aboveView = false;
+const bool frustumCulling = true;
 ///////////////////////////////////////
 
 //Initial resolutions
@@ -48,7 +49,7 @@ GLuint quadVBO;
 GLuint diffuseTexture;
 GLuint specularTexture;
 GLuint normalMap;
-const GLuint NR_LIGHTS = 32;
+const GLuint NR_LIGHTS = 1;
 std::vector<glm::vec3> lightPositions;
 std::vector<glm::vec3> lightColors;
 //Timing control for controls and camera
@@ -159,22 +160,21 @@ void loadModels()
 	//Reads the models from file once
 	modelLibrary.push_back(Model("models/cube/cube.obj")); //0
 
-	//modelLibrary.push_back(Model("models/nanosuit/nanosuit.obj")); //1
-
-	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //2
+	modelLibrary.push_back(Model("models/sphere/sphere.obj")); //1
 }
 
 void createModels()
 {
 	std::srand(time(0));
+	glm::mat4 rot = glm::rotate(glm::mat4(), 0.1f, glm::vec3(0, 1, 0));
 	//Loads 100 spheres randomly
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 10000; i++)
 	{
-		allModels.push_back(new Model(modelLibrary.at(1), {
+		allModels.push_back(new Model(modelLibrary[0], {
 			1.0, 0.0, 0.0, 0.0,
 			0.0, 1.0, 0.0, 0.0,
 			0.0, 0.0, 1.0, 0.0,
-			(rand() % 100)-50, (rand() % 10)-5, (rand() % 100)-50, 1.0 }));
+			(rand() % 100)-50, (rand() % 10)-5, (rand() % 100)-50, 1.0 },rot));
 	}
 	//Some lights with random values
 	std::srand(13);
@@ -192,29 +192,6 @@ void createModels()
 	}
 	visibleModels = allModels;
 }
-//Not used in this example as frustum culling changes the order of the models being drawn
-void sort()
-{
-	//Bubble sort
-	glm::vec3 modelPos1;
-	glm::vec3 modelPos2;
-	bool sorted = false;
-	while (!sorted)
-	{
-		sorted = true;
-		for (int i = 0; i < allModels.size() - 1;i++)
-		{
-			modelPos1 = allModels[i]->getModelMatrix()[3];
-			modelPos2 = allModels[i + 1]->getModelMatrix()[3];
-			//Compare distance to model1 and distance to model2 and swap if out of order.
-			if (glm::distance(modelPos1, playerCamera.getCameraPos()) > glm::distance(modelPos2, playerCamera.getCameraPos()))
-			{
-				std::swap(allModels[i], allModels[i + 1]);
-				sorted = false;
-			}
-		}
-	}
-}
 
 void update(sf::Window &window)
 {
@@ -226,14 +203,14 @@ void update(sf::Window &window)
 		viewMatrix = glm::lookAt(
 			glm::vec3(0, 100, 0),
 			glm::vec3(1, 1, 1),
-			glm::vec3(0, 1, 0));
+			glm::vec3(1, 0, 0));
 	}
 	else
 	{
 		viewMatrix = playerCamera.Update(deltaTime.asSeconds(), window);
 	}
-	playerCamera.frustumCulling(frustumObject, visibleModels);
-	playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
+	if(frustumCulling)playerCamera.frustumCulling(frustumObject, visibleModels);
+	//playerCamera.mousePicking(window,projectionMatrix,viewMatrix,allModels);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt))
 	{
@@ -243,11 +220,10 @@ void update(sf::Window &window)
 	{
 		window.setMouseCursorVisible(false);
 	}
-	for (int i = 0; i < allModels.size(); i++)
-	{
-		allModels[i]->rotate();
-	}
-	//sort();
+	//for (int i = 0; i < allModels.size(); i++)
+	//{
+	//	allModels[i]->rotate();
+	//}
 }
 void render(sf::Window &window)
 {
@@ -313,7 +289,7 @@ int main()
 	settings.antialiasingLevel = 2;
 	sf::Window window(sf::VideoMode(windowWidth, windowHeight), "OpenGL", sf::Style::Default, settings);
 	//V-Sync
-	window.setVerticalSyncEnabled(true);
+	window.setVerticalSyncEnabled(false);
 	//Disable cursor
 	window.setMouseCursorVisible(false);
 	//Load resources, initialize the OpenGL states, ...
