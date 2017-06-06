@@ -17,7 +17,7 @@
 #pragma comment(lib, "opengl32.lib")
 ///////////////////////////////////////
 //Toggle for demo, demo camera only moves in 2D, while normal occlusion works in 3D
-const bool aboveView = false;
+const bool aboveView = true;
 const bool frustumCulling = true;
 ///////////////////////////////////////
 

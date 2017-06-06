@@ -15,7 +15,7 @@ struct Plane
 	float getSignedDistanceTo(const glm::vec3 &point) const;
 };
 //Number of levels in the quadtree 
-static const int quadTreeLevels = 3;
+static const int quadTreeLevels = 5;
 //Bounds for quads (as they are axis alligned these values define a quad)
 static enum { XMIN, ZMIN, XMAX, ZMAX };
 static const int mapHeight = 100;
